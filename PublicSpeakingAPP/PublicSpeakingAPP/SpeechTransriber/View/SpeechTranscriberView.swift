@@ -6,71 +6,132 @@
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct SpeechTranscriberView: View {
-    @StateObject private var viewModel = SpeechTranscriberViewModel()
-
-    @State private var presentImporter = false
-    @State private var selectedURL: URL? = nil
-    @State private var showingAlert: Bool = false
+    // MARK: - Buat instance kedua ViewModel
+    @StateObject private var speechVM = SpeechTranscriberViewModel()
+    @StateObject private var textAnalyzerVM = TextFrequencyAnalyzerViewModel()
+    @StateObject private var intonationAnalyzerVM = IntonationAnalyzerViewModel()
 
     var body: some View {
-        VStack(spacing: 16) {
-            // STATUS
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(viewModel.isRecording ? Color.green : Color.gray)
-                    .frame(width: 10, height: 10)
-                Text(viewModel.isRecording ? "Listening…" : "Idle")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal)
-
-            // LIVE CONTROLS
-            HStack(spacing: 12) {
-                Button {
-                    viewModel.startLiveTranscription()
-                } label: {
-                    Label("Start Live Transcription", systemImage: "mic.fill")
+        ScrollView {
+            VStack(spacing: 24) {
+                // ... (bagian Controls tidak berubah) ...
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(speechVM.isRecording ? Color.green : Color.gray)
+                        .frame(width: 10, height: 10)
+                    Text(speechVM.isRecording ? "Listening…" : "Idle")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(viewModel.isRecording || !viewModel.canRecord)
 
-                Button {
-                    viewModel.stopLiveTranscription()
-                } label: {
-                    Label("Stop", systemImage: "stop.fill")
+                HStack(spacing: 12) {
+                    Button {
+                        speechVM.startLiveTranscription()
+                    } label: {
+                        Label("Start Live Transcription", systemImage: "mic.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(speechVM.isRecording || !speechVM.canRecord)
+
+                    Button {
+                        speechVM.stopLiveTranscription()
+                    } label: {
+                        Label("Stop", systemImage: "stop.fill")
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!speechVM.isRecording)
                 }
-                .buttonStyle(.bordered)
-                .disabled(!viewModel.isRecording)
-            }
 
-            // ERROR
-            if let error = viewModel.errorMessage {
-                Text(error)
-                    .foregroundStyle(.red)
-                    .font(.footnote)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-            }
+                if let error = speechVM.errorMessage {
+                    Text(error)
+                        .foregroundStyle(.red).font(.footnote)
+                }
 
-            // TRANSCRIPT
-            ScrollView {
-                Text(viewModel.transcript.isEmpty ? "Transcript will appear here..." : viewModel.transcript)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
+                // MARK: - Transcript Display
+                VStack(alignment: .leading) {
+                    Text("Transcript").font(.headline)
+                    Text(speechVM.transcript.isEmpty ? "Transcript will appear here..." : speechVM.transcript)
+                        .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
+                        .padding()
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(8)
+                }
+                
+                if !intonationAnalyzerVM.pitchHistory.isEmpty || speechVM.isRecording {
+                    IntonationGraphView(viewModel: intonationAnalyzerVM)
+                        .transition(.opacity.animation(.easeInOut))
+                }
+
+                // MARK: - Tampilkan Hasil Analisis
+                if !textAnalyzerVM.wordFrequencies.isEmpty || !textAnalyzerVM.repeatedWordsInWindow.isEmpty || !textAnalyzerVM.repeatedBigrams.isEmpty {
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("Speech Analysis Results 🔬")
+                            .font(.title2).bold()
+
+                        // 1. Hasil Frekuensi
+                        AnalysisResultView(
+                            title: "📊 Kata yang Sering Diulang (lebih dari 1x)",
+                            results: textAnalyzerVM.wordFrequencies
+                        )
+                        
+                        // 2. Hasil Analisis Jarak
+                        AnalysisResultView(
+                            title: "📏 Pengulangan Kata Berdekatan (Jendela 15 kata)",
+                            results: textAnalyzerVM.repeatedWordsInWindow
+                        )
+
+                        // 3. Hasil N-Gram
+                        AnalysisResultView(
+                            title: "🔗 Frasa yang Diulang (2 Kata)",
+                            results: textAnalyzerVM.repeatedBigrams
+                        )
+                        
+                        AnalysisResultView(
+                            title: "🔗 Frasa yang Diulang (3 Kata)",
+                            results: textAnalyzerVM.repeatedTrigrams
+                        )
+                    }
+                }
             }
-            .background(Color(UIColor.secondarySystemBackground))
-            .cornerRadius(8)
-            .padding(.horizontal)
+            .padding()
         }
-        .padding()
         .onAppear {
-            viewModel.requestAuthorization()
+            // MARK: - Hubungkan kedua ViewModel
+            speechVM.textAnalyzerVM = textAnalyzerVM
+            speechVM.intonationAnalyzerVM = intonationAnalyzerVM
+            speechVM.requestAuthorization()
         }
     }
 }
 
+// MARK: - Subview untuk menampilkan hasil analisis
+struct AnalysisResultView: View {
+    let title: String
+    let results: [String: Int]
+
+    var body: some View {
+        if !results.isEmpty {
+            VStack(alignment: .leading) {
+                Text(title).font(.headline)
+                ForEach(results.sorted(by: { $0.value > $1.value }), id: \.key) { (item, count) in
+                    HStack {
+                        Text("'\(item)'")
+                            .bold()
+                        Spacer()
+                        Text("\(count) kali")
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.subheadline)
+                    .padding(.top, 2)
+                }
+            }
+            .padding()
+            .background(Color(UIColor.systemGray6))
+            .cornerRadius(8)
+        }
+    }
+}
