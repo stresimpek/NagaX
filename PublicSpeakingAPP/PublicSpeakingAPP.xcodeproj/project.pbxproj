@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		17BA4F042E9F94990030B293 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F032E9F94990030B293 /* WhisperKit */; };
+		17BA4F062E9F94990030B293 /* whisperkit-cli in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F052E9F94990030B293 /* whisperkit-cli */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		12BCF37B2E8BACB500FD1CF8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17BA4F042E9F94990030B293 /* WhisperKit in Frameworks */,
+				17BA4F062E9F94990030B293 /* whisperkit-cli in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,8 @@
 			);
 			name = PublicSpeakingAPP;
 			packageProductDependencies = (
+				17BA4F032E9F94990030B293 /* WhisperKit */,
+				17BA4F052E9F94990030B293 /* whisperkit-cli */,
 			);
 			productName = PublicSpeakingAPP;
 			productReference = 12BCF36B2E8BACB400FD1CF8 /* PublicSpeakingAPP.app */;
@@ -195,6 +204,9 @@
 			);
 			mainGroup = 12BCF3622E8BACB400FD1CF8;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 12BCF36C2E8BACB400FD1CF8 /* Products */;
 			projectDirPath = "";
@@ -405,6 +417,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -437,6 +450,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -578,6 +592,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/whisperkit";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		17BA4F032E9F94990030B293 /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */;
+			productName = WhisperKit;
+		};
+		17BA4F052E9F94990030B293 /* whisperkit-cli */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */;
+			productName = "whisperkit-cli";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 12BCF3632E8BACB400FD1CF8 /* Project object */;
 }
