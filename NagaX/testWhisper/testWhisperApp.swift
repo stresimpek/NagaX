@@ -1,14 +1,14 @@
 //
-//  NagaXApp.swift
-//  NagaX
+//  testWhisperApp.swift
+//  testWhisper
 //
-//  Created by Jordan on 30/09/25.
+//  Created by Jordan on 13/10/25.
 //
 
 import SwiftUI
 
 @main
-struct NagaXApp: App {
+struct testWhisperApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
-        "revision" : "309a47b2b1d9b5e991f36961c983ecec72275be3",
-        "version" : "1.6.1"
+        "revision" : "cdd0ef3755280949551dc26dee5de9ddeda89f54",
+        "version" : "1.6.2"
       }
     },
     {
@@ -43,7 +43,7 @@
       "location" : "https://github.com/argmaxinc/whisperkit",
       "state" : {
         "branch" : "main",
-        "revision" : "f31370fbb39818e32722426eb9878665dfcfae3c"
+        "revision" : "0926e5293f210b3045665d7a7be2836c94c1c0cb"
       }
     }
   ],
