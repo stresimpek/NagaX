@@ -7,9 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		60BDD601EDBF8F584D053CAB /* Pods_PublicSpeakingAPPTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5120AB97BDC78E5C3ABE35F0 /* Pods_PublicSpeakingAPPTests.framework */; };
-		9B4AA7F9B09F6FB4DCA81F15 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 36FE5AB0C988BDA00C5A1556 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */; };
-		E6B2799375B628BC5157386E /* Pods_PublicSpeakingAPP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 13C93D0FED4B95DD07151209 /* Pods_PublicSpeakingAPP.framework */; };
+		17BA4F042E9F94990030B293 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F032E9F94990030B293 /* WhisperKit */; };
+		17BA4F062E9F94990030B293 /* whisperkit-cli in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F052E9F94990030B293 /* whisperkit-cli */; };
+		5F504208A36F0D6DD7EAF200 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BDBBDEA89D59FB584042F4A9 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */; };
+		7CE851DA155C463A766ECDF8 /* Pods_PublicSpeakingAPPTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3FB7F432C78D629616FA649B /* Pods_PublicSpeakingAPPTests.framework */; };
+		DD24F122C7CC08C3B9C52EBE /* Pods_PublicSpeakingAPP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61E6E345EB8465F6CC18B06C /* Pods_PublicSpeakingAPP.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,18 +32,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		016D9560FE89F0C72E5C21A8 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig"; sourceTree = "<group>"; };
+		066ECDE1A03F55BC483FB13D /* Pods-PublicSpeakingAPPTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPPTests.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPPTests/Pods-PublicSpeakingAPPTests.debug.xcconfig"; sourceTree = "<group>"; };
 		12BCF36B2E8BACB400FD1CF8 /* PublicSpeakingAPP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PublicSpeakingAPP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		12BCF37A2E8BACB500FD1CF8 /* PublicSpeakingAPPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PublicSpeakingAPPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		12BCF3842E8BACB500FD1CF8 /* PublicSpeakingAPPUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PublicSpeakingAPPUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		13C93D0FED4B95DD07151209 /* Pods_PublicSpeakingAPP.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPP.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		185D68E716FCA69C0334D967 /* Pods-PublicSpeakingAPPTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPPTests.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPPTests/Pods-PublicSpeakingAPPTests.release.xcconfig"; sourceTree = "<group>"; };
-		23AA5710A796E2496BADD687 /* Pods-PublicSpeakingAPP.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.release.xcconfig"; sourceTree = "<group>"; };
-		36FE5AB0C988BDA00C5A1556 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		5120AB97BDC78E5C3ABE35F0 /* Pods_PublicSpeakingAPPTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPPTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		582B34D4FCB41813A80CA9FC /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig"; sourceTree = "<group>"; };
-		9B6E4F38BAB53B8F193CC91F /* Pods-PublicSpeakingAPP.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.debug.xcconfig"; sourceTree = "<group>"; };
-		C5F4A08B668B1BAE4F9F2928 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; sourceTree = "<group>"; };
-		D42417921072AD7F4363BBA9 /* Pods-PublicSpeakingAPPTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPPTests.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPPTests/Pods-PublicSpeakingAPPTests.debug.xcconfig"; sourceTree = "<group>"; };
+		2B5CCB8D1661E906DE9DC6C3 /* Pods-PublicSpeakingAPP.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.debug.xcconfig"; sourceTree = "<group>"; };
+		3FB7F432C78D629616FA649B /* Pods_PublicSpeakingAPPTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPPTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		61E6E345EB8465F6CC18B06C /* Pods_PublicSpeakingAPP.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPP.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		67E79AA2EC4971F34195DCF3 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		A64080B740B2D5CFEA07545E /* Pods-PublicSpeakingAPPTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPPTests.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPPTests/Pods-PublicSpeakingAPPTests.release.xcconfig"; sourceTree = "<group>"; };
+		BDBBDEA89D59FB584042F4A9 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0956CE89974888098C971A5 /* Pods-PublicSpeakingAPP.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -67,7 +69,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E6B2799375B628BC5157386E /* Pods_PublicSpeakingAPP.framework in Frameworks */,
+				17BA4F042E9F94990030B293 /* WhisperKit in Frameworks */,
+				17BA4F062E9F94990030B293 /* whisperkit-cli in Frameworks */,
+				DD24F122C7CC08C3B9C52EBE /* Pods_PublicSpeakingAPP.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,7 +79,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				60BDD601EDBF8F584D053CAB /* Pods_PublicSpeakingAPPTests.framework in Frameworks */,
+				7CE851DA155C463A766ECDF8 /* Pods_PublicSpeakingAPPTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,23 +87,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9B4AA7F9B09F6FB4DCA81F15 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */,
+				5F504208A36F0D6DD7EAF200 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		084414F2364783B6771982EC /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				13C93D0FED4B95DD07151209 /* Pods_PublicSpeakingAPP.framework */,
-				36FE5AB0C988BDA00C5A1556 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */,
-				5120AB97BDC78E5C3ABE35F0 /* Pods_PublicSpeakingAPPTests.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		12BCF3622E8BACB400FD1CF8 = {
 			isa = PBXGroup;
 			children = (
@@ -108,7 +102,7 @@
 				12BCF3872E8BACB500FD1CF8 /* PublicSpeakingAPPUITests */,
 				12BCF36C2E8BACB400FD1CF8 /* Products */,
 				DFBACB3A5B126BA9D06A63F4 /* Pods */,
-				084414F2364783B6771982EC /* Frameworks */,
+				C7365DD0208C7E68DE4D88ED /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -122,15 +116,25 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		C7365DD0208C7E68DE4D88ED /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				61E6E345EB8465F6CC18B06C /* Pods_PublicSpeakingAPP.framework */,
+				BDBBDEA89D59FB584042F4A9 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */,
+				3FB7F432C78D629616FA649B /* Pods_PublicSpeakingAPPTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		DFBACB3A5B126BA9D06A63F4 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				9B6E4F38BAB53B8F193CC91F /* Pods-PublicSpeakingAPP.debug.xcconfig */,
-				23AA5710A796E2496BADD687 /* Pods-PublicSpeakingAPP.release.xcconfig */,
-				C5F4A08B668B1BAE4F9F2928 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */,
-				582B34D4FCB41813A80CA9FC /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */,
-				D42417921072AD7F4363BBA9 /* Pods-PublicSpeakingAPPTests.debug.xcconfig */,
-				185D68E716FCA69C0334D967 /* Pods-PublicSpeakingAPPTests.release.xcconfig */,
+				2B5CCB8D1661E906DE9DC6C3 /* Pods-PublicSpeakingAPP.debug.xcconfig */,
+				D0956CE89974888098C971A5 /* Pods-PublicSpeakingAPP.release.xcconfig */,
+				67E79AA2EC4971F34195DCF3 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */,
+				016D9560FE89F0C72E5C21A8 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */,
+				066ECDE1A03F55BC483FB13D /* Pods-PublicSpeakingAPPTests.debug.xcconfig */,
+				A64080B740B2D5CFEA07545E /* Pods-PublicSpeakingAPPTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -142,11 +146,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 12BCF38E2E8BACB500FD1CF8 /* Build configuration list for PBXNativeTarget "PublicSpeakingAPP" */;
 			buildPhases = (
-				967A6FEF3E9C40288FAF97FE /* [CP] Check Pods Manifest.lock */,
+				3C66375FDC68752E36DA60E9 /* [CP] Check Pods Manifest.lock */,
 				12BCF3672E8BACB400FD1CF8 /* Sources */,
 				12BCF3682E8BACB400FD1CF8 /* Frameworks */,
 				12BCF3692E8BACB400FD1CF8 /* Resources */,
-				DFCFC15F34205EB69B97ACA5 /* [CP] Copy Pods Resources */,
+				4C175B1442C5A6F2D99379ED /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -156,6 +160,10 @@
 				12BCF36D2E8BACB400FD1CF8 /* PublicSpeakingAPP */,
 			);
 			name = PublicSpeakingAPP;
+			packageProductDependencies = (
+				17BA4F032E9F94990030B293 /* WhisperKit */,
+				17BA4F052E9F94990030B293 /* whisperkit-cli */,
+			);
 			productName = PublicSpeakingAPP;
 			productReference = 12BCF36B2E8BACB400FD1CF8 /* PublicSpeakingAPP.app */;
 			productType = "com.apple.product-type.application";
@@ -164,7 +172,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 12BCF3912E8BACB500FD1CF8 /* Build configuration list for PBXNativeTarget "PublicSpeakingAPPTests" */;
 			buildPhases = (
-				B6B53706E3C2A006E1BDDB6D /* [CP] Check Pods Manifest.lock */,
+				485837873FAB3C220BDC2346 /* [CP] Check Pods Manifest.lock */,
 				12BCF3762E8BACB500FD1CF8 /* Sources */,
 				12BCF3772E8BACB500FD1CF8 /* Frameworks */,
 				12BCF3782E8BACB500FD1CF8 /* Resources */,
@@ -186,11 +194,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 12BCF3942E8BACB500FD1CF8 /* Build configuration list for PBXNativeTarget "PublicSpeakingAPPUITests" */;
 			buildPhases = (
-				806546AC2F75235465E8D5D7 /* [CP] Check Pods Manifest.lock */,
+				0B10F45DE7623D02925BC4C4 /* [CP] Check Pods Manifest.lock */,
 				12BCF3802E8BACB500FD1CF8 /* Sources */,
 				12BCF3812E8BACB500FD1CF8 /* Frameworks */,
 				12BCF3822E8BACB500FD1CF8 /* Resources */,
-				CA16CE705FE9D0CEF3F728A9 /* [CP] Copy Pods Resources */,
+				DE0DDCDA10C5CC4FFA26FEBA /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -237,6 +245,9 @@
 			);
 			mainGroup = 12BCF3622E8BACB400FD1CF8;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 12BCF36C2E8BACB400FD1CF8 /* Products */;
 			projectDirPath = "";
@@ -274,7 +285,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		806546AC2F75235465E8D5D7 /* [CP] Check Pods Manifest.lock */ = {
+		0B10F45DE7623D02925BC4C4 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -296,7 +307,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		967A6FEF3E9C40288FAF97FE /* [CP] Check Pods Manifest.lock */ = {
+		3C66375FDC68752E36DA60E9 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -318,7 +329,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		B6B53706E3C2A006E1BDDB6D /* [CP] Check Pods Manifest.lock */ = {
+		485837873FAB3C220BDC2346 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -340,7 +351,28 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		CA16CE705FE9D0CEF3F728A9 /* [CP] Copy Pods Resources */ = {
+		4C175B1442C5A6F2D99379ED /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		DE0DDCDA10C5CC4FFA26FEBA /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -359,27 +391,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		DFCFC15F34205EB69B97ACA5 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 8;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -480,6 +491,10 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				"OTHER_LDFLAGS[arch=*]" = (
+					"-force_load",
+					"$(SRCROOT)/Pods/TensorFlowLiteSelectTfOps/Frameworks/TensorFlowLiteSelectTfOps.xcframework/ios-arm64/TensorFlowLiteSelectTfOps.framework/TensorFlowLiteSelectTfOps",
+				);
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -537,6 +552,10 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				"OTHER_LDFLAGS[arch=*]" = (
+					"-force_load",
+					"$(SRCROOT)/Pods/TensorFlowLiteSelectTfOps/Frameworks/TensorFlowLiteSelectTfOps.xcframework/ios-arm64/TensorFlowLiteSelectTfOps.framework/TensorFlowLiteSelectTfOps",
+				);
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
@@ -545,7 +564,7 @@
 		};
 		12BCF38F2E8BACB500FD1CF8 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9B6E4F38BAB53B8F193CC91F /* Pods-PublicSpeakingAPP.debug.xcconfig */;
+			baseConfigurationReference = 2B5CCB8D1661E906DE9DC6C3 /* Pods-PublicSpeakingAPP.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -559,6 +578,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -578,7 +598,7 @@
 		};
 		12BCF3902E8BACB500FD1CF8 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 23AA5710A796E2496BADD687 /* Pods-PublicSpeakingAPP.release.xcconfig */;
+			baseConfigurationReference = D0956CE89974888098C971A5 /* Pods-PublicSpeakingAPP.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -592,6 +612,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -611,7 +632,7 @@
 		};
 		12BCF3922E8BACB500FD1CF8 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D42417921072AD7F4363BBA9 /* Pods-PublicSpeakingAPPTests.debug.xcconfig */;
+			baseConfigurationReference = 066ECDE1A03F55BC483FB13D /* Pods-PublicSpeakingAPPTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -634,7 +655,7 @@
 		};
 		12BCF3932E8BACB500FD1CF8 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 185D68E716FCA69C0334D967 /* Pods-PublicSpeakingAPPTests.release.xcconfig */;
+			baseConfigurationReference = A64080B740B2D5CFEA07545E /* Pods-PublicSpeakingAPPTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -657,7 +678,7 @@
 		};
 		12BCF3952E8BACB500FD1CF8 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C5F4A08B668B1BAE4F9F2928 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */;
+			baseConfigurationReference = 67E79AA2EC4971F34195DCF3 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -678,7 +699,7 @@
 		};
 		12BCF3962E8BACB500FD1CF8 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 582B34D4FCB41813A80CA9FC /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */;
+			baseConfigurationReference = 016D9560FE89F0C72E5C21A8 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -737,6 +758,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/whisperkit";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		17BA4F032E9F94990030B293 /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */;
+			productName = WhisperKit;
+		};
+		17BA4F052E9F94990030B293 /* whisperkit-cli */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */;
+			productName = "whisperkit-cli";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 12BCF3632E8BACB400FD1CF8 /* Project object */;
 }

@@ -1,193 +1,307 @@
 //
-//  SpeechTranscriberViewModel.swift
+//  SpeechTranscriberView.swift
 //  PublicSpeakingAPP
 //
 //  Created by Regina Celine Adiwinata on 30/09/25.
 //
 
 import Foundation
+import SwiftUI
 import AVFoundation
-import Speech
+import WhisperKit
 import Combine
 
 @MainActor
-final class SpeechTranscriberViewModel: NSObject, ObservableObject {
-    // ... (properti yang sudah ada seperti @Published var transcript) ...
-    @Published var transcript: String = ""
+final class SpeechTranscriberViewModel: ObservableObject {
+    // Core WhisperKit object
+    @Published var whisperKit: WhisperKit?
+    @Published var modelState: ModelState = .unloaded
+    
+    // Transcription state
     @Published var isRecording: Bool = false
-    @Published var authorizationStatus: SFSpeechRecognizerAuthorizationStatus = .notDetermined
-    @Published var errorMessage: String?
-    @Published var currentLocaleIdentifier: String = "id_ID"
-
-    // MARK: - Tambahkan properti untuk Analyzer VM
+    @Published var isTranscribing: Bool = false
+    
+    // UI & App State
+    @Published var appStartTime = Date()
+    @Published var loadingProgressValue: Float = 0.0
+    
+    // Live Transcription Parameters
+    @Published var selectedModel: String = "openai_whisper-small_216MB"
+    @Published var selectedLanguage: String = "indonesian"
+    @Published var selectedTask: String = "transcribe"
+    @Published var enableEagerDecoding: Bool = true
+    @Published var enableTimestamps: Bool = true
+    @Published var silenceThreshold: Double = 0.3
+    @Published var realtimeDelayInterval: Double = 1.0
+    @Published var tokenConfirmationsNeeded: Double = 2
+    
+    // Buffer & Audio Info
+    @Published var bufferSeconds: Double = 0
+    
+    // Transcription result holders
+    @Published var confirmedSegments: [TranscriptionSegment] = []
+    @Published var unconfirmedSegments: [TranscriptionSegment] = []
+    
+    // For Eager Streaming
+    @Published var confirmedText: String = ""
+    @Published var hypothesisText: String = ""
+    @Published var prevResult: TranscriptionResult?
+    @Published var lastAgreedSeconds: Float = 0.0
+    
+    // Task management
+    @Published var transcriptionTask: Task<Void, Never>?
+    
+    // Analyzer links
     weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     weak var intonationAnalyzerVM: IntonationAnalyzerViewModel?
-
-    var canRecord: Bool {
-        authorizationStatus == .authorized
+    
+    private var analyzerLastSampleIndex: Int = 0
+    
+    // MARK: - Binding helper agar UI butuh perubahan minimal
+    func binding<T>(_ keyPath: ReferenceWritableKeyPath<SpeechTranscriberViewModel, T>) -> Binding<T> {
+        Binding(get: { self[keyPath: keyPath] },
+                set: { self[keyPath: keyPath] = $0 })
     }
     
-    // ... (sisa properti speech & audio) ...
-    private let audioEngine = AVAudioEngine()
-    private var speechRecognizer: SFSpeechRecognizer? = SFSpeechRecognizer(locale: Locale(identifier: "id_ID"))
-    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    private var recognitionTask: SFSpeechRecognitionTask?
-    private let audioSession = AVAudioSession.sharedInstance()
-    private var inputNode: AVAudioInputNode? { audioEngine.inputNode }
-    
-    override init() {
-        super.init()
-        observeInterruptions()
+    // MARK: - Public API (panggil dari View)
+    func onAppear() {
+        loadModel()
     }
     
-    // MARK: - Locale
-    func setLocale(_ identifier: String) {
-        currentLocaleIdentifier = identifier
-        speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: identifier))
-    }
-    
-    // MARK: - Authorization
-    func requestAuthorization() {
-        SFSpeechRecognizer.requestAuthorization { [weak self] status in
-            Task { @MainActor in
-                self?.authorizationStatus = status
-                if status != .authorized {
-                    self?.errorMessage = "Speech recognition not authorized. Please enable it in Settings."
-                } else {
-                    self?.errorMessage = nil
-                }
-            }
-        }
-    }
-    
-    // MARK: - Live Transcription
-    func startLiveTranscription() {
-        guard !isRecording else { return }
-
-        // ... (kode guard check yang sudah ada) ...
-        guard let recognizer = speechRecognizer else {
-            errorMessage = "Recognizer is not supported for the selected locale."
-            return
-        }
-        guard recognizer.isAvailable else {
-            errorMessage = "Recognizer is not available right now."
-            return
-        }
-        guard authorizationStatus == .authorized else {
-            errorMessage = "Permission required. Please allow Speech Recognition & Microphone."
-            requestAuthorization()
-            return
-        }
-
-        stopLiveTranscription(resetTranscript: true)
-        
-        // MARK: - Bersihkan hasil analisis sebelumnya
-        textAnalyzerVM?.clearResults()
-        intonationAnalyzerVM?.clearResults()
-
-        // ... (kode setup audio session yang sudah ada) ...
-        do {
-            try audioSession.setCategory(.record, mode: .measurement, options: [.allowBluetoothHFP])
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            errorMessage = "Couldn't configure the audio session: \(error.localizedDescription)"
-            return
-        }
-
-        let req = SFSpeechAudioBufferRecognitionRequest()
-        req.shouldReportPartialResults = true
-        if #available(iOS 13.0, *) {
-            req.requiresOnDeviceRecognition = false
-        }
-        recognitionRequest = req
-
-        recognitionTask = recognizer.recognitionTask(with: req) { [weak self] result, error in
-            guard let self else { return }
-
-            if let result = result {
-                self.transcript = result.bestTranscription.formattedString
-                if result.isFinal {
-                    // MARK: - PANGGIL ANALISIS DI SINI!
-                    print("\n\n✅ Transcription Finalized. Starting analysis...")
-                    self.textAnalyzerVM?.analyze(text: self.transcript)
-                    
-                    self.finishAudioSession()
-                    self.isRecording = false
-                }
-            }
-
-            if let error = error {
-                self.errorMessage = error.localizedDescription
-                self.finishAudioSession()
-                self.isRecording = false
-            }
-        }
-
-        // ... (sisa kode startLiveTranscription) ...
-        guard let inputNode = inputNode else {
-            errorMessage = "Audio input not available."
-            return
-        }
-
-        let inputFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.removeTap(onBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, _ in
-            self?.recognitionRequest?.append(buffer)
-            self?.intonationAnalyzerVM?.analyze(buffer: buffer)
-        }
-
-        audioEngine.prepare()
-        do {
-            try audioEngine.start()
-            isRecording = true
-            errorMessage = nil
-        } catch {
-            errorMessage = "Audio Engine couldn't start: \(error.localizedDescription)"
-            stopLiveTranscription()
-        }
-    }
-    
-    // ... (sisa kode di SpeechTranscriberViewModel) ...
-    func stopLiveTranscription(resetTranscript: Bool = false) {
-        if audioEngine.isRunning {
-            audioEngine.stop()
-        }
-        inputNode?.removeTap(onBus: 0)
-        recognitionRequest?.endAudio()
-        recognitionTask?.cancel()
-        
-        recognitionTask = nil
-        recognitionRequest = nil
-        
-        finishAudioSession()
+    func resetState() {
         isRecording = false
-        if resetTranscript { transcript = "" }
+        isTranscribing = false
+        if let whisperKit {
+            whisperKit.audioProcessor.stopRecording()
+        }
+        transcriptionTask?.cancel()
+        
+        confirmedSegments = []
+        unconfirmedSegments = []
+        confirmedText = ""
+        hypothesisText = ""
+        prevResult = nil
+        lastAgreedSeconds = 0.0
+        bufferSeconds = 0
+        
+        analyzerLastSampleIndex = 0
     }
     
-    private func finishAudioSession() {
-        do {
-            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-            // ignore
+    func loadModel() {
+        guard modelState == .unloaded else { return }
+        modelState = .loading
+        
+        Task {
+            do {
+                let modelURL = try await WhisperKit.download(
+                    variant: selectedModel,
+                    from: "argmaxinc/whisperkit-coreml",
+                    progressCallback: { progress in
+                        DispatchQueue.main.async {
+                            self.loadingProgressValue = Float(progress.fractionCompleted)
+                            self.modelState = .downloading
+                        }
+                    }
+                )
+                
+                await MainActor.run { self.modelState = .prewarming }
+                
+                self.whisperKit = try await WhisperKit(modelFolder: modelURL.path, verbose: true, logLevel: .debug)
+                
+                await MainActor.run {
+                    self.modelState = self.whisperKit?.modelState ?? .unloaded
+                    if self.modelState == .loaded {
+                        self.loadingProgressValue = 1.0
+                    }
+                }
+            } catch {
+                print("Error loading WhisperKit model: \(error.localizedDescription)")
+                await MainActor.run { self.modelState = .unloaded }
+            }
         }
     }
     
-    private func observeInterruptions() {
-        NotificationCenter.default.addObserver(
-            forName: AVAudioSession.interruptionNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] notif in
-            guard let self else { return }
-            guard let info = notif.userInfo,
-                  let typeRaw = info[AVAudioSessionInterruptionTypeKey] as? UInt,
-                  let type = AVAudioSession.InterruptionType(rawValue: typeRaw) else { return }
+    func toggleRecording() {
+        isRecording.toggle()
+        if isRecording {
+            resetState()
+            startRecording()
+        } else {
+            stopRecording()
+        }
+    }
+    
+    func startRecording() {
+        guard let whisperKit = whisperKit else { return }
+        Task(priority: .userInitiated) {
+            guard await AudioProcessor.requestRecordPermission() else {
+                print("Microphone access was not granted.")
+                await MainActor.run { self.isRecording = false }
+                return
+            }
             
-            if type == .began {
-                Task { @MainActor in
-                    self.stopLiveTranscription()
+            try? whisperKit.audioProcessor.startRecordingLive { _ in
+                DispatchQueue.main.async {
+                    self.bufferSeconds = Double(whisperKit.audioProcessor.audioSamples.count) / Double(WhisperKit.sampleRate)
+                }
+            }
+            
+            await MainActor.run {
+                self.isRecording = true
+                self.isTranscribing = true
+            }
+            
+            self.realtimeLoop()
+        }
+    }
+    
+    func stopRecording() {
+        if let whisperKit {
+            whisperKit.audioProcessor.stopRecording()
+        }
+        transcriptionTask?.cancel()
+        
+        Task {
+            await MainActor.run {
+                self.isRecording = false
+                self.isTranscribing = false
+                
+                if self.enableEagerDecoding {
+                    self.confirmedText += self.hypothesisText
+                    self.hypothesisText = ""
+                } else {
+                    self.confirmedSegments.append(contentsOf: self.unconfirmedSegments)
+                    self.unconfirmedSegments = []
                 }
             }
         }
+        
+        analyzerLastSampleIndex = 0
+    }
+    
+    func realtimeLoop() {
+        transcriptionTask = Task {
+            while isRecording && isTranscribing {
+                do {
+                    try await transcribeCurrentBuffer()
+                    try await Task.sleep(for: .seconds(realtimeDelayInterval))
+                } catch is CancellationError {
+                    print("Transcription task cancelled.")
+                    break
+                } catch {
+                    print("Error during transcription loop: \(error.localizedDescription)")
+                    break
+                }
+            }
+        }
+    }
+    
+    // MARK: - Helper: convert float samples -> AVAudioPCMBuffer
+    private func makePCMBuffer(from samples: [Float], sampleRate: Double = Double(WhisperKit.sampleRate)) -> AVAudioPCMBuffer? {
+        guard !samples.isEmpty else { return nil }
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                         sampleRate: sampleRate,
+                                         channels: 1,
+                                         interleaved: false) else { return nil }
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format,
+                                            frameCapacity: AVAudioFrameCount(samples.count)) else { return nil }
+        
+        buffer.frameLength = AVAudioFrameCount(samples.count)
+        if let dst = buffer.floatChannelData?.pointee {
+            samples.withUnsafeBufferPointer { src in
+                dst.assign(from: src.baseAddress!, count: samples.count)
+            }
+        }
+        return buffer
+    }
+    
+    
+    func transcribeCurrentBuffer() async throws {
+        guard let whisperKit = whisperKit else { return }
+        
+        let currentBuffer = whisperKit.audioProcessor.audioSamples
+        guard !currentBuffer.isEmpty else { return }
+        
+        let newCount = currentBuffer.count
+        if newCount > analyzerLastSampleIndex {
+            let delta = Array(currentBuffer[analyzerLastSampleIndex..<newCount])
+            analyzerLastSampleIndex = newCount
+            if let pcm = makePCMBuffer(from: delta, sampleRate: Double(WhisperKit.sampleRate)) {
+                intonationAnalyzerVM?.analyze(buffer: pcm)
+            }
+        }
+        
+        let result: TranscriptionResult?
+        if enableEagerDecoding {
+            result = try await transcribeEagerMode(Array(currentBuffer))
+        } else {
+            result = try await transcribeAudioSamples(Array(currentBuffer))
+            await MainActor.run {
+                guard let segments = result?.segments else { return }
+                let requiredSegmentsForConfirmation = 2
+                if segments.count > requiredSegmentsForConfirmation {
+                    let confirmCount = segments.count - requiredSegmentsForConfirmation
+                    self.confirmedSegments = Array(segments.prefix(confirmCount))
+                    self.unconfirmedSegments = Array(segments.suffix(requiredSegmentsForConfirmation))
+                } else {
+                    self.unconfirmedSegments = segments
+                }
+            }
+        }
+    }
+    
+    func transcribeAudioSamples(_ samples: [Float]) async throws -> TranscriptionResult? {
+        guard let whisperKit = whisperKit else { return nil }
+        
+        let languageCode = Constants.languages[selectedLanguage, default: "id"]
+        let options = DecodingOptions(
+            task: selectedTask == "transcribe" ? .transcribe : .translate,
+            language: languageCode,
+            withoutTimestamps: !enableTimestamps
+        )
+        
+        let transcription = try await whisperKit.transcribe(audioArray: samples, decodeOptions: options)
+        return transcription.first
+    }
+    
+    func transcribeEagerMode(_ samples: [Float]) async throws -> TranscriptionResult? {
+        guard let whisperKit = whisperKit else { return nil }
+        
+        let languageCode = Constants.languages[selectedLanguage, default: "id"]
+        let options = DecodingOptions(
+            task: selectedTask == "transcribe" ? .transcribe : .translate,
+            language: languageCode,
+            wordTimestamps: true,
+            clipTimestamps: [lastAgreedSeconds]
+        )
+        
+        let transcriptionResults = try await whisperKit.transcribe(audioArray: samples, decodeOptions: options)
+        guard let transcription = transcriptionResults.first else { return nil }
+        
+        await MainActor.run {
+            let newWords = transcription.allWords.filter { $0.start >= self.lastAgreedSeconds }
+            
+            if let prevResult = self.prevResult {
+                let prevWords = prevResult.allWords.filter { $0.start >= self.lastAgreedSeconds }
+                let commonPrefix = TranscriptionUtilities.findLongestCommonPrefix(prevWords, newWords)
+                
+                if commonPrefix.count >= Int(self.tokenConfirmationsNeeded) {
+                    let wordsToConfirm = commonPrefix.prefix(commonPrefix.count - Int(self.tokenConfirmationsNeeded))
+                    if !wordsToConfirm.isEmpty {
+                        self.confirmedText += wordsToConfirm.map { $0.word }.joined()
+                        if let lastAgreedWord = wordsToConfirm.last {
+                            self.lastAgreedSeconds = lastAgreedWord.end
+                        }
+                    }
+                }
+            }
+            
+            // Recalc hypothesis
+            let hypothesisWords = transcription.allWords.filter { $0.start >= self.lastAgreedSeconds }
+            self.hypothesisText = hypothesisWords.map { $0.word }.joined()
+            self.prevResult = transcription
+        }
+        
+        return transcription
     }
 }

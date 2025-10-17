@@ -25,6 +25,9 @@ final class IntonationAnalyzerViewModel: ObservableObject {
     private var audioBuffer = [Float]()
     private var requiredInputSize = 0
     
+    private let windowSamples = 16000
+    private let hopSamples = 8000
+    
     // MARK: - Audio Conversion
     private var audioConverter: AVAudioConverter?
     private let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
@@ -38,130 +41,92 @@ final class IntonationAnalyzerViewModel: ObservableObject {
     
 
     private var inputBaseShape: [Int] = [] // contoh: [-1, 1024] atau [1, 16000]
-    private var inputRank: Int = 0
+    private var inputRank: Int = 2
 
     private func loadModel() {
-        guard let modelPath = Bundle.main.path(forResource: "spice", ofType: "tflite") else {
-            print("❌ FATAL: Model file 'spice.tflite' not found.")
-            intonationLabel = "Error: Model file not found."
-            return
-        }
+       guard let modelPath = Bundle.main.path(forResource: "spice", ofType: "tflite") else {
+           print("❌ FATAL: spice.tflite not found"); intonationLabel = "Error: Model file not found."; return
+       }
+       do {
+           interpreter = try Interpreter(modelPath: modelPath)
+           // Alokasikan awal supaya tensor terinisialisasi
+           try interpreter?.allocateTensors()
+           print("✅ TFLite model loaded.")
+       } catch {
+           print("❌ Interpreter init error: \(error)"); intonationLabel = "Error: Could not load model."
+       }
+   }
 
-        do {
-            let itpr = try Interpreter(modelPath: modelPath)
-            self.interpreter = itpr
-
-            // Alokasikan sekali agar kita bisa baca info tensor (beberapa model butuh ini untuk expose shape)
-            try itpr.allocateTensors()
-
-            let inTensor = try itpr.input(at: 0)
-            let dims = inTensor.shape.dimensions
-            self.inputBaseShape = dims
-            self.inputRank = dims.count
-
-            // Ukuran "samples" biasanya ada di dimensi terakhir
-            self.requiredInputSize = max(dims.last ?? 0, 0)  // bisa 0 kalau model flexible (dynamic)
-            print("✅ Model loaded. Original input shape: \(dims) rank=\(inputRank) last=\(requiredInputSize)")
-
-        } catch {
-            print("❌ Error: Failed to configure TFLite interpreter: \(error)")
-            intonationLabel = "Error: Could not load model."
-        }
-    }
-
-    
     func analyze(buffer: AVAudioPCMBuffer) {
-        guard requiredInputSize > 0 else { return }
-        guard let convertedBuffer = convertAudio(buffer: buffer) else { return }
-        
-        let frameLength = Int(convertedBuffer.frameLength)
-        guard let channelData = convertedBuffer.floatChannelData?.pointee else { return }
-        let floatArray = Array(UnsafeBufferPointer(start: channelData, count: frameLength))
-        
-        audioBuffer.append(contentsOf: floatArray)
-        
-        while audioBuffer.count >= requiredInputSize {
-            let chunkToProcess = Array(audioBuffer.prefix(requiredInputSize))
-            audioBuffer.removeFirst(requiredInputSize)
-            runInference(on: chunkToProcess)
-        }
-    }
+           guard let converted = convertAudio(buffer: buffer) else { return }
+           let n = Int(converted.frameLength)
+           guard let ch = converted.floatChannelData?.pointee else { return }
+           let chunk = Array(UnsafeBufferPointer(start: ch, count: n))
+           audioBuffer.append(contentsOf: chunk)
 
+           // Proses per frame tetap
+           while audioBuffer.count >= windowSamples {
+               let frame = Array(audioBuffer.prefix(windowSamples))
+               // slide dengan hop (overlap)
+               audioBuffer.removeFirst(hopSamples)
+               runInference(on: frame)
+           }
+       }
 
-    private func runInference(on audioChunk: [Float]) {
-        guard let interpreter = interpreter else { return }
-        guard !audioChunk.isEmpty else { return }
+        private func runInference(on audioFrame: [Float]) {
+            guard let interpreter = interpreter else { return }
+            // Pastikan panjang frame sesuai
+            let N = audioFrame.count
+            guard N > 0 else { return }
 
-        do {
-            // 1) Siapkan shape 2D: [1, samples]
-            let newShapeArray: [Int]
-            if inputRank == 2 {
-                newShapeArray = [1, audioChunk.count]
-            } else if inputRank == 1 {
-                newShapeArray = [audioChunk.count]
-            } else {
-                print("❌ Unexpected input rank \(inputRank).")
-                return
+            do {
+                // ✅ Model kamu mengharapkan rank-1 (vector), jadi gunakan [N] saja.
+                try interpreter.resizeInput(at: 0, to: Tensor.Shape([N]))
+                try interpreter.allocateTensors() // WAJIB setelah resize
+
+                let inputData = Data(buffer: UnsafeBufferPointer(start: audioFrame, count: N))
+                try interpreter.copy(inputData, toInputAt: 0)
+
+                try interpreter.invoke()
+
+                let pitchTensor = try interpreter.output(at: 0)
+                let unctTensor  = try interpreter.output(at: 1)
+
+                let pitchVals = pitchTensor.data.toArray(type: Float.self)
+                let unctVals  = unctTensor.data.toArray(type: Float.self)
+                let confVals  = unctVals.map { 1.0 - $0 }
+
+                let f0Hz = zip(pitchVals, confVals).compactMap { (p, c) -> Double? in
+                    guard c >= 0.85 else { return nil }
+                    return Double(spiceOutputToHz(p))
+                }
+                updatePitchHistory(with: f0Hz)
+
+            } catch {
+                print("❌ Inference error: \(error)")
             }
-
-            // MARK: - THE FIX IS HERE
-            // Bungkus array [Int] ke dalam struktur Tensor.Shape
-            let newShape = Tensor.Shape(newShapeArray)
-            
-            try interpreter.resizeInput(at: 0, to: newShape)
-            try interpreter.allocateTensors()  // WAJIB setelah resize
-
-            // 2) Copy data
-            let inputData = Data(buffer: UnsafeBufferPointer(start: audioChunk, count: audioChunk.count))
-            try interpreter.copy(inputData, toInputAt: 0)
-
-            // 3) Invoke
-            try interpreter.invoke()
-
-            // 4) Ambil dua output: pitch & uncertainty
-            let pitchTensor = try interpreter.output(at: 0)
-            let unctTensor  = try interpreter.output(at: 1)
-
-            let pitchVals = pitchTensor.data.toArray(type: Float.self)
-            let unctVals  = unctTensor.data.toArray(type: Float.self)
-            let confVals  = unctVals.map { 1.0 - $0 }  // confidence
-
-            // 5) Konversi ke Hz dan filter berdasarkan confidence
-            let f0Hz = zip(pitchVals, confVals).compactMap { (p, c) -> Double? in
-                guard c >= 0.85 else { return nil }
-                return Double(spiceOutputToHz(p))
-            }
-
-            updatePitchHistory(with: f0Hz)
-
-        } catch {
-            print("❌ Error: Failed during TFLite inference: \(error)")
         }
-    }
-    
-    @inline(__always)
-    private func spiceOutputToHz(_ p: Float) -> Float {
-        // Parameter publik SPICE (konstan)
-        let PT_OFFSET: Float = 25.58
-        let PT_SLOPE:  Float = 63.07
-        let FMIN:      Float = 10.0
-        let BINS_PER_OCT: Float = 12.0
-        let cqtBin = p * PT_SLOPE + PT_OFFSET
-        return FMIN * powf(2.0, cqtBin / BINS_PER_OCT)
-    }
 
 
-    
-    // ... Sisa file (updatePitchHistory, dll.) tidak ada perubahan ...
-    private func updatePitchHistory(with newPitches: [Double]) {
-        let validPitches = newPitches.filter { $0 > 0.0 }
-        guard !validPitches.isEmpty else { return }
-        pitchHistory.append(contentsOf: validPitches)
-        if pitchHistory.count > historySize {
-            pitchHistory.removeFirst(pitchHistory.count - historySize)
-        }
-        calculateStatistics()
-    }
+       @inline(__always)
+       private func spiceOutputToHz(_ p: Float) -> Float {
+           let PT_OFFSET: Float = 25.58
+           let PT_SLOPE:  Float = 63.07
+           let FMIN:      Float = 10.0
+           let BINS_PER_OCT: Float = 12.0
+           let cqtBin = p * PT_SLOPE + PT_OFFSET
+           return FMIN * powf(2.0, cqtBin / BINS_PER_OCT)
+       }
+
+       private func updatePitchHistory(with newPitches: [Double]) {
+           let valid = newPitches.filter { $0 > 0 }
+           guard !valid.isEmpty else { return }
+           pitchHistory.append(contentsOf: valid)
+           if pitchHistory.count > historySize {
+               pitchHistory.removeFirst(pitchHistory.count - historySize)
+           }
+           calculateStatistics()
+       }
     
     private func calculateStatistics() {
         guard pitchHistory.count > 1 else { return }

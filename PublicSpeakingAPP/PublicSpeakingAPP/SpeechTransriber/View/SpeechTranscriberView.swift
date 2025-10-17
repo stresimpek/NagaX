@@ -6,90 +6,126 @@
 //
 
 import SwiftUI
+import WhisperKit
 
 struct SpeechTranscriberView: View {
-    // MARK: - Buat instance kedua ViewModel
-    @StateObject private var speechVM = SpeechTranscriberViewModel()
+    @StateObject private var vm = SpeechTranscriberViewModel()
     @StateObject private var textAnalyzerVM = TextFrequencyAnalyzerViewModel()
     @StateObject private var intonationAnalyzerVM = IntonationAnalyzerViewModel()
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                // ... (bagian Controls tidak berubah) ...
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(speechVM.isRecording ? Color.green : Color.gray)
-                        .frame(width: 10, height: 10)
-                    Text(speechVM.isRecording ? "Listening…" : "Idle")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+            VStack(spacing: 20) {
 
-                HStack(spacing: 12) {
-                    Button {
-                        speechVM.startLiveTranscription()
-                    } label: {
-                        Label("Start Live Transcription", systemImage: "mic.fill")
+                // === Header (sama)
+                Text("Whisper Live Transcribe")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+
+                // === modelStateView (sama)
+                HStack {
+                    Image(systemName: "circle.fill")
+                        .foregroundStyle(vm.modelState == .loaded ? .green : (vm.modelState == .unloaded ? .red : .yellow))
+                        .symbolEffect(.variableColor, isActive: vm.modelState != .loaded && vm.modelState != .unloaded)
+                    if vm.modelState == .loading || vm.modelState == .downloading || vm.modelState == .prewarming {
+                        ProgressView(value: vm.loadingProgressValue)
+                            .progressViewStyle(LinearProgressViewStyle())
+                        Text(String(format: "%.0f%%", vm.loadingProgressValue * 100))
+                    } else {
+                        Text(vm.modelState.description)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(speechVM.isRecording || !speechVM.canRecord)
-
-                    Button {
-                        speechVM.stopLiveTranscription()
-                    } label: {
-                        Label("Stop", systemImage: "stop.fill")
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(!speechVM.isRecording)
                 }
+                .padding(.horizontal)
 
-                if let error = speechVM.errorMessage {
-                    Text(error)
-                        .foregroundStyle(.red).font(.footnote)
-                }
+                // === transcriptionView (sama)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            if vm.enableEagerDecoding {
+                                Text("\(Text(vm.confirmedText).fontWeight(.bold))\(Text(vm.hypothesisText).foregroundColor(.gray))")
+                                    .id("bottom")
+                            } else {
+                                ForEach(vm.confirmedSegments, id: \.start) { segment in
+                                    Text(segment.text).fontWeight(.bold)
+                                }
+                                ForEach(vm.unconfirmedSegments, id: \.start) { segment in
+                                    Text(segment.text).foregroundColor(.gray)
+                                }
+                                .id("bottom")
+                            }
 
-                // MARK: - Transcript Display
-                VStack(alignment: .leading) {
-                    Text("Transcript").font(.headline)
-                    Text(speechVM.transcript.isEmpty ? "Transcript will appear here..." : speechVM.transcript)
-                        .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
+                            if !vm.isRecording && vm.confirmedText.isEmpty && vm.confirmedSegments.isEmpty {
+                                Text("Tekan tombol rekam untuk memulai...")
+                                    .foregroundColor(.gray)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.top, 50)
+                            }
+                        }
                         .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .onChange(of: vm.confirmedText) { _, _ in proxy.scrollTo("bottom") }
+                    .onChange(of: vm.hypothesisText) { _, _ in proxy.scrollTo("bottom") }
+                    .onChange(of: vm.unconfirmedSegments) { _, _ in proxy.scrollTo("bottom") }
                 }
-                
-                if !intonationAnalyzerVM.pitchHistory.isEmpty || speechVM.isRecording {
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
+
+                // === controlsView (sama, dengan binding helper)
+                VStack(spacing: 15) {
+                    Toggle("Eager Mode (Latensi Rendah)", isOn: vm.binding(\.enableEagerDecoding))
+                        .disabled(vm.isRecording)
+
+                    Button(action: {
+                        withAnimation { vm.toggleRecording() }
+                    }) {
+                        Image(systemName: vm.isRecording ? "stop.circle.fill" : "record.circle")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 70, height: 70)
+                            .foregroundColor(vm.modelState == .loaded ? .red : .gray)
+                    }
+                    .disabled(vm.modelState != .loaded)
+
+                    Text(vm.isRecording ? "Durasi Buffer: \(String(format: "%.1f", vm.bufferSeconds))s" : "Siap Merekam")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                // =============== Tambahan: Intonation Graph (di bawah UI Whisper) ===============
+                if !intonationAnalyzerVM.pitchHistory.isEmpty || vm.isRecording {
+                    Divider()
                     IntonationGraphView(viewModel: intonationAnalyzerVM)
                         .transition(.opacity.animation(.easeInOut))
                 }
 
-                // MARK: - Tampilkan Hasil Analisis
-                if !textAnalyzerVM.wordFrequencies.isEmpty || !textAnalyzerVM.repeatedWordsInWindow.isEmpty || !textAnalyzerVM.repeatedBigrams.isEmpty {
-                    Divider()
-                    
-                    VStack(alignment: .leading, spacing: 20) {
-                        Text("Speech Analysis Results 🔬")
-                            .font(.title2).bold()
+                // =============== Tambahan: Text Frequency Analysis (di bawah UI Whisper) =======
+                if !textAnalyzerVM.wordFrequencies.isEmpty
+                    || !textAnalyzerVM.repeatedWordsInWindow.isEmpty
+                    || !textAnalyzerVM.repeatedBigrams.isEmpty
+                    || !textAnalyzerVM.repeatedTrigrams.isEmpty {
 
-                        // 1. Hasil Frekuensi
+                    Divider()
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("Speech Analysis Results 🔬").font(.title2).bold()
+
                         AnalysisResultView(
                             title: "📊 Kata yang Sering Diulang (lebih dari 1x)",
                             results: textAnalyzerVM.wordFrequencies
                         )
-                        
-                        // 2. Hasil Analisis Jarak
                         AnalysisResultView(
                             title: "📏 Pengulangan Kata Berdekatan (Jendela 15 kata)",
                             results: textAnalyzerVM.repeatedWordsInWindow
                         )
-
-                        // 3. Hasil N-Gram
                         AnalysisResultView(
                             title: "🔗 Frasa yang Diulang (2 Kata)",
                             results: textAnalyzerVM.repeatedBigrams
                         )
-                        
                         AnalysisResultView(
                             title: "🔗 Frasa yang Diulang (3 Kata)",
                             results: textAnalyzerVM.repeatedTrigrams
@@ -100,13 +136,36 @@ struct SpeechTranscriberView: View {
             .padding()
         }
         .onAppear {
-            // MARK: - Hubungkan kedua ViewModel
-            speechVM.textAnalyzerVM = textAnalyzerVM
-            speechVM.intonationAnalyzerVM = intonationAnalyzerVM
-            speechVM.requestAuthorization()
+            vm.textAnalyzerVM = textAnalyzerVM
+            vm.intonationAnalyzerVM = intonationAnalyzerVM
+            vm.onAppear() // load model seperti di ContentView.onAppear
         }
+        // Fallback non-invasif untuk trigger text analyzer saat teks final/hypothesis berubah
+        .onChange(of: vm.confirmedText) { newVal in
+            if !newVal.isEmpty { textAnalyzerVM.analyze(text: newVal) }
+        }
+        .onChange(of: vm.hypothesisText) { hypo in
+            // Eager mode live analysis
+            let live = vm.confirmedText + hypo
+            if !live.isEmpty { textAnalyzerVM.analyze(text: live) }
+        }
+
+        .onChange(of: vm.unconfirmedSegments) { _ in
+            // Non-eager live analysis dari segmen yang sedang tampil
+            let text = vm.confirmedSegments.map { $0.text }.joined() +
+                       vm.unconfirmedSegments.map { $0.text }.joined()
+            if !text.isEmpty { textAnalyzerVM.analyze(text: text) }
+        }
+
+        .onChange(of: vm.confirmedSegments) { _ in
+            let text = vm.confirmedSegments.map { $0.text }.joined() +
+                       vm.unconfirmedSegments.map { $0.text }.joined()
+            if !text.isEmpty { textAnalyzerVM.analyze(text: text) }
+        }
+
     }
 }
+
 
 // MARK: - Subview untuk menampilkan hasil analisis
 struct AnalysisResultView: View {

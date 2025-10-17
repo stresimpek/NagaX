@@ -6,7 +6,9 @@ target 'PublicSpeakingAPP' do
   use_frameworks!
 
   # Pods for PublicSpeakingAPP
-pod 'TensorFlowLiteSwift'
+pod 'TensorFlowLiteSwift',        '0.0.1-nightly.20250619'
+  pod 'TensorFlowLiteC',            '0.0.1-nightly.20250619'
+  pod 'TensorFlowLiteSelectTfOps',  '0.0.1-nightly.20250619'
 
   target 'PublicSpeakingAPPTests' do
     inherit! :search_paths
