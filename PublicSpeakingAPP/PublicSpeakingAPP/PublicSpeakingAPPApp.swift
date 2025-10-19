@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct PublicSpeakingAPPApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -26,6 +28,7 @@ struct PublicSpeakingAPPApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(appDelegate.orientationInfo)
         }
         .modelContainer(sharedModelContainer)
     }
