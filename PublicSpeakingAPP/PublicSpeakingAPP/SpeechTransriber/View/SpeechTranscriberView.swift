@@ -12,6 +12,7 @@ struct SpeechTranscriberView: View {
     @StateObject private var vm = SpeechTranscriberViewModel()
     @StateObject private var textAnalyzerVM = TextFrequencyAnalyzerViewModel()
     @StateObject private var intonationAnalyzerVM = IntonationAnalyzerViewModel()
+    @StateObject private var tempoVM = TempoViewModel()
     
     @EnvironmentObject var orientationInfo: OrientationInfo
 
@@ -114,6 +115,13 @@ struct SpeechTranscriberView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+                    
+                    // Tempo bicara
+                    if vm.isRecording || tempoVM.wpm > 0 {
+                        Divider()
+                        TempoView(viewModel: tempoVM)
+                            .transition(.opacity.animation(.easeInOut))
+                    }
 
                     // =============== Tambahan: Intonation Graph (di bawah UI Whisper) ===============
                     if !intonationAnalyzerVM.pitchHistory.isEmpty || vm.isRecording {
@@ -159,29 +167,39 @@ struct SpeechTranscriberView: View {
             orientationInfo.lockToPortrait()
             vm.textAnalyzerVM = textAnalyzerVM
             vm.intonationAnalyzerVM = intonationAnalyzerVM
+            vm.tempoVM = tempoVM
             vm.onAppear() // load model seperti di ContentView.onAppear
         }
         // Fallback non-invasif untuk trigger text analyzer saat teks final/hypothesis berubah
         .onChange(of: vm.confirmedText) { newVal in
-            if !newVal.isEmpty { textAnalyzerVM.analyze(text: newVal) }
+            let liveText = newVal + vm.hypothesisText
+            if !liveText.isEmpty {
+                textAnalyzerVM.analyze(text: liveText)
+                tempoVM.updateTempo(text: liveText, duration: vm.bufferSeconds)
+            }
         }
         .onChange(of: vm.hypothesisText) { hypo in
-            // Eager mode live analysis
-            let live = vm.confirmedText + hypo
-            if !live.isEmpty { textAnalyzerVM.analyze(text: live) }
+            let liveText = vm.confirmedText + hypo
+            if !liveText.isEmpty {
+                textAnalyzerVM.analyze(text: liveText)
+                tempoVM.updateTempo(text: liveText, duration: vm.bufferSeconds)
+            }
         }
 
         .onChange(of: vm.unconfirmedSegments) { _ in
-            // Non-eager live analysis dari segmen yang sedang tampil
-            let text = vm.confirmedSegments.map { $0.text }.joined() +
-                       vm.unconfirmedSegments.map { $0.text }.joined()
-            if !text.isEmpty { textAnalyzerVM.analyze(text: text) }
+            let text = vm.confirmedSegments.map { $0.text }.joined() + vm.unconfirmedSegments.map { $0.text }.joined()
+            if !text.isEmpty {
+                textAnalyzerVM.analyze(text: text)
+                tempoVM.updateTempo(text: text, duration: vm.bufferSeconds)
+            }
         }
 
         .onChange(of: vm.confirmedSegments) { _ in
-            let text = vm.confirmedSegments.map { $0.text }.joined() +
-                       vm.unconfirmedSegments.map { $0.text }.joined()
-            if !text.isEmpty { textAnalyzerVM.analyze(text: text) }
+            let text = vm.confirmedSegments.map { $0.text }.joined() + vm.unconfirmedSegments.map { $0.text }.joined()
+            if !text.isEmpty {
+                textAnalyzerVM.analyze(text: text)
+                tempoVM.updateTempo(text: text, duration: vm.bufferSeconds)
+            }
         }
     }
 }

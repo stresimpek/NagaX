@@ -54,6 +54,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     // Analyzer links
     weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     weak var intonationAnalyzerVM: IntonationAnalyzerViewModel?
+    weak var tempoVM: TempoViewModel?
     
     private var analyzerLastSampleIndex: Int = 0
     
@@ -85,6 +86,10 @@ final class SpeechTranscriberViewModel: ObservableObject {
         bufferSeconds = 0
         
         analyzerLastSampleIndex = 0
+        
+        textAnalyzerVM?.clearResults()
+        intonationAnalyzerVM?.clearResults()
+        tempoVM?.clearResults()
     }
     
     func loadModel() {
