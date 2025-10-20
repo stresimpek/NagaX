@@ -64,12 +64,13 @@ struct HomeView: View {
                 Spacer()
 
                 VStack(spacing: 8) {
+                    Text(levels[currentLevelIndex].title)
+                        .font(.headline)
+
                     Image(levels[currentLevelIndex].imageName)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 150, height: 150)
-                    Text(levels[currentLevelIndex].title)
-                        .font(.headline)
                 }
 
                 Spacer()
