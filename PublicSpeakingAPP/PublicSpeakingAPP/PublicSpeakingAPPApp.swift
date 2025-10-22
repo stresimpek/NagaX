@@ -10,23 +10,21 @@ import SwiftData
 
 @main
 struct PublicSpeakingAPPApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    
+    @StateObject private var whisperKitVM = SpeechTranscriberViewModel()
+    @StateObject private var textAnalyzerVM = TextFrequencyAnalyzerViewModel()
+    @StateObject private var intonationAnalyzerVM = IntonationAnalyzerViewModel()
+    @StateObject private var tempoVM = TempoViewModel()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                HomeView()
+                    .environmentObject(whisperKitVM)
+                    .environmentObject(textAnalyzerVM)
+                    .environmentObject(intonationAnalyzerVM)
+                    .environmentObject(tempoVM)
+            }
         }
-        .modelContainer(sharedModelContainer)
     }
 }
