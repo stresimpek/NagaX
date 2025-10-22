@@ -17,6 +17,12 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
     @Published var repeatedWordsInWindow: [String: Int] = [:]
     @Published var repeatedBigrams: [String: Int] = [:]
     @Published var repeatedTrigrams: [String: Int] = [:]
+    
+    @Published var fillerWordCount: [String: Int] = [:]
+    
+    private let fillerWordsID: Set<String> = [
+        "eh", "ehm", "hmm", "ee", "um", "uh", "anu", "um", "eee"
+    ]
 
     // MARK: - Indonesian Stop Words
     private let stopWordsID: Set<String> = [
@@ -117,13 +123,12 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
             return
         }
 
-        // 1. Preprocessing (Tokenization & Stop Word Removal)
-        let tokens = preprocess(text: text)
+        let (allTokens, filteredTokens) = preprocess(text: text)
 
-        // 2. Run all analyses
-        analyzeFrequency(tokens: tokens)
-        analyzeProximity(tokens: tokens, windowSize: 15) // Window 15 kata
-        analyzeNGrams(tokens: tokens)
+        analyzeFillerWords(tokens: allTokens)
+        analyzeFrequency(tokens: filteredTokens)
+        analyzeProximity(tokens: filteredTokens, windowSize: 15)
+        analyzeNGrams(tokens: filteredTokens)
     }
 
     func clearResults() {
@@ -131,16 +136,17 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
         repeatedWordsInWindow = [:]
         repeatedBigrams = [:]
         repeatedTrigrams = [:]
+
+        fillerWordCount = [:]
     }
 
     // MARK: - Analysis Functions
     
-    /// 1. Tokenisasi dan menghapus stop words
-    private func preprocess(text: String) -> [String] {
+    private func preprocess(text: String) -> (allTokens: [String], filteredTokens: [String]) {
         let tagger = NLTagger(tagSchemes: [.tokenType])
         tagger.string = text
         var tokens: [String] = []
-
+        
         let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace]
         tagger.enumerateTags(in: text.startIndex..<text.endIndex, unit: .word, scheme: .tokenType, options: options) { _, tokenRange in
             let token = String(text[tokenRange]).lowercased()
@@ -151,9 +157,23 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
         // Filter stop words
         let filteredTokens = tokens.filter { !stopWordsID.contains($0) }
         
-        print("---  preprocess ---")
+        print("Preprocess")
         print("Original Tokens: \(tokens.count), Filtered Tokens: \(filteredTokens.count)")
-        return filteredTokens
+        
+        return (tokens, filteredTokens)
+    }
+    
+    private func analyzeFillerWords(tokens: [String]) {
+        var counts: [String: Int] = [:]
+        for token in tokens {
+            if fillerWordsID.contains(token) {
+                counts[token, default: 0] += 1
+            }
+        }
+        self.fillerWordCount = counts
+        
+        print("Filler Word Analysis")
+        self.fillerWordCount.forEach { print("'\($0.key)': \($0.value) kali") }
     }
 
     private func analyzeFrequency(tokens: [String]) {
@@ -164,44 +184,40 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
             return
         }
 
-        // Langkah 1: Hitung frekuensi absolut untuk semua kata (seperti sebelumnya)
+        // Hitung frekuensi absolut untuk semua kata
         var allFrequencies: [String: Int] = [:]
         for token in tokens {
             allFrequencies[token, default: 0] += 1
         }
 
-        // Langkah 2: Siapkan dictionary baru untuk hasil yang lolos seleksi
+        // Dictionary baru untuk hasil yang lolos seleksi
         var significantFrequencies: [String: Int] = [:]
         var allTermFrequencies: [String: Double] = [:]
         
-        // Tentukan ambang batas (threshold), 5% = 0.05
+        // Ambang batas (threshold), 5% = 0.05
         let threshold: Double = 0.3
 
-        // Langkah 3: Loop melalui semua frekuensi untuk menghitung TF dan memfilternya
+        // Loop melalui semua frekuensi untuk menghitung dan filter TF
         for (word, count) in allFrequencies {
             // Hitung TF untuk setiap kata
             let tf = Double(count) / Double(totalTokens)
-            allTermFrequencies[word] = tf // Simpan semua TF jika diperlukan di tempat lain
-
-            // Langkah 4: Cek apakah TF melebihi ambang batas
+            allTermFrequencies[word] = tf
+            // Cek apakah TF melebihi ambang batas
             if tf > threshold {
-                // Jika ya, simpan FREKUENSI ABSOLUT-nya
+                // Simpan FREKUENSI ABSOLUT-nya
                 significantFrequencies[word] = count
             }
         }
 
-        // Langkah 5: Update properti yang akan ditampilkan di UI
         self.wordFrequencies = significantFrequencies
-        self.termFrequencies = allTermFrequencies // Kita tetap simpan semua TF untuk data internal
+        self.termFrequencies = allTermFrequencies
 
-        // Modifikasi print untuk menunjukkan proses filtering
         print("\n--- 📊 Term Frequency Analysis (Threshold: >\(threshold * 100)%) ---")
         if self.wordFrequencies.isEmpty {
             print("No words exceeded the significance threshold.")
         } else {
             print("Significant Repetitions Found:")
             self.wordFrequencies.sorted { $0.value > $1.value }.forEach { word, count in
-                // Ambil nilai TF yang sudah dihitung untuk ditampilkan di print
                 if let tf = self.termFrequencies[word] {
                     let percentage = String(format: "%.2f%%", tf * 100)
                     print("- '\(word)': Muncul \(count) kali (porsi \(percentage))")
@@ -210,7 +226,7 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
         }
     }
 
-    /// 3. Menganalisis pengulangan kata dalam jarak berdekatan (window)
+    // Menganalisis pengulangan kata dalam jarak berdekatan (window)
     private func analyzeProximity(tokens: [String], windowSize: Int) {
         var repeatedInWindow: [String: Int] = [:]
         
@@ -234,7 +250,7 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
         self.repeatedWordsInWindow.sorted { $0.value > $1.value }.forEach { print("\($0.key): \($0.value) times repeated in a window") }
     }
 
-    /// 4. Menganalisis pengulangan frasa (bigram & trigram)
+    // Menganalisis pengulangan frasa (bigram & trigram)
     private func analyzeNGrams(tokens: [String]) {
         var bigramFrequencies: [String: Int] = [:]
         var trigramFrequencies: [String: Int] = [:]

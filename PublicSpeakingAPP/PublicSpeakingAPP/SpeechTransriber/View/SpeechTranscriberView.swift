@@ -10,11 +10,10 @@ import WhisperKit
 
 struct SpeechTranscriberView: View {
     @StateObject private var vm = SpeechTranscriberViewModel()
-    @StateObject private var textAnalyzerVM = TextFrequencyAnalyzerViewModel()
-    @StateObject private var intonationAnalyzerVM = IntonationAnalyzerViewModel()
-    @StateObject private var tempoVM = TempoViewModel()
-    
-    @EnvironmentObject var orientationInfo: OrientationInfo
+    let whisperKitVM: SpeechTranscriberViewModel
+    let textAnalyzerVM: TextFrequencyAnalyzerViewModel
+    let intonationAnalyzerVM: IntonationAnalyzerViewModel
+    let tempoVM: TempoViewModel
 
     var body: some View {
         NavigationStack {
@@ -27,10 +26,14 @@ struct SpeechTranscriberView: View {
                         .fontWeight(.bold)
                     
                     NavigationLink(destination: {
-                        SimulationView()
-                            .environmentObject(orientationInfo)
-                            .navigationBarBackButtonHidden(true)
-                            .toolbar(.hidden, for: .navigationBar)
+                        SimulationViewWrapper(
+                            whisperKitVM: whisperKitVM,
+                            textAnalyzerVM: textAnalyzerVM,
+                            intonationAnalyzerVM: intonationAnalyzerVM,
+                            tempoVM: tempoVM
+                        )
+                        .navigationBarBackButtonHidden(true)
+                        .toolbar(.hidden, for: .navigationBar)
                     }) {
                         Label("Mulai Sesi Latihan", systemImage: "play.display")
                             .font(.headline)
@@ -164,42 +167,10 @@ struct SpeechTranscriberView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .onAppear {
-            orientationInfo.lockToPortrait()
             vm.textAnalyzerVM = textAnalyzerVM
             vm.intonationAnalyzerVM = intonationAnalyzerVM
             vm.tempoVM = tempoVM
-            vm.onAppear() // load model seperti di ContentView.onAppear
-        }
-        // Fallback non-invasif untuk trigger text analyzer saat teks final/hypothesis berubah
-        .onChange(of: vm.confirmedText) { newVal in
-            let liveText = newVal + vm.hypothesisText
-            if !liveText.isEmpty {
-                textAnalyzerVM.analyze(text: liveText)
-                tempoVM.updateTempo(text: liveText, duration: vm.bufferSeconds)
-            }
-        }
-        .onChange(of: vm.hypothesisText) { hypo in
-            let liveText = vm.confirmedText + hypo
-            if !liveText.isEmpty {
-                textAnalyzerVM.analyze(text: liveText)
-                tempoVM.updateTempo(text: liveText, duration: vm.bufferSeconds)
-            }
-        }
-
-        .onChange(of: vm.unconfirmedSegments) { _ in
-            let text = vm.confirmedSegments.map { $0.text }.joined() + vm.unconfirmedSegments.map { $0.text }.joined()
-            if !text.isEmpty {
-                textAnalyzerVM.analyze(text: text)
-                tempoVM.updateTempo(text: text, duration: vm.bufferSeconds)
-            }
-        }
-
-        .onChange(of: vm.confirmedSegments) { _ in
-            let text = vm.confirmedSegments.map { $0.text }.joined() + vm.unconfirmedSegments.map { $0.text }.joined()
-            if !text.isEmpty {
-                textAnalyzerVM.analyze(text: text)
-                tempoVM.updateTempo(text: text, duration: vm.bufferSeconds)
-            }
+            vm.onAppear()
         }
     }
 }

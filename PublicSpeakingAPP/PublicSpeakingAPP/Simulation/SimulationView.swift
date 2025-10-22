@@ -8,16 +8,36 @@
 import SwiftUI
 import Combine
 
+struct SimulationViewWrapper: View {
+    let whisperKitVM: SpeechTranscriberViewModel
+    let textAnalyzerVM: TextFrequencyAnalyzerViewModel
+    let intonationAnalyzerVM: IntonationAnalyzerViewModel
+    let tempoVM: TempoViewModel
+
+    var body: some View {
+        SimulationView(
+            viewModel: SimulationViewModel(
+                whisperKitVM: whisperKitVM,
+                textAnalyzerVM: textAnalyzerVM,
+                intonationAnalyzerVM: intonationAnalyzerVM,
+                tempoVM: tempoVM
+            )
+        )
+    }
+}
+
 struct SimulationView: View {
     
-    @StateObject private var viewModel = SimulationViewModel()
-    @EnvironmentObject var orientationInfo: OrientationInfo
+    @StateObject private var viewModel: SimulationViewModel
     @Environment(\.dismiss) var dismiss
-
+    
+    init(viewModel: SimulationViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+    
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                
                 let gridHeight = geo.size.height
                     
                 VStack(spacing: -gridHeight * 0.15) {
@@ -49,12 +69,11 @@ struct SimulationView: View {
                 AnimatedActorView(targetFrames: viewModel.teacherMood.animationFrames, isAnimating: viewModel.isRecording)
                 .frame(height: geo.size.height * 0.65)
                 .position(x: geo.size.width / 2, y: geo.size.height * 0.7)
-
+                
                 VStack {
                     ZStack {
                         HStack {
                             Button(action: {
-                                orientationInfo.lockToPortrait()
                                 dismiss()
                             }) {
                                 Image(systemName: "xmark")
@@ -108,12 +127,20 @@ struct SimulationView: View {
                                     .font(.system(size: 40))
                                     .foregroundColor(viewModel.isRecording ? .red : .black)
                             }
+                            .disabled(viewModel.whisperModelState != .loaded)
                             
-                            Text(viewModel.isRecording ? "STOP\nRECORD" : "START\nRECORD")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.black)
-                                .multilineTextAlignment(.center)
-                                .lineLimit(2)
+                            VStack(alignment: .leading) {
+                                Text(viewModel.isRecording ? "STOP\nRECORD" : "START\nRECORD")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.black)
+                                    .lineLimit(2)
+                                
+                                if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
+                                    Text(viewModel.whisperModelState.description)
+                                        .font(.caption2)
+                                        .foregroundColor(.gray)
+                                }
+                            }
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 10)
@@ -124,14 +151,28 @@ struct SimulationView: View {
                     .padding(.bottom, geo.safeAreaInsets.bottom)
                 }
                 .zIndex(10)
-            }
+                
+                }
             .frame(width: geo.size.width, height: geo.size.height)
-            .onAppear {
-                orientationInfo.lockToLandscape()
-            }
             .onDisappear {
-                orientationInfo.lockToPortrait()
+                viewModel.cleanup()
             }
+            .navigationDestination(isPresented: $viewModel.isAnalysisComplete) {
+                if let result = viewModel.evaluationResult {
+                    EvaluationView(
+                        result: result,
+                        whisperKitVM: viewModel.whisperKitVM,
+                        textAnalyzerVM: viewModel.textAnalyzerVM,
+                        intonationAnalyzerVM: viewModel.intonationAnalyzerVM,
+                        tempoVM: viewModel.tempoVM,
+                        fullTranscript: viewModel.finalTranscript
+                    )
+                    .navigationBarBackButtonHidden(true)
+                } else {
+                    Text("Gagal memuat hasil evaluasi.")
+                }
+            }
+            .navigationBarBackButtonHidden(true)
         }
     }
 }
