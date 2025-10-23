@@ -123,7 +123,7 @@ class SimulationViewModel: ObservableObject {
             if wasRecording {
                 print("Menghentikan recording...")
                 stopGame()
-                whisperKitVM.toggleRecording()
+                whisperKitVM.toggleRecording(shouldLoop: true)
                 
             } else {
                 print("Memulai recording...")
@@ -132,7 +132,7 @@ class SimulationViewModel: ObservableObject {
                 evaluationResult = nil
                 finalTranscript = ""
                 
-                whisperKitVM.toggleRecording()
+                whisperKitVM.toggleRecording(shouldLoop: true)
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     if self.whisperKitVM.isRecording {

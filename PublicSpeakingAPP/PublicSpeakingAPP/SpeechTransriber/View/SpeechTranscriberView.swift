@@ -4,13 +4,15 @@
 //
 //  Created by Regina Celine Adiwinata on 30/09/25.
 //
+//  Fixed by Gemini on 22/10/25 to remove ViewModel loop.
+//
 
 import SwiftUI
 import WhisperKit
 
 struct SpeechTranscriberView: View {
-    @StateObject private var vm = SpeechTranscriberViewModel()
-    let whisperKitVM: SpeechTranscriberViewModel
+    @ObservedObject var whisperKitVM: SpeechTranscriberViewModel
+    
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
     let intonationAnalyzerVM: IntonationAnalyzerViewModel
     let tempoVM: TempoViewModel
@@ -20,7 +22,6 @@ struct SpeechTranscriberView: View {
             ScrollView {
                 VStack(spacing: 20) {
 
-                    // === Header (sama)
                     Text("Whisper Live Transcribe")
                         .font(.largeTitle)
                         .fontWeight(.bold)
@@ -44,39 +45,37 @@ struct SpeechTranscriberView: View {
                             .cornerRadius(12)
                     }
 
-                    // === modelStateView (sama)
                     HStack {
                         Image(systemName: "circle.fill")
-                            .foregroundStyle(vm.modelState == .loaded ? .green : (vm.modelState == .unloaded ? .red : .yellow))
-                            .symbolEffect(.variableColor, isActive: vm.modelState != .loaded && vm.modelState != .unloaded)
-                        if vm.modelState == .loading || vm.modelState == .downloading || vm.modelState == .prewarming {
-                            ProgressView(value: vm.loadingProgressValue)
+                            .foregroundStyle(whisperKitVM.modelState == .loaded ? .green : (whisperKitVM.modelState == .unloaded ? .red : .yellow))
+                            .symbolEffect(.variableColor, isActive: whisperKitVM.modelState != .loaded && whisperKitVM.modelState != .unloaded)
+                        if whisperKitVM.modelState == .loading || whisperKitVM.modelState == .downloading || whisperKitVM.modelState == .prewarming {
+                            ProgressView(value: whisperKitVM.loadingProgressValue)
                                 .progressViewStyle(LinearProgressViewStyle())
-                            Text(String(format: "%.0f%%", vm.loadingProgressValue * 100))
+                            Text(String(format: "%.0f%%", whisperKitVM.loadingProgressValue * 100))
                         } else {
-                            Text(vm.modelState.description)
+                            Text(whisperKitVM.modelState.description)
                         }
                     }
                     .padding(.horizontal)
 
-                    // === transcriptionView (sama)
                     ScrollViewReader { proxy in
                         ScrollView {
                             VStack(alignment: .leading, spacing: 10) {
-                                if vm.enableEagerDecoding {
-                                    Text("\(Text(vm.confirmedText).fontWeight(.bold))\(Text(vm.hypothesisText).foregroundColor(.gray))")
+                                if whisperKitVM.enableEagerDecoding {
+                                    Text("\(Text(whisperKitVM.confirmedText).fontWeight(.bold))\(Text(whisperKitVM.hypothesisText).foregroundColor(.gray))")
                                         .id("bottom")
                                 } else {
-                                    ForEach(vm.confirmedSegments, id: \.start) { segment in
+                                    ForEach(whisperKitVM.confirmedSegments, id: \.start) { segment in
                                         Text(segment.text).fontWeight(.bold)
                                     }
-                                    ForEach(vm.unconfirmedSegments, id: \.start) { segment in
+                                    ForEach(whisperKitVM.unconfirmedSegments, id: \.start) { segment in
                                         Text(segment.text).foregroundColor(.gray)
                                     }
                                     .id("bottom")
                                 }
 
-                                if !vm.isRecording && vm.confirmedText.isEmpty && vm.confirmedSegments.isEmpty {
+                                if !whisperKitVM.isRecording && whisperKitVM.confirmedText.isEmpty && whisperKitVM.confirmedSegments.isEmpty {
                                     Text("Tekan tombol rekam untuk memulai...")
                                         .foregroundColor(.gray)
                                         .frame(maxWidth: .infinity, alignment: .center)
@@ -86,11 +85,11 @@ struct SpeechTranscriberView: View {
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .onChange(of: vm.confirmedText) { _, _ in proxy.scrollTo("bottom") }
-                        .onChange(of: vm.hypothesisText) { _, _ in proxy.scrollTo("bottom") }
-                        .onChange(of: vm.unconfirmedSegments) { _, _ in proxy.scrollTo("bottom") }
+                        .onChange(of: whisperKitVM.confirmedText) { _, _ in proxy.scrollTo("bottom") }
+                        .onChange(of: whisperKitVM.hypothesisText) { _, _ in proxy.scrollTo("bottom") }
+                        .onChange(of: whisperKitVM.unconfirmedSegments) { _, _ in proxy.scrollTo("bottom") }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(minHeight: 200, maxHeight: .infinity)
                     .background(Color(UIColor.secondarySystemBackground))
                     .cornerRadius(12)
                     .overlay(
@@ -98,42 +97,38 @@ struct SpeechTranscriberView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
 
-                    // === controlsView (sama, dengan binding helper)
                     VStack(spacing: 15) {
-                        Toggle("Eager Mode (Latensi Rendah)", isOn: vm.binding(\.enableEagerDecoding))
-                            .disabled(vm.isRecording)
+                        Toggle("Eager Mode (Latensi Rendah)", isOn: whisperKitVM.binding(\.enableEagerDecoding))
+                            .disabled(whisperKitVM.isRecording)
 
                         Button(action: {
-                            withAnimation { vm.toggleRecording() }
+                            withAnimation { whisperKitVM.toggleRecording(shouldLoop: true) }
                         }) {
-                            Image(systemName: vm.isRecording ? "stop.circle.fill" : "record.circle")
+                            Image(systemName: whisperKitVM.isRecording ? "stop.circle.fill" : "record.circle")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 70, height: 70)
-                                .foregroundColor(vm.modelState == .loaded ? .red : .gray)
+                                .foregroundColor(whisperKitVM.modelState == .loaded ? .red : .gray)
                         }
-                        .disabled(vm.modelState != .loaded)
+                        .disabled(whisperKitVM.modelState != .loaded)
 
-                        Text(vm.isRecording ? "Durasi Buffer: \(String(format: "%.1f", vm.bufferSeconds))s" : "Siap Merekam")
+                        Text(whisperKitVM.isRecording ? "Durasi Buffer: \(String(format: "%.1f", whisperKitVM.bufferSeconds))s" : "Siap Merekam")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                     
-                    // Tempo bicara
-                    if vm.isRecording || tempoVM.wpm > 0 {
+                    if whisperKitVM.isRecording || tempoVM.wpm > 0 {
                         Divider()
                         TempoView(viewModel: tempoVM)
                             .transition(.opacity.animation(.easeInOut))
                     }
 
-                    // =============== Tambahan: Intonation Graph (di bawah UI Whisper) ===============
-                    if !intonationAnalyzerVM.pitchHistory.isEmpty || vm.isRecording {
+                    if !intonationAnalyzerVM.pitchHistory.isEmpty || whisperKitVM.isRecording {
                         Divider()
                         IntonationGraphView(viewModel: intonationAnalyzerVM)
                             .transition(.opacity.animation(.easeInOut))
                     }
 
-                    // =============== Tambahan: Text Frequency Analysis (di bawah UI Whisper) =======
                     if !textAnalyzerVM.wordFrequencies.isEmpty
                         || !textAnalyzerVM.repeatedWordsInWindow.isEmpty
                         || !textAnalyzerVM.repeatedBigrams.isEmpty
@@ -167,10 +162,10 @@ struct SpeechTranscriberView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .onAppear {
-            vm.textAnalyzerVM = textAnalyzerVM
-            vm.intonationAnalyzerVM = intonationAnalyzerVM
-            vm.tempoVM = tempoVM
-            vm.onAppear()
+            whisperKitVM.textAnalyzerVM = textAnalyzerVM
+            whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
+            whisperKitVM.tempoVM = tempoVM
+            whisperKitVM.onAppear()
         }
     }
 }
