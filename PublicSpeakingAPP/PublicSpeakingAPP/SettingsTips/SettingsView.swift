@@ -64,20 +64,6 @@ struct SettingsView: View {
                             .clipShape(Capsule())
                     }
 
-                    // Pilihan durasi cepat (opsional)
-//                    HStack(spacing: 8) {
-//                        ForEach([3,5,7,10], id:\.self) { m in
-//                            Button {
-//                                durationMinutes = m
-//                            } label: {
-//                                Text("\(m)m")
-//                                    .padding(.horizontal, 10)
-//                                    .padding(.vertical, 6)
-//                            }
-//                            .background(m == durationMinutes ? .blue.opacity(0.2) : .gray.opacity(0.15))
-//                            .clipShape(Capsule())
-//                        }
-//                    }
 
                     // Distraksi
                     VStack(alignment: .leading, spacing: 8) {
@@ -114,6 +100,11 @@ struct SettingsView: View {
                     }
 
                     Divider().padding(.vertical, 4)
+//                    SettingsHeader(
+//                        title: "Pilih tempat presentasimu",
+//                        onBack: onBack,
+//                        onNext: onNext
+//                    )
 
                     // Aspek yang dievaluasi
                     Text("Aspek yang dievaluasi")
@@ -145,5 +136,7 @@ struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.white)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }

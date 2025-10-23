@@ -23,7 +23,7 @@ struct BubbleChat: View {
                     BubbleTail(isFromCurrentUser: isFromCurrentUser)
                         .fill(Color(.systemGray6))
                         .frame(width: 10, height: 14)
-                        .offset(x: isFromCurrentUser ? 20 : -20, y: 6)
+                        .offset(x: isFromCurrentUser ? 150 : -150, y: 6)
                 }
                 .foregroundColor(.black)
                 .shadow(radius: 0.5)

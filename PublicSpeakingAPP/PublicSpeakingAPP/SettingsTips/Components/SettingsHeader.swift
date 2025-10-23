@@ -31,6 +31,6 @@ struct SettingsHeader: View {
             }
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, 16)
+        .padding()
     }
 }

@@ -42,7 +42,7 @@ struct HomeView: View {
                 case .settings:
                     SettingsView(
                         onBack: {                      // balik ke Tips
-                            if !path.isEmpty { path.removeLast() }
+                            path.removeLast()
                         },
                         onNext: {                      // ke Simulation
                             path.append(.simulation)
@@ -57,10 +57,11 @@ struct HomeView: View {
                         intonationAnalyzerVM: intonationAnalyzerVM,
                         tempoVM: tempoVM
                     )
-                        .navigationBarBackButtonHidden(true)
+                    .navigationBarBackButtonHidden(true)
                 }
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             // wiring tambahan kalau perlu
             whisperKitVM.textAnalyzerVM = textAnalyzerVM
@@ -70,68 +71,3 @@ struct HomeView: View {
         }
     }
 }
-
-
-//import SwiftUI
-//
-//enum Route: Hashable {
-//    case home
-//    case tips
-//    case settings
-//    case simulation
-//}
-//
-//struct HomeView: View {
-//    // ... properties yang sudah ada ...
-//    @State private var path: [Route] = []
-//
-//    @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
-//    @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
-//    @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
-//    @EnvironmentObject private var tempoVM: TempoViewModel
-//
-//    var body: some View {
-//        NavigationStack(path: $path) {
-//            // ====== Konten lama HomeView kamu pindah ke komponen agar rapi ======
-//            HomeContentView(
-//                onStart: { path.append(.tips) } // tombol "Mulai Presentasi"
-//            )
-//            .navigationDestination(for: Route.self) { route in
-//                switch route {
-//                case .home:
-//                    HomeContentView(
-//                        onStart: { path.append(.tips) } 
-//                    )
-//                case .tips:
-//                    TipsPresentasiView(
-//                        onBack: { path.append(.home) },
-//                        onContinue: { path.append(.settings) }  // dari Tips -> Settings
-//                    )
-//
-//                case .settings:
-//                    SettingsView(
-//                        onBack: { path.append(.tips) },
-//                        onNext: { path.append(.simulation) }     // dari Settings -> Simulation
-//                    )
-//
-//                case .simulation:
-//                    // Tidak perlu lagi kirim VM satu2, sudah ada di Environment
-//                    SimulationViewWrapper(
-//                        whisperKitVM: whisperKitVM,
-//                        textAnalyzerVM: textAnalyzerVM,
-//                        intonationAnalyzerVM: intonationAnalyzerVM,
-//                        tempoVM: tempoVM
-//                    )
-//                        .navigationBarBackButtonHidden(true)
-//                }
-//            }
-//        }
-//        // Tetap boleh lakukan pengkabelan VM tambahan di onAppear
-//        .onAppear {
-//            whisperKitVM.textAnalyzerVM = textAnalyzerVM
-//            whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
-//            whisperKitVM.tempoVM = tempoVM
-//            whisperKitVM.onAppear()
-//        }
-//    }
-//}

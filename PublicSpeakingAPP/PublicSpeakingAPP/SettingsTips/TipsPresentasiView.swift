@@ -35,7 +35,7 @@ struct TipsPresentasiView: View {
 
                     ButtonComponent(text: "Presentasi? Aku belum siap…", action: onBack)
 //                    ButtonComponent(text: "Oke, aku mau langsung mulai!", action: {  })
-                    ButtonComponent(text: "Presentasi? Aku belum siap…", action: onContinue)
+                    ButtonComponent(text: "Oke, aku mau langsung mulai!", action: onContinue)
                 }
                 .padding(.trailing, 16)
             }
@@ -44,5 +44,7 @@ struct TipsPresentasiView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.white)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
