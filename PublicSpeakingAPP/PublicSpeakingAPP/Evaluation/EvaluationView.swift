@@ -93,11 +93,14 @@ struct EvaluationView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            FooterButtonsView(whisperKitVM: whisperKitVM,
-                              textAnalyzerVM: textAnalyzerVM,
-                              intonationAnalyzerVM: intonationAnalyzerVM,
-                              tempoVM: tempoVM)
-                .background(.bar)
+            FooterButtonsView(
+                whisperKitVM: whisperKitVM,
+                textAnalyzerVM: textAnalyzerVM,
+                intonationAnalyzerVM: intonationAnalyzerVM,
+                tempoVM: tempoVM,
+                fullTranscript: fullTranscript
+            )
+            .background(.bar)
         }
         .background(Color(.systemGroupedBackground))
     }
@@ -285,6 +288,7 @@ struct FooterButtonsView: View {
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     let intonationAnalyzerVM: IntonationAnalyzerViewModel?
     let tempoVM: TempoViewModel?
+    let fullTranscript: String
     
     var body: some View {
         HStack(spacing: 15) {
@@ -305,8 +309,16 @@ struct FooterButtonsView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .frame(maxWidth: .infinity)
-               
             }
+            
+            // NEW: Question Generator Button
+            NavigationLink(destination: QuestionGeneratorView(confirmedText: fullTranscript)) {
+                Text("QnA")
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+            .controlSize(.large)
+            .frame(maxWidth: .infinity)
             
             NavigationLink(destination: HomeView()) {
                 Text("Selesai")

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		17BA4F042E9F94990030B293 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F032E9F94990030B293 /* WhisperKit */; };
 		17BA4F062E9F94990030B293 /* whisperkit-cli in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F052E9F94990030B293 /* whisperkit-cli */; };
+		31FAB13C2EAA834500545CF1 /* LLM in Frameworks */ = {isa = PBXBuildFile; productRef = 31FAB13B2EAA834500545CF1 /* LLM */; };
 		5F504208A36F0D6DD7EAF200 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BDBBDEA89D59FB584042F4A9 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */; };
 		7CE851DA155C463A766ECDF8 /* Pods_PublicSpeakingAPPTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3FB7F432C78D629616FA649B /* Pods_PublicSpeakingAPPTests.framework */; };
 		DD24F122C7CC08C3B9C52EBE /* Pods_PublicSpeakingAPP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61E6E345EB8465F6CC18B06C /* Pods_PublicSpeakingAPP.framework */; };
@@ -69,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31FAB13C2EAA834500545CF1 /* LLM in Frameworks */,
 				17BA4F042E9F94990030B293 /* WhisperKit in Frameworks */,
 				17BA4F062E9F94990030B293 /* whisperkit-cli in Frameworks */,
 				DD24F122C7CC08C3B9C52EBE /* Pods_PublicSpeakingAPP.framework in Frameworks */,
@@ -163,6 +165,7 @@
 			packageProductDependencies = (
 				17BA4F032E9F94990030B293 /* WhisperKit */,
 				17BA4F052E9F94990030B293 /* whisperkit-cli */,
+				31FAB13B2EAA834500545CF1 /* LLM */,
 			);
 			productName = PublicSpeakingAPP;
 			productReference = 12BCF36B2E8BACB400FD1CF8 /* PublicSpeakingAPP.app */;
@@ -247,6 +250,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */,
+				31FAB13A2EAA834500545CF1 /* XCRemoteSwiftPackageReference "LLM" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 12BCF36C2E8BACB400FD1CF8 /* Products */;
@@ -359,13 +363,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -380,13 +380,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -570,7 +566,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = RUK94DS7MJ;
+				DEVELOPMENT_TEAM = STRHT7D4R7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -604,7 +600,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = RUK94DS7MJ;
+				DEVELOPMENT_TEAM = STRHT7D4R7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -768,6 +764,14 @@
 				kind = branch;
 			};
 		};
+		31FAB13A2EAA834500545CF1 /* XCRemoteSwiftPackageReference "LLM" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/eastriverlee/LLM.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.4.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -780,6 +784,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */;
 			productName = "whisperkit-cli";
+		};
+		31FAB13B2EAA834500545CF1 /* LLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 31FAB13A2EAA834500545CF1 /* XCRemoteSwiftPackageReference "LLM" */;
+			productName = LLM;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
