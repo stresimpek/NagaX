@@ -28,6 +28,8 @@ class SimulationViewModel: ObservableObject {
     @Published var whisperModelState: ModelState = .unloaded
     @Published var finalTranscript: String = ""
     
+    @Published var showNoTranscriptAlert: Bool = false
+    
     private var gameTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
     
@@ -145,31 +147,35 @@ class SimulationViewModel: ObservableObject {
     
     private func processEvaluation() {
         print("Memproses evaluasi...")
-        
-        guard whisperKitVM.bufferSeconds > 0 else {
-            print("Tidak ada data audio yang direkam")
-            return
-        }
-        
-        let duration = whisperKitVM.bufferSeconds
-        
-        print("Data Evaluasi:")
-        print("- Duration: \(duration)s")
-        print("- Tempo WPM: \(tempoVM.wpm)")
-        print("- Filler Words: \(textAnalyzerVM.fillerWordCount)")
-        print("- Intonation StdDev: \(intonationAnalyzerVM.standardDeviation)")
-        
+
         self.finalTranscript = self.whisperKitVM.confirmedText
-        self.evaluationResult = EvaluationViewModel.process(
-            tempoVM: self.tempoVM,
-            textAnalyzerVM: self.textAnalyzerVM,
-            intonationVM: self.intonationAnalyzerVM,
-            duration: duration
-        )
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.isAnalysisComplete = true
-            print("Evaluasi selesai, navigasi ke hasil")
+
+        if self.finalTranscript.isEmpty {
+            print("Evaluasi dibatalkan: Tidak ada transkrip.")
+            self.isAnalysisComplete = false
+            self.showNoTranscriptAlert = true
+
+        } else {
+            print("Transkrip ditemukan, melanjutkan evaluasi...")
+            let duration = whisperKitVM.bufferSeconds
+
+            print("Data Evaluasi:")
+            print("- Duration: \(duration)s")
+            print("- Tempo WPM: \(tempoVM.wpm)")
+            print("- Filler Words: \(textAnalyzerVM.fillerWordCount)")
+            print("- Intonation StdDev: \(intonationAnalyzerVM.standardDeviation)")
+
+            self.evaluationResult = EvaluationViewModel.process(
+                tempoVM: self.tempoVM,
+                textAnalyzerVM: self.textAnalyzerVM,
+                intonationVM: self.intonationAnalyzerVM,
+                duration: duration
+            )
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.isAnalysisComplete = true
+                print("Evaluasi selesai, navigasi ke hasil")
+            }
         }
     }
 

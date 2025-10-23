@@ -152,7 +152,26 @@ struct SimulationView: View {
                 }
                 .zIndex(10)
                 
+                if viewModel.showNoTranscriptAlert {
+                    
+                    Color.black.opacity(0.4)
+                        .edgesIgnoringSafeArea(.all)
+                        .zIndex(98)
+                        .transition(.opacity)
+                        .onTapGesture {
+                             withAnimation {
+                                 viewModel.showNoTranscriptAlert = false
+                             }
+                        }
+                    
+                    NoTranscriptView(
+                        title: "Latihan Gagal",
+                        message: "Tidak ada audio yang terdeteksi atau transkrip tidak dapat dibuat. Silakan coba lagi.",
+                        isPresented: $viewModel.showNoTranscriptAlert
+                    )
+                    .zIndex(99)
                 }
+            }
             .frame(width: geo.size.width, height: geo.size.height)
             .onDisappear {
                 viewModel.cleanup()
@@ -173,6 +192,8 @@ struct SimulationView: View {
                 }
             }
             .navigationBarBackButtonHidden(true)
+            
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.showNoTranscriptAlert)
         }
     }
 }
