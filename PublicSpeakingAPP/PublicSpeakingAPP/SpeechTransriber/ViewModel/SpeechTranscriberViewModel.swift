@@ -214,7 +214,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         buffer.frameLength = AVAudioFrameCount(samples.count)
         if let dst = buffer.floatChannelData?.pointee {
             samples.withUnsafeBufferPointer { src in
-                dst.assign(from: src.baseAddress!, count: samples.count)
+                dst.update(from: src.baseAddress!, count: samples.count)
             }
         }
         return buffer
@@ -253,6 +253,12 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 }
             }
         }
+        
+        if let allWords = result?.allWords, let tempoVM = self.tempoVM {
+            let totalDuration = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
+            
+            tempoVM.updateTempo(from: allWords, totalDuration: totalDuration)
+        }
     }
     
     func transcribeAudioSamples(_ samples: [Float]) async throws -> TranscriptionResult? {
@@ -262,7 +268,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         let options = DecodingOptions(
             task: selectedTask == "transcribe" ? .transcribe : .translate,
             language: languageCode,
-            withoutTimestamps: !enableTimestamps
+            wordTimestamps: true
         )
         
         let transcription = try await whisperKit.transcribe(audioArray: samples, decodeOptions: options)
