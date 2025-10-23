@@ -6,11 +6,9 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct PublicSpeakingAPPApp: App {
-    
     @StateObject private var whisperKitVM = SpeechTranscriberViewModel()
     @StateObject private var textAnalyzerVM = TextFrequencyAnalyzerViewModel()
     @StateObject private var intonationAnalyzerVM = IntonationAnalyzerViewModel()
@@ -18,13 +16,11 @@ struct PublicSpeakingAPPApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                HomeView()
-                    .environmentObject(whisperKitVM)
-                    .environmentObject(textAnalyzerVM)
-                    .environmentObject(intonationAnalyzerVM)
-                    .environmentObject(tempoVM)
-            }
+            RootView()
+                .environmentObject(whisperKitVM)
+                .environmentObject(textAnalyzerVM)
+                .environmentObject(intonationAnalyzerVM)
+                .environmentObject(tempoVM)
         }
     }
 }
