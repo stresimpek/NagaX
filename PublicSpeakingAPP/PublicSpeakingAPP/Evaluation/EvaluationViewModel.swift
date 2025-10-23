@@ -59,9 +59,9 @@ struct EvaluationViewModel {
     }
     
     private static func gradeTempo(wpm: Double) -> (String, String, Double) {
-        if wpm < 60.0 {
+        if wpm < 100.0 {
             return ("D", "Tempo Lambat", 0.25)
-        } else if wpm >= 60.0 && wpm <= 80.0 {
+        } else if wpm >= 100.0 && wpm <= 150.0 {
             return ("A", "Tempo Ideal", 1.0)
         } else {
             return ("C", "Tempo Cepat", 0.5)
@@ -94,10 +94,10 @@ struct EvaluationViewModel {
             return ("D", "Cenderung Datar", 0.25)
         } else if stdDev < 25.0 {
             return ("C", "Agak Bervariasi", 0.5)
-        } else if stdDev < 35.0 {
+        } else if stdDev <= 35.0 {
             return ("B", "Cukup Bervariasi", 0.75)
-        } else {
-            return ("A", "Sangat Dinamis", 1.0)
+        } else  if stdDev > 35.0 {
+            return ("D", "Terlalu Berlebihan", 1.0)
         }
     }
 

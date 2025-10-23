@@ -16,14 +16,12 @@ final class TempoViewModel: ObservableObject {
     @Published var tempoLabel: String = "..."
 
     // Standar WPM Bahasa Indonesia
-    private let wpmLambat: Double = 60.0
-    private let wpmCepat: Double = 100.0
+    private let wpmLambat: Double = 100.0
+    private let wpmCepat: Double = 150.0
     
     private var wordHistory: [(endTime: TimeInterval, duration: TimeInterval)] = []
     private let windowSize: TimeInterval = 10.0
     private let smoothingFactor: Double = 0.3
-    
-    
 
 //    func updateTempo(text: String, duration: TimeInterval) {
 //        // Guard clause untuk mencegah pembagian dengan nol

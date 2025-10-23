@@ -518,6 +518,11 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
         } else {
             let transcription = try await transcribeAudioSamples(Array(currentBuffer))
+            
+            if let allWords = transcription?.allWords, let tempoVM = self.tempoVM {
+                let totalDuration = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
+                tempoVM.updateTempo(from: allWords, totalDuration: totalDuration)
+            }
 
             await MainActor.run {
                 currentText = ""
@@ -769,9 +774,14 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 let lastHypothesis = self.lastAgreedWords + TranscriptionUtilities.findLongestDifferentSuffix(self.prevWords, self.hypothesisWords)
                 self.hypothesisText = lastHypothesis.map { $0.word }.joined()
                 
-                // TODO: Panggil textAnalyzerVM & tempoVM di sini dengan data teks baru
-                // textAnalyzerVM?.analyze(text: self.confirmedText)
-                // tempoVM?.analyze(text: self.confirmedText, time: ...)
+                let allCurrentWords = self.confirmedWords + lastHypothesis
+                let totalDuration = Double(samples.count) / Double(WhisperKit.sampleRate)
+
+                if let tempoVM = self.tempoVM {
+                    tempoVM.updateTempo(from: allCurrentWords, totalDuration: totalDuration)
+                }
+                
+                textAnalyzerVM?.analyze(text: self.confirmedText + self.hypothesisText)
             }
         } catch {
             print("[EagerMode] Error: \(error)")
@@ -840,60 +850,5 @@ final class SpeechTranscriberViewModel: ObservableObject {
             
             tempoVM.updateTempo(from: allWords, totalDuration: totalDuration)
         }
-    }
-    
-    func transcribeAudioSamples(_ samples: [Float]) async throws -> TranscriptionResult? {
-        guard let whisperKit = whisperKit else { return nil }
-        
-        let languageCode = Constants.languages[selectedLanguage, default: "id"]
-        let options = DecodingOptions(
-            task: selectedTask == "transcribe" ? .transcribe : .translate,
-            language: languageCode,
-            wordTimestamps: true
-        )
-        
-        let transcription = try await whisperKit.transcribe(audioArray: samples, decodeOptions: options)
-        return transcription.first
-    }
-    
-    func transcribeEagerMode(_ samples: [Float]) async throws -> TranscriptionResult? {
-        guard let whisperKit = whisperKit else { return nil }
-        
-        let languageCode = Constants.languages[selectedLanguage, default: "id"]
-        let options = DecodingOptions(
-            task: selectedTask == "transcribe" ? .transcribe : .translate,
-            language: languageCode,
-            wordTimestamps: true,
-            clipTimestamps: [lastAgreedSeconds]
-        )
-        
-        let transcriptionResults = try await whisperKit.transcribe(audioArray: samples, decodeOptions: options)
-        guard let transcription = transcriptionResults.first else { return nil }
-        
-        await MainActor.run {
-            let newWords = transcription.allWords.filter { $0.start >= self.lastAgreedSeconds }
-            
-            if let prevResult = self.prevResult {
-                let prevWords = prevResult.allWords.filter { $0.start >= self.lastAgreedSeconds }
-                let commonPrefix = TranscriptionUtilities.findLongestCommonPrefix(prevWords, newWords)
-                
-                if commonPrefix.count >= Int(self.tokenConfirmationsNeeded) {
-                    let wordsToConfirm = commonPrefix.prefix(commonPrefix.count - Int(self.tokenConfirmationsNeeded))
-                    if !wordsToConfirm.isEmpty {
-                        self.confirmedText += wordsToConfirm.map { $0.word }.joined()
-                        if let lastAgreedWord = wordsToConfirm.last {
-                            self.lastAgreedSeconds = lastAgreedWord.end
-                        }
-                    }
-                }
-            }
-            
-            // Recalc hypothesis
-            let hypothesisWords = transcription.allWords.filter { $0.start >= self.lastAgreedSeconds }
-            self.hypothesisText = hypothesisWords.map { $0.word }.joined()
-            self.prevResult = transcription
-        }
-        
-        return transcription
     }
 }
