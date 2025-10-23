@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import WhisperKit
 
 struct SimulationViewWrapper: View {
     let whisperKitVM: SpeechTranscriberViewModel
