@@ -92,11 +92,13 @@ struct EvaluationViewModel {
     private static func gradeIntonation(stdDev: Double) -> (String, String, Double) {
         if stdDev < 18.0 {
             return ("D", "Cenderung Datar", 0.25)
-        } else if stdDev < 25.0 {
+        } else if stdDev < 22.0 {
             return ("C", "Agak Bervariasi", 0.5)
-        } else if stdDev <= 35.0 {
+        } else if stdDev < 25.0 {
             return ("B", "Cukup Bervariasi", 0.75)
-        } else  if stdDev > 35.0 {
+        } else if stdDev >= 25.0 && stdDev <= 30.0 {
+            return ("A", "Sangat Bervariasi", 0.75)
+        } else {
             return ("D", "Terlalu Berlebihan", 1.0)
         }
     }
