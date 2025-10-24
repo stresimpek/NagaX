@@ -518,6 +518,11 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
         } else {
             let transcription = try await transcribeAudioSamples(Array(currentBuffer))
+            
+            if let allWords = transcription?.allWords, let tempoVM = self.tempoVM {
+                let totalDuration = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
+                tempoVM.updateTempo(from: allWords, totalDuration: totalDuration)
+            }
 
             await MainActor.run {
                 currentText = ""
@@ -769,9 +774,14 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 let lastHypothesis = self.lastAgreedWords + TranscriptionUtilities.findLongestDifferentSuffix(self.prevWords, self.hypothesisWords)
                 self.hypothesisText = lastHypothesis.map { $0.word }.joined()
                 
-                // TODO: Panggil textAnalyzerVM & tempoVM di sini dengan data teks baru
-                // textAnalyzerVM?.analyze(text: self.confirmedText)
-                // tempoVM?.analyze(text: self.confirmedText, time: ...)
+                let allCurrentWords = self.confirmedWords + lastHypothesis
+                let totalDuration = Double(samples.count) / Double(WhisperKit.sampleRate)
+
+                if let tempoVM = self.tempoVM {
+                    tempoVM.updateTempo(from: allCurrentWords, totalDuration: totalDuration)
+                }
+                
+                textAnalyzerVM?.analyze(text: self.confirmedText + self.hypothesisText)
             }
         } catch {
             print("[EagerMode] Error: \(error)")
@@ -795,9 +805,50 @@ final class SpeechTranscriberViewModel: ObservableObject {
         buffer.frameLength = AVAudioFrameCount(samples.count)
         if let dst = buffer.floatChannelData?.pointee {
             samples.withUnsafeBufferPointer { src in
-                dst.assign(from: src.baseAddress!, count: samples.count)
+                dst.update(from: src.baseAddress!, count: samples.count)
             }
         }
         return buffer
+    }
+    
+    
+    func transcribeCurrentBuffer() async throws {
+        guard let whisperKit = whisperKit else { return }
+        
+        let currentBuffer = whisperKit.audioProcessor.audioSamples
+        guard !currentBuffer.isEmpty else { return }
+        
+        let newCount = currentBuffer.count
+        if newCount > analyzerLastSampleIndex {
+            let delta = Array(currentBuffer[analyzerLastSampleIndex..<newCount])
+            analyzerLastSampleIndex = newCount
+            if let pcm = makePCMBuffer(from: delta, sampleRate: Double(WhisperKit.sampleRate)) {
+                intonationAnalyzerVM?.analyze(buffer: pcm)
+            }
+        }
+        
+        let result: TranscriptionResult?
+        if enableEagerDecoding {
+            result = try await transcribeEagerMode(Array(currentBuffer))
+        } else {
+            result = try await transcribeAudioSamples(Array(currentBuffer))
+            await MainActor.run {
+                guard let segments = result?.segments else { return }
+                let requiredSegmentsForConfirmation = 2
+                if segments.count > requiredSegmentsForConfirmation {
+                    let confirmCount = segments.count - requiredSegmentsForConfirmation
+                    self.confirmedSegments = Array(segments.prefix(confirmCount))
+                    self.unconfirmedSegments = Array(segments.suffix(requiredSegmentsForConfirmation))
+                } else {
+                    self.unconfirmedSegments = segments
+                }
+            }
+        }
+        
+        if let allWords = result?.allWords, let tempoVM = self.tempoVM {
+            let totalDuration = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
+            
+            tempoVM.updateTempo(from: allWords, totalDuration: totalDuration)
+        }
     }
 }

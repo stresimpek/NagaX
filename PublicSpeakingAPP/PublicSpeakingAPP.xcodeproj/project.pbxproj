@@ -157,6 +157,7 @@
 				12BCF3682E8BACB400FD1CF8 /* Frameworks */,
 				12BCF3692E8BACB400FD1CF8 /* Resources */,
 				4C175B1442C5A6F2D99379ED /* [CP] Copy Pods Resources */,
+				F055A54106308D95B2E430D9 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -205,6 +206,7 @@
 				12BCF3812E8BACB500FD1CF8 /* Frameworks */,
 				12BCF3822E8BACB500FD1CF8 /* Resources */,
 				DE0DDCDA10C5CC4FFA26FEBA /* [CP] Copy Pods Resources */,
+				EE31AB3AE95B55D0D0C0AC56 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -253,6 +255,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				17BA4F022E9F94990030B293 /* XCRemoteSwiftPackageReference "whisperkit" */,
+				3C21AB492EAA1C1100FB4458 /* XCRemoteSwiftPackageReference "rive-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 12BCF36C2E8BACB400FD1CF8 /* Products */;
@@ -365,13 +368,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -386,17 +385,47 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
-			outputPaths = (
-			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		EE31AB3AE95B55D0D0C0AC56 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F055A54106308D95B2E430D9 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -576,9 +605,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = 8FXMS3XYYB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -610,9 +641,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -772,6 +805,14 @@
 			requirement = {
 				branch = main;
 				kind = branch;
+			};
+		};
+		3C21AB492EAA1C1100FB4458 /* XCRemoteSwiftPackageReference "rive-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rive-app/rive-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.12.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

@@ -9,6 +9,7 @@ target 'PublicSpeakingAPP' do
 pod 'TensorFlowLiteSwift',        '0.0.1-nightly.20250619'
   pod 'TensorFlowLiteC',            '0.0.1-nightly.20250619'
   pod 'TensorFlowLiteSelectTfOps',  '0.0.1-nightly.20250619'
+pod 'RiveRuntime'
 
   target 'PublicSpeakingAPPTests' do
     inherit! :search_paths

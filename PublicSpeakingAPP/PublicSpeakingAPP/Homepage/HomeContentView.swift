@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import RiveRuntime
 
 struct SpeakerLevel {
     let title: String
@@ -26,90 +27,48 @@ struct HomeContentView: View {
         ScrollView {
             VStack(spacing: 16) {
                 HStack(spacing: 4) {
-                    Text("Presentasimu dimulai")
+                    Text("Presentasimu dimulai dalam: ")
                     CountdownBox(text: "3")
-                    Text("hari")
+                    Text("hari ")
                     CountdownBox(text: "20")
-                    Text("jam")
+                    Text("jam ")
                     CountdownBox(text: "30")
                     Text("menit")
                 }
                 .font(.system(size: 14))
                 .padding(.top, 16)
                 
-                VStack(spacing: 6) {
-                    Text("Kamu 0% siap untuk presentasi")
-                        .font(.system(size: 14))
-                    ProgressView(value: 0)
-                        .progressViewStyle(LinearProgressViewStyle(tint: .black))
-                        .frame(height: 8)
-                        .clipShape(Capsule())
-                    HStack {
-                        Text("Belum siap")
-                        Spacer()
-                        Text("Siap")
-                    }
-                    .font(.system(size: 12))
-                }
-                .padding(.horizontal)
+                Spacer()
                 
-                HStack(alignment: .center) {
-                    Button(action: {
-                        withAnimation {
-                            currentLevelIndex = (currentLevelIndex - 1 + levels.count) % levels.count
-                        }
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .font(.title2)
-                            .padding(8)
+                HStack (spacing: 52) {
+                    VStack {
+                        Text("Noob Speaker")
+                        RiveViewModel(fileName:"noob cako new").view()
+                            .frame(width: 200, height: 120)
                     }
                     
-                    Spacer()
-                    
-                    VStack(spacing: 8) {
-                        Image(levels[currentLevelIndex].imageName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 150, height: 150)
-                        Text(levels[currentLevelIndex].title)
-                            .font(.headline)
-                    }
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        withAnimation {
-                            currentLevelIndex = (currentLevelIndex + 1) % levels.count
+                    VStack (alignment: .leading) {
+                        Text("Kamu belum siap untuk presentasi")
+                            .font(.system(size: 14))
+                        HStack {
+                            ProgressView(value: 0)
+                                .progressViewStyle(LinearProgressViewStyle(tint: .black))
+                                .frame(height: 8)
+                                .clipShape(Capsule())
+                            Text("%")
                         }
-                    }) {
-                        Image(systemName: "chevron.right")
-                            .font(.title2)
-                            .padding(8)
+                        HStack (spacing: 20) {
+                            VStack (spacing: 20) {
+                                StatBar(title: "Intonasi", value: 0)
+                                StatBar(title: "Filler Words", value: 0)
+                            }
+                            VStack (spacing: 20) {
+                                StatBar(title: "Tempo", value: 0)
+                                StatBar(title: "Kontak Mata", value: 0)
+                            }
+                        }
                     }
                 }
-                .padding(.horizontal, 16)
-                
-                HStack(alignment: .top, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        StatBar(title: "Intonasi", value: 0)
-                        StatBar(title: "Filler Words", value: 0)
-                        StatBar(title: "Tempo", value: 0)
-                        StatBar(title: "Eye Contact", value: 0)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.black, lineWidth: 1)
-                    )
-                    
-                    VStack(spacing: 12) {
-                        CardButton(title: "Penghargaan", systemIcon: "star")
-                        CardButton(title: "Latihanku", systemIcon: "doc.text")
-                    }
-                    .frame(maxWidth: 140)
-                }
-                .padding(.horizontal)
                 
                 Spacer()
                 
