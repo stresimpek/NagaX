@@ -116,18 +116,21 @@ struct HomeContentView: View {
                 Text("Yuk, mulai latihan presentasi untuk meningkatkan rank mu")
                     .font(.system(size: 14))
                     .multilineTextAlignment(.center)
+
+                HStack(alignment: .center, spacing: 12) {
+                    CardButton(title: "Penghargaan", systemIcon: "star")
+                    CardButton(title: "Riwayat Latihan", systemIcon: "doc.text")
+                    Button(action: onStart) {
+                        Text("Mulai Presentasi")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.black)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
                     .padding(.horizontal)
-                
-                Button(action: onStart) {
-                    Text("Mulai Presentasi")
-                        .fontWeight(.bold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.black)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
                 }
-                .padding(.horizontal)
             }
             .toolbar(.hidden, for: .navigationBar)
         }

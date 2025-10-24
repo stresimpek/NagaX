@@ -100,11 +100,6 @@ struct SettingsView: View {
                     }
 
                     Divider().padding(.vertical, 4)
-//                    SettingsHeader(
-//                        title: "Pilih tempat presentasimu",
-//                        onBack: onBack,
-//                        onNext: onNext
-//                    )
 
                     // Aspek yang dievaluasi
                     Text("Aspek yang dievaluasi")
