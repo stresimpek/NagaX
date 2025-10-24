@@ -1,8 +1,8 @@
 //
-//  Homepage.swift
+//  HomeContentView.swift
 //  PublicSpeakingAPP
 //
-//  Created by Elisabeth Levana on 20/10/25.
+//  Created by Regina Celine Adiwinata on 23/10/25.
 //
 
 import SwiftUI
@@ -13,7 +13,7 @@ struct SpeakerLevel {
     let imageName: String
 }
 
-struct HomeView: View {
+struct HomeContentView: View {
     let levels: [SpeakerLevel] = [
         SpeakerLevel(title: "Noob Speaker", imageName: "blobFish"),
         SpeakerLevel(title: "Professional Speaker", imageName: "beluga")
@@ -21,10 +21,7 @@ struct HomeView: View {
 
     @State private var currentLevelIndex = 0
     
-    @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
-    @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
-    @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
-    @EnvironmentObject private var tempoVM: TempoViewModel
+    let onStart: () -> Void
 
     var body: some View {
         ScrollView {
@@ -98,14 +95,19 @@ struct HomeView: View {
                     .padding(.horizontal)
                 }
                 .frame(maxWidth: .infinity)
+                
+                Button(action: onStart) {
+                    Text("Mulai Presentasi")
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.black)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal)
             }
             .toolbar(.hidden, for: .navigationBar)
-            .onAppear {
-                whisperKitVM.textAnalyzerVM = textAnalyzerVM
-                whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
-                whisperKitVM.tempoVM = tempoVM
-                whisperKitVM.onAppear()
-            }
         }
     }
 }
