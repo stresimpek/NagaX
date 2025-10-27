@@ -49,22 +49,16 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		12BCF36D2E8BACB400FD1CF8 /* PublicSpeakingAPP */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = PublicSpeakingAPP;
 			sourceTree = "<group>";
 		};
 		12BCF37D2E8BACB500FD1CF8 /* PublicSpeakingAPPTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = PublicSpeakingAPPTests;
 			sourceTree = "<group>";
 		};
 		12BCF3872E8BACB500FD1CF8 /* PublicSpeakingAPPUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = PublicSpeakingAPPUITests;
 			sourceTree = "<group>";
 		};
@@ -605,7 +599,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8FXMS3XYYB;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
@@ -676,7 +670,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
@@ -699,7 +693,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
@@ -721,7 +715,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = celine.PublicSpeakingAPPUITests;
@@ -742,7 +736,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = celine.PublicSpeakingAPPUITests;

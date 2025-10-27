@@ -29,6 +29,8 @@ class SimulationViewModel: ObservableObject {
     @Published var whisperModelState: ModelState = .unloaded
     @Published var finalTranscript: String = ""
     
+    @Published var showNoTranscriptAlert: Bool = false
+    
     private var gameTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
     
@@ -195,67 +197,70 @@ class SimulationViewModel: ObservableObject {
     }
     
     func toggleRecording() {
-            guard whisperModelState == .loaded else {
-                print("Model belum siap, tidak bisa merekam.")
-                return
-            }
+        guard whisperModelState == .loaded else {
+            print("Model belum siap, tidak bisa merekam.")
+            return
+        }
+    
+        let wasRecording = isRecording
+        isRecording.toggle()
         
-            let wasRecording = isRecording
-            isRecording.toggle()
+        if wasRecording {
+            print("Menghentikan recording...")
+            stopGame()
+            whisperKitVM.toggleRecording(shouldLoop: true)
             
-            if wasRecording {
-                print("Menghentikan recording...")
-                stopGame()
-                whisperKitVM.toggleRecording(shouldLoop: true)
-                
-            } else {
-                print("Memulai recording...")
-                startGame()
-                isAnalysisComplete = false
-                evaluationResult = nil
-                finalTranscript = ""
-                
-                whisperKitVM.toggleRecording(shouldLoop: true)
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    if self.whisperKitVM.isRecording {
-                        self.recordingStartTime = Date()
-                        print("Recording dimulai pada: \(self.recordingStartTime!)")
-                    }
+        } else {
+            print("Memulai recording...")
+            startGame()
+            isAnalysisComplete = false
+            evaluationResult = nil
+            finalTranscript = ""
+            
+            whisperKitVM.toggleRecording(shouldLoop: true)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                if self.whisperKitVM.isRecording {
+                    self.recordingStartTime = Date()
+                    print("Recording dimulai pada: \(self.recordingStartTime!)")
                 }
             }
         }
+    }
     
     private func processEvaluation() {
         print("Memproses evaluasi...")
-        
-        guard whisperKitVM.bufferSeconds > 0 else {
-            print("Tidak ada data audio yang direkam")
-            return
-        }
-        
-        let duration = whisperKitVM.bufferSeconds
-        
-        print("Data Evaluasi:")
-        print("- Duration: \(duration)s")
-        print("- Tempo WPM: \(tempoVM.wpm)")
-        print("- Filler Words: \(textAnalyzerVM.fillerWordCount)")
-        print("- Intonation StdDev: \(intonationAnalyzerVM.standardDeviation)")
-        
+
         self.finalTranscript = self.whisperKitVM.confirmedText
-        self.evaluationResult = EvaluationViewModel.process(
-            tempoVM: self.tempoVM,
-            textAnalyzerVM: self.textAnalyzerVM,
-            intonationVM: self.intonationAnalyzerVM,
-            duration: duration
-        )
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.isAnalysisComplete = true
-            print("Evaluasi selesai, navigasi ke hasil")
+
+        if self.finalTranscript.isEmpty {
+            print("Evaluasi dibatalkan: Tidak ada transkrip.")
+            self.isAnalysisComplete = false
+            self.showNoTranscriptAlert = true
+
+        } else {
+            print("Transkrip ditemukan, melanjutkan evaluasi...")
+            let duration = whisperKitVM.bufferSeconds
+
+            print("Data Evaluasi:")
+            print("- Duration: \(duration)s")
+            print("- Tempo WPM: \(tempoVM.wpm)")
+            print("- Filler Words: \(textAnalyzerVM.fillerWordCount)")
+            print("- Intonation StdDev: \(intonationAnalyzerVM.standardDeviation)")
+
+            self.evaluationResult = EvaluationViewModel.process(
+                tempoVM: self.tempoVM,
+                textAnalyzerVM: self.textAnalyzerVM,
+                intonationVM: self.intonationAnalyzerVM,
+                duration: duration
+            )
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.isAnalysisComplete = true
+                print("Evaluasi selesai, navigasi ke hasil")
+            }
         }
     }
-
     
     func setTeacherMood(_ mood: TeacherMood) {
         if self.teacherMood == mood && self.isRecording {
