@@ -6,6 +6,8 @@
 //
 //  Refactored with Argmax logic and re-integrated analyzers on 22/10/25.
 //
+//  Refactored to remove Eager Mode on 27/10/25.
+//
 
 import Foundation
 import SwiftUI
@@ -44,8 +46,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var enablePromptPrefill: Bool = true
     @Published var enableCachePrefill: Bool = true
     @Published var enableSpecialCharacters: Bool = false
-    @Published var enableEagerDecoding: Bool = true
-    @Published var enableDecoderPreview: Bool = true
     @Published var temperatureStart: Double = 0
     @Published var fallbackCount: Double = 5
     @Published var compressionCheckWindow: Double = 60
@@ -53,8 +53,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var silenceThreshold: Double = 0.5
     @Published var realtimeDelayInterval: Double = 1.0
     @Published var useVAD: Bool = true
-    @Published var tokenConfirmationsNeeded: Double = 2
-    @Published var concurrentWorkerCount: Double = 4
+    @Published var concurrentWorkerCount: Double = 4 // Kept as it's not exclusively for eager mode
     @Published var chunkingStrategy: ChunkingStrategy = .vad
     @Published var encoderComputeUnits: MLComputeUnits = .cpuAndNeuralEngine
     @Published var decoderComputeUnits: MLComputeUnits = .cpuAndNeuralEngine
@@ -80,17 +79,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var bufferSeconds: Double = 0
     @Published var confirmedSegments: [TranscriptionSegment] = []
     @Published var unconfirmedSegments: [TranscriptionSegment] = []
-
-    // MARK: - Eager Mode Properties
-    @Published var eagerResults: [TranscriptionResult?] = []
-    @Published var prevResult: TranscriptionResult?
-    @Published var lastAgreedSeconds: Float = 0.0
-    @Published var prevWords: [WordTiming] = []
-    @Published var lastAgreedWords: [WordTiming] = []
-    @Published var confirmedWords: [WordTiming] = []
-    @Published var confirmedText: String = ""
-    @Published var hypothesisWords: [WordTiming] = []
-    @Published var hypothesisText: String = ""
     
     // MARK: - Analyzer Links (DITAMBAHKAN KEMBALI)
     weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
@@ -149,16 +137,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
         bufferSeconds = 0
         confirmedSegments = []
         unconfirmedSegments = []
-
-        eagerResults = []
-        prevResult = nil
-        lastAgreedSeconds = 0.0
-        prevWords = []
-        lastAgreedWords = []
-        confirmedWords = []
-        confirmedText = ""
-        hypothesisWords = []
-        hypothesisText = ""
         
         analyzerLastSampleIndex = 0
         textAnalyzerVM?.clearResults()
@@ -216,12 +194,12 @@ final class SpeechTranscriberViewModel: ObservableObject {
     func loadModel(_ model: String, redownload: Bool = false) {
         print("Selected Model: \(selectedModel)")
         print("""
-            Computing Options:
-            - Mel Spectrogram:  \(getComputeOptions().melCompute.description)
-            - Audio Encoder:    \(getComputeOptions().audioEncoderCompute.description)
-            - Text Decoder:     \(getComputeOptions().textDecoderCompute.description)
-            - Prefill Data:     \(getComputeOptions().prefillCompute.description)
-        """)
+              Computing Options:
+              - Mel Spectrogram:  \(getComputeOptions().melCompute.description)
+              - Audio Encoder:    \(getComputeOptions().audioEncoderCompute.description)
+              - Text Decoder:     \(getComputeOptions().textDecoderCompute.description)
+              - Prefill Data:     \(getComputeOptions().prefillCompute.description)
+              """)
 
         modelState = .loading
         whisperKit = nil
@@ -418,11 +396,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
     func finalizeText() {
         Task {
             await MainActor.run {
-                if hypothesisText != "" {
-                    confirmedText += hypothesisText
-                    hypothesisText = ""
-                }
-
                 if !unconfirmedSegments.isEmpty {
                     confirmedSegments.append(contentsOf: unconfirmedSegments)
                     unconfirmedSegments = []
@@ -500,67 +473,49 @@ final class SpeechTranscriberViewModel: ObservableObject {
 
         lastBufferSize = currentBuffer.count
 
-        if enableEagerDecoding {
-            let transcription = try await transcribeEagerMode(Array(currentBuffer))
-            await MainActor.run {
-                currentText = ""
-                tokensPerSecond = transcription?.timings.tokensPerSecond ?? 0
-                firstTokenTime = transcription?.timings.firstTokenTime ?? 0
-                modelLoadingTime = transcription?.timings.modelLoading ?? 0
-                pipelineStart = transcription?.timings.pipelineStart ?? 0
-                currentLag = transcription?.timings.decodingLoop ?? 0
-                currentEncodingLoops = Int(transcription?.timings.totalEncodingRuns ?? 0)
+        let transcription = try await transcribeAudioSamples(Array(currentBuffer))
+                
+        if let allWords = transcription?.allWords, let tempoVM = self.tempoVM {
+            let totalDuration = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
+            tempoVM.updateTempo(from: allWords, totalDuration: totalDuration)
+        }
 
-                let totalAudio = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
-                totalInferenceTime = transcription?.timings.fullPipeline ?? 0
-                effectiveRealTimeFactor = Double(totalInferenceTime) / totalAudio
-                effectiveSpeedFactor = totalAudio / Double(totalInferenceTime)
-            }
-        } else {
-            let transcription = try await transcribeAudioSamples(Array(currentBuffer))
-            
-            if let allWords = transcription?.allWords, let tempoVM = self.tempoVM {
-                let totalDuration = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
-                tempoVM.updateTempo(from: allWords, totalDuration: totalDuration)
+        await MainActor.run {
+            currentText = ""
+            guard let segments = transcription?.segments else {
+                return
             }
 
-            await MainActor.run {
-                currentText = ""
-                guard let segments = transcription?.segments else {
-                    return
-                }
+            tokensPerSecond = transcription?.timings.tokensPerSecond ?? 0
+            firstTokenTime = transcription?.timings.firstTokenTime ?? 0
+            modelLoadingTime = transcription?.timings.modelLoading ?? 0
+            pipelineStart = transcription?.timings.pipelineStart ?? 0
+            currentLag = transcription?.timings.decodingLoop ?? 0
+            currentEncodingLoops += Int(transcription?.timings.totalEncodingRuns ?? 0)
 
-                tokensPerSecond = transcription?.timings.tokensPerSecond ?? 0
-                firstTokenTime = transcription?.timings.firstTokenTime ?? 0
-                modelLoadingTime = transcription?.timings.modelLoading ?? 0
-                pipelineStart = transcription?.timings.pipelineStart ?? 0
-                currentLag = transcription?.timings.decodingLoop ?? 0
-                currentEncodingLoops += Int(transcription?.timings.totalEncodingRuns ?? 0)
+            let totalAudio = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
+            totalInferenceTime += transcription?.timings.fullPipeline ?? 0
+            effectiveRealTimeFactor = Double(totalInferenceTime) / totalAudio
+            effectiveSpeedFactor = totalAudio / Double(totalInferenceTime)
 
-                let totalAudio = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
-                totalInferenceTime += transcription?.timings.fullPipeline ?? 0
-                effectiveRealTimeFactor = Double(totalInferenceTime) / totalAudio
-                effectiveSpeedFactor = totalAudio / Double(totalInferenceTime)
+            if segments.count > requiredSegmentsForConfirmation {
+                let numberOfSegmentsToConfirm = segments.count - requiredSegmentsForConfirmation
+                let confirmedSegmentsArray = Array(segments.prefix(numberOfSegmentsToConfirm))
+                let remainingSegments = Array(segments.suffix(requiredSegmentsForConfirmation))
 
-                if segments.count > requiredSegmentsForConfirmation {
-                    let numberOfSegmentsToConfirm = segments.count - requiredSegmentsForConfirmation
-                    let confirmedSegmentsArray = Array(segments.prefix(numberOfSegmentsToConfirm))
-                    let remainingSegments = Array(segments.suffix(requiredSegmentsForConfirmation))
+                if let lastConfirmedSegment = confirmedSegmentsArray.last, lastConfirmedSegment.end > lastConfirmedSegmentEndSeconds {
+                    lastConfirmedSegmentEndSeconds = lastConfirmedSegment.end
+                    print("Last confirmed segment end: \(lastConfirmedSegmentEndSeconds)")
 
-                    if let lastConfirmedSegment = confirmedSegmentsArray.last, lastConfirmedSegment.end > lastConfirmedSegmentEndSeconds {
-                        lastConfirmedSegmentEndSeconds = lastConfirmedSegment.end
-                        print("Last confirmed segment end: \(lastConfirmedSegmentEndSeconds)")
-
-                        for segment in confirmedSegmentsArray {
-                            if !confirmedSegments.contains(segment: segment) {
-                                confirmedSegments.append(segment)
-                            }
+                    for segment in confirmedSegmentsArray {
+                        if !confirmedSegments.contains(segment: segment) {
+                            confirmedSegments.append(segment)
                         }
                     }
-                    unconfirmedSegments = remainingSegments
-                } else {
-                    unconfirmedSegments = segments
                 }
+                unconfirmedSegments = remainingSegments
+            } else {
+                unconfirmedSegments = segments
             }
         }
     }
@@ -623,6 +578,8 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 let joinedChunks = self.currentChunks.sorted { $0.key < $1.key }.flatMap { $0.value.chunkText }.joined(separator: "\n")
 
                 self.currentText = joinedChunks
+                // Moved analyzer call here from eager mode
+                self.textAnalyzerVM?.analyze(text: self.currentText)
                 self.currentFallbacks = fallbacks
                 self.currentDecodingLoops += 1
             }
@@ -661,145 +618,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
         let mergedResults = TranscriptionUtilities.mergeTranscriptionResults(transcriptionResults)
         return mergedResults
     }
-
-    func transcribeEagerMode(_ samples: [Float]) async throws -> TranscriptionResult? {
-        guard let whisperKit = whisperKit else { return nil }
-
-        guard whisperKit.textDecoder.supportsWordTimestamps else {
-            await MainActor.run {
-                confirmedText = "Eager mode requires word timestamps, which are not supported by the current model: \(selectedModel)."
-            }
-            return nil
-        }
-
-        let languageCode = Constants.languages[selectedLanguage, default: Constants.defaultLanguageCode]
-        let task: DecodingTask = selectedTask == "transcribe" ? .transcribe : .translate
-        print(selectedLanguage)
-        print(languageCode)
-
-        let options = DecodingOptions(
-            verbose: true,
-            task: task,
-            language: languageCode,
-            temperature: Float(temperatureStart),
-            temperatureFallbackCount: Int(fallbackCount),
-            sampleLength: Int(sampleLength),
-            usePrefillPrompt: enablePromptPrefill,
-            usePrefillCache: enableCachePrefill,
-            skipSpecialTokens: !enableSpecialCharacters,
-            withoutTimestamps: !enableTimestamps,
-            wordTimestamps: true,
-            firstTokenLogProbThreshold: -1.5,
-            chunkingStrategy: ChunkingStrategy.none
-        )
-
-        let decodingCallback: ((TranscriptionProgress) -> Bool?) = { progress in
-            DispatchQueue.main.async {
-                let fallbacks = Int(progress.timings.totalDecodingFallbacks)
-                if progress.text.count < self.currentText.count {
-                    if fallbacks != self.currentFallbacks {
-                         print("Fallback occured: \(fallbacks)")
-                    }
-                }
-                self.currentText = progress.text
-                self.currentFallbacks = fallbacks
-                self.currentDecodingLoops += 1
-            }
-            
-            let currentTokens = progress.tokens
-            let checkWindow = Int(self.compressionCheckWindow)
-            if currentTokens.count > checkWindow {
-                let checkTokens: [Int] = currentTokens.suffix(checkWindow)
-                let compressionRatio = TextUtilities.compressionRatio(of: checkTokens)
-                if compressionRatio > options.compressionRatioThreshold! {
-                    print("Early stopping due to compression threshold")
-                    return false
-                }
-            }
-            if progress.avgLogprob! < options.logProbThreshold! {
-                print("Early stopping due to logprob threshold")
-                return false
-            }
-
-            return nil
-        }
-
-        print("[EagerMode] \(lastAgreedSeconds)-\(Double(samples.count) / 16000.0) seconds")
-
-        let segmentCallback: SegmentDiscoveryCallback = { segments in
-            for segment in segments {
-                print("Discovered segment: \(segment.id) (\(segment.seek))): \(segment.start) -> \(segment.end)")
-            }
-        }
-
-        whisperKit.segmentDiscoveryCallback = segmentCallback
-
-        let streamingAudio = samples
-        var streamOptions = options
-        streamOptions.clipTimestamps = [lastAgreedSeconds]
-        let lastAgreedTokens = lastAgreedWords.flatMap { $0.tokens }
-        streamOptions.prefixTokens = lastAgreedTokens
-        
-        do {
-            let transcription: TranscriptionResult? = try await whisperKit.transcribe(audioArray: streamingAudio, decodeOptions: streamOptions, callback: decodingCallback).first
-            
-            await MainActor.run {
-                var skipAppend = false
-                if let result = transcription {
-                    self.hypothesisWords = result.allWords.filter { $0.start >= self.lastAgreedSeconds }
-
-                    if let prevResult = self.prevResult {
-                        self.prevWords = prevResult.allWords.filter { $0.start >= self.lastAgreedSeconds }
-                        let commonPrefix = TranscriptionUtilities.findLongestCommonPrefix(self.prevWords, self.hypothesisWords)
-                        print("[EagerMode] Prev \"\((self.prevWords.map { $0.word }).joined())\"")
-                        print("[EagerMode] Next \"\((self.hypothesisWords.map { $0.word }).joined())\"")
-                        print("[EagerMode] Found common prefix \"\((commonPrefix.map { $0.word }).joined())\"")
-
-                        if commonPrefix.count >= Int(self.tokenConfirmationsNeeded) {
-                            self.lastAgreedWords = commonPrefix.suffix(Int(self.tokenConfirmationsNeeded))
-                            self.lastAgreedSeconds = self.lastAgreedWords.first!.start
-                            print("[EAndaEagerMode] Found new last agreed word \"\(self.lastAgreedWords.first!.word)\" at \(self.lastAgreedSeconds) seconds")
-
-                            self.confirmedWords.append(contentsOf: commonPrefix.prefix(commonPrefix.count - Int(self.tokenConfirmationsNeeded)))
-                            let currentWords = self.confirmedWords.map { $0.word }.joined()
-                            print("[EagerMode] Current:  \(self.lastAgreedSeconds) -> \(Double(samples.count) / 16000.0) \(currentWords)")
-                        } else {
-                            print("[EagerMode] Using same last agreed time \(self.lastAgreedSeconds)")
-                            skipAppend = true
-                        }
-                    }
-                    self.prevResult = result
-                }
-
-                if !skipAppend {
-                    self.eagerResults.append(transcription)
-                }
-            }
-
-            await MainActor.run {
-                let finalWords = self.confirmedWords.map { $0.word }.joined()
-                self.confirmedText = finalWords
-
-                let lastHypothesis = self.lastAgreedWords + TranscriptionUtilities.findLongestDifferentSuffix(self.prevWords, self.hypothesisWords)
-                self.hypothesisText = lastHypothesis.map { $0.word }.joined()
-                
-                let allCurrentWords = self.confirmedWords + lastHypothesis
-                let totalDuration = Double(samples.count) / Double(WhisperKit.sampleRate)
-
-                if let tempoVM = self.tempoVM {
-                    tempoVM.updateTempo(from: allCurrentWords, totalDuration: totalDuration)
-                }
-                
-                textAnalyzerVM?.analyze(text: self.confirmedText + self.hypothesisText)
-            }
-        } catch {
-            print("[EagerMode] Error: \(error)")
-            finalizeText()
-        }
-
-        let mergedResult = TranscriptionUtilities.mergeTranscriptionResults(eagerResults, confirmedWords: confirmedWords)
-        return mergedResult
-    }
     
     // MARK: - Helper: convert float samples -> AVAudioPCMBuffer (DITAMBAHKAN KEMBALI)
     private func makePCMBuffer(from samples: [Float], sampleRate: Double = Double(WhisperKit.sampleRate)) -> AVAudioPCMBuffer? {
@@ -837,20 +655,16 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
         
         let result: TranscriptionResult?
-        if enableEagerDecoding {
-            result = try await transcribeEagerMode(Array(currentBuffer))
-        } else {
-            result = try await transcribeAudioSamples(Array(currentBuffer))
-            await MainActor.run {
-                guard let segments = result?.segments else { return }
-                let requiredSegmentsForConfirmation = 2
-                if segments.count > requiredSegmentsForConfirmation {
-                    let confirmCount = segments.count - requiredSegmentsForConfirmation
-                    self.confirmedSegments = Array(segments.prefix(confirmCount))
-                    self.unconfirmedSegments = Array(segments.suffix(requiredSegmentsForConfirmation))
-                } else {
-                    self.unconfirmedSegments = segments
-                }
+        result = try await transcribeAudioSamples(Array(currentBuffer))
+        await MainActor.run {
+            guard let segments = result?.segments else { return }
+            let requiredSegmentsForConfirmation = 2
+            if segments.count > requiredSegmentsForConfirmation {
+                let confirmCount = segments.count - requiredSegmentsForConfirmation
+                self.confirmedSegments = Array(segments.prefix(confirmCount))
+                self.unconfirmedSegments = Array(segments.suffix(requiredSegmentsForConfirmation))
+            } else {
+                self.unconfirmedSegments = segments
             }
         }
         

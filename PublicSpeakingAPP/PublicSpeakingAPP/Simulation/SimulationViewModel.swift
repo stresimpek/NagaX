@@ -106,38 +106,26 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func setupAnalysisSubscribers() {
-        whisperKitVM.$confirmedText
-            .combineLatest(whisperKitVM.$hypothesisText)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] (confirmed, hypothesis) in
-                guard let self = self, self.isRecording, self.whisperKitVM.enableEagerDecoding else { return }
-                
-                let liveText = confirmed + hypothesis
-                let duration = self.whisperKitVM.bufferSeconds
-                
-                if !liveText.isEmpty && duration > 0 {
-                    self.textAnalyzerVM.analyze(text: liveText)
-//                    self.tempoVM.updateTempo(text: liveText, duration: duration)
-                }
-            }
-            .store(in: &cancellables)
+    // Blok subscriber untuk confirmedText/hypothesisText (Eager Mode) dihapus
+    // karena properti tersebut sudah tidak ada di whisperKitVM.
 
-        whisperKitVM.$confirmedSegments
-            .combineLatest(whisperKitVM.$unconfirmedSegments)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] (confirmed, unconfirmed) in
-                 guard let self = self, self.isRecording, !self.whisperKitVM.enableEagerDecoding else { return }
+    whisperKitVM.$confirmedSegments
+        .combineLatest(whisperKitVM.$unconfirmedSegments)
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] (confirmed, unconfirmed) in
+            // Guard diubah, tidak lagi memeriksa enableEagerDecoding
+            guard let self = self, self.isRecording else { return }
 
-                let liveText = confirmed.map { $0.text }.joined() + unconfirmed.map { $0.text }.joined()
-                let duration = self.whisperKitVM.bufferSeconds
-                
-                if !liveText.isEmpty && duration > 0 {
-                    self.textAnalyzerVM.analyze(text: liveText)
+            let liveText = confirmed.map { $0.text }.joined() + unconfirmed.map { $0.text }.joined()
+            let duration = self.whisperKitVM.bufferSeconds
+            
+            if !liveText.isEmpty && duration > 0 {
+                self.textAnalyzerVM.analyze(text: liveText)
 //                    self.tempoVM.updateTempo(text: liveText, duration: duration)
-                }
             }
-            .store(in: &cancellables)
         }
+        .store(in: &cancellables)
+    }
     
     private func setupAudioPlayers(named fileNames: [String]) {
         distractionPlayers.removeAll()
@@ -231,7 +219,9 @@ class SimulationViewModel: ObservableObject {
     private func processEvaluation() {
         print("Memproses evaluasi...")
 
-        self.finalTranscript = self.whisperKitVM.confirmedText
+        // Diubah: Mengambil transkrip final dari confirmedSegments,
+        // karena finalizeText() di whisperKitVM akan memindahkan semua segmen ke sana.
+        self.finalTranscript = self.whisperKitVM.confirmedSegments.map { $0.text }.joined()
 
         if self.finalTranscript.isEmpty {
             print("Evaluasi dibatalkan: Tidak ada transkrip.")

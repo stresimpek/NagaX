@@ -4,8 +4,6 @@
 //
 //  Created by Regina Celine Adiwinata on 30/09/25.
 //
-//  Fixed by Gemini on 22/10/25 to remove ViewModel loop.
-//
 
 import SwiftUI
 import WhisperKit
@@ -25,7 +23,7 @@ struct SpeechTranscriberView: View {
                     Text("Whisper Live Transcribe")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                    
+                        
                     NavigationLink(destination: {
                         SimulationViewWrapper(
                             whisperKitVM: whisperKitVM,
@@ -62,20 +60,17 @@ struct SpeechTranscriberView: View {
                     ScrollViewReader { proxy in
                         ScrollView {
                             VStack(alignment: .leading, spacing: 10) {
-                                if whisperKitVM.enableEagerDecoding {
-                                    Text("\(Text(whisperKitVM.confirmedText).fontWeight(.bold))\(Text(whisperKitVM.hypothesisText).foregroundColor(.gray))")
-                                        .id("bottom")
-                                } else {
-                                    ForEach(whisperKitVM.confirmedSegments, id: \.start) { segment in
-                                        Text(segment.text).fontWeight(.bold)
-                                    }
-                                    ForEach(whisperKitVM.unconfirmedSegments, id: \.start) { segment in
-                                        Text(segment.text).foregroundColor(.gray)
-                                    }
-                                    .id("bottom")
+                                // Teks Eager Mode dihapus, hanya menampilkan segmen
+                                ForEach(whisperKitVM.confirmedSegments, id: \.start) { segment in
+                                    Text(segment.text).fontWeight(.bold)
                                 }
+                                ForEach(whisperKitVM.unconfirmedSegments, id: \.start) { segment in
+                                    Text(segment.text).foregroundColor(.gray)
+                                }
+                                .id("bottom")
 
-                                if !whisperKitVM.isRecording && whisperKitVM.confirmedText.isEmpty && whisperKitVM.confirmedSegments.isEmpty {
+                                // Kondisi if diperbarui (confirmedText dihapus)
+                                if !whisperKitVM.isRecording && whisperKitVM.confirmedSegments.isEmpty {
                                     Text("Tekan tombol rekam untuk memulai...")
                                         .foregroundColor(.gray)
                                         .frame(maxWidth: .infinity, alignment: .center)
@@ -85,8 +80,7 @@ struct SpeechTranscriberView: View {
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .onChange(of: whisperKitVM.confirmedText) { _, _ in proxy.scrollTo("bottom") }
-                        .onChange(of: whisperKitVM.hypothesisText) { _, _ in proxy.scrollTo("bottom") }
+                        // .onChange yang tidak perlu dihapus
                         .onChange(of: whisperKitVM.unconfirmedSegments) { _, _ in proxy.scrollTo("bottom") }
                     }
                     .frame(minHeight: 200, maxHeight: .infinity)
@@ -98,9 +92,8 @@ struct SpeechTranscriberView: View {
                     )
 
                     VStack(spacing: 15) {
-                        Toggle("Eager Mode (Latensi Rendah)", isOn: whisperKitVM.binding(\.enableEagerDecoding))
-                            .disabled(whisperKitVM.isRecording)
-
+                        // Toggle Eager Mode dihapus
+                        
                         Button(action: {
                             withAnimation { whisperKitVM.toggleRecording(shouldLoop: true) }
                         }) {
@@ -116,7 +109,7 @@ struct SpeechTranscriberView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+                        
                     if whisperKitVM.isRecording || tempoVM.wpm > 0 {
                         Divider()
                         TempoView(viewModel: tempoVM)
