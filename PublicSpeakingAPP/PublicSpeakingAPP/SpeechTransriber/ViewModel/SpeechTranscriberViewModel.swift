@@ -592,7 +592,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             usePrefillCache: enableCachePrefill,
             skipSpecialTokens: !enableSpecialCharacters,
             withoutTimestamps: !enableTimestamps,
-            wordTimestamps: enableTimestamps,
+            wordTimestamps: true,
             clipTimestamps: seekClip,
             promptTokens: myPromptTokenIDs,
             chunkingStrategy: chunkingStrategy
@@ -688,7 +688,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             usePrefillCache: enableCachePrefill,
             skipSpecialTokens: !enableSpecialCharacters,
             withoutTimestamps: !enableTimestamps,
-            wordTimestamps: enableTimestamps,
+            wordTimestamps: true,
             firstTokenLogProbThreshold: -1.5,
             chunkingStrategy: ChunkingStrategy.none
         )
