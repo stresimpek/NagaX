@@ -50,7 +50,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var fallbackCount: Double = 5
     @Published var compressionCheckWindow: Double = 60
     @Published var sampleLength: Double = 224
-    @Published var silenceThreshold: Double = 0.5
+    @Published var silenceThreshold: Double = 0.3
     @Published var realtimeDelayInterval: Double = 1.0
     @Published var useVAD: Bool = true
     @Published var tokenConfirmationsNeeded: Double = 2
@@ -196,21 +196,21 @@ final class SpeechTranscriberViewModel: ObservableObject {
         print("Found locally: \(localModels)")
         print("Previously selected model: \(selectedModel)")
 
-        Task {
-            let remoteModelSupport = await WhisperKit.recommendedRemoteModels()
-            await MainActor.run {
-                for model in remoteModelSupport.supported {
-                    if !availableModels.contains(model) {
-                        availableModels.append(model)
-                    }
-                }
-                for model in remoteModelSupport.disabled {
-                    if !disabledModels.contains(model) {
-                        disabledModels.append(model)
-                    }
-                }
-            }
-        }
+//        Task {
+//            let remoteModelSupport = await WhisperKit.recommendedRemoteModels()
+//            await MainActor.run {
+//                for model in remoteModelSupport.supported {
+//                    if !availableModels.contains(model) {
+//                        availableModels.append(model)
+//                    }
+//                }
+//                for model in remoteModelSupport.disabled {
+//                    if !disabledModels.contains(model) {
+//                        disabledModels.append(model)
+//                    }
+//                }
+//            }
+//        }
     }
 
     func loadModel(_ model: String, redownload: Bool = false) {
@@ -355,7 +355,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
         isRecording.toggle()
 
         if isRecording {
-            resetState()
             startRecording(shouldLoop)
         } else {
             stopRecording(shouldLoop)
@@ -363,6 +362,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     }
 
     func startRecording(_ loop: Bool) {
+        resetState()
         guard let whisperKit = whisperKit else { return }
         
         Task(priority: .userInitiated) {
@@ -572,7 +572,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         
         let task: DecodingTask = selectedTask == "transcribe" ? .transcribe : .translate
         let seekClip: [Float] = [lastConfirmedSegmentEndSeconds]
-        let prompt = "Kalimat ini mungkin terpotong, jangan mengarang kata-kata untuk mengisi sisa kalimat."
+        let prompt = ""
         
         let myPromptTokenIDs: [Int]
         if let tokenizer = whisperKit.tokenizer {
@@ -676,6 +676,17 @@ final class SpeechTranscriberViewModel: ObservableObject {
         let task: DecodingTask = selectedTask == "transcribe" ? .transcribe : .translate
         print(selectedLanguage)
         print(languageCode)
+        
+        let prompt = ""
+                
+        let myPromptTokenIDs: [Int]
+        if let tokenizer = whisperKit.tokenizer {
+            myPromptTokenIDs = tokenizer.encode(text: prompt)
+        } else {
+            myPromptTokenIDs = []
+        }
+        
+        let tokensToSuppress: [Int] = []
 
         let options = DecodingOptions(
             verbose: true,
@@ -689,7 +700,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             skipSpecialTokens: !enableSpecialCharacters,
             withoutTimestamps: !enableTimestamps,
             wordTimestamps: true,
-            firstTokenLogProbThreshold: -1.5,
+            promptTokens: myPromptTokenIDs, supressTokens: tokensToSuppress, firstTokenLogProbThreshold: -1.5,
             chunkingStrategy: ChunkingStrategy.none
         )
 
