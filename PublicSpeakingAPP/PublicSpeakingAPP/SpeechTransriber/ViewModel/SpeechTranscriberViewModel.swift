@@ -395,21 +395,20 @@ final class SpeechTranscriberViewModel: ObservableObject {
     func stopRecording(_ loop: Bool) {
         isRecording = false
         stopRealtimeTranscription()
+
         if let audioProcessor = whisperKit?.audioProcessor {
             audioProcessor.stopRecording()
         }
 
-        if !loop {
-            transcribeTask = Task {
-                await MainActor.run { isTranscribing = true }
-                do {
-                    try await transcribeCurrentBuffer()
-                } catch {
-                    print("Error: \(error.localizedDescription)")
-                }
-                finalizeText()
-                await MainActor.run { isTranscribing = false }
+        transcribeTask = Task {
+            do {
+                try await transcribeCurrentBuffer()
+            } catch {
+                print("Error: \(error.localizedDescription)")
             }
+            finalizeText()
+
+            await MainActor.run { isTranscribing = false }
         }
 
         finalizeText()
@@ -450,7 +449,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
     }
 
     func stopRealtimeTranscription() {
-        isTranscribing = false
         transcriptionTask?.cancel()
     }
 
@@ -677,14 +675,14 @@ final class SpeechTranscriberViewModel: ObservableObject {
         print(selectedLanguage)
         print(languageCode)
         
-        let prompt = ""
-                
-        let myPromptTokenIDs: [Int]
-        if let tokenizer = whisperKit.tokenizer {
-            myPromptTokenIDs = tokenizer.encode(text: prompt)
-        } else {
-            myPromptTokenIDs = []
-        }
+//        let prompt = ""
+//                
+//        let myPromptTokenIDs: [Int]
+//        if let tokenizer = whisperKit.tokenizer {
+//            myPromptTokenIDs = tokenizer.encode(text: prompt)
+//        } else {
+//            myPromptTokenIDs = []
+//        }
         
         let tokensToSuppress: [Int] = []
 
@@ -700,7 +698,8 @@ final class SpeechTranscriberViewModel: ObservableObject {
             skipSpecialTokens: !enableSpecialCharacters,
             withoutTimestamps: !enableTimestamps,
             wordTimestamps: true,
-            promptTokens: myPromptTokenIDs, supressTokens: tokensToSuppress, firstTokenLogProbThreshold: -1.5,
+//            promptTokens: myPromptTokenIDs,
+            supressTokens: tokensToSuppress, firstTokenLogProbThreshold: -1.5,
             chunkingStrategy: ChunkingStrategy.none
         )
 

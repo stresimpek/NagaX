@@ -9,9 +9,9 @@
 /* Begin PBXBuildFile section */
 		17BA4F042E9F94990030B293 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F032E9F94990030B293 /* WhisperKit */; };
 		17BA4F062E9F94990030B293 /* whisperkit-cli in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F052E9F94990030B293 /* whisperkit-cli */; };
-		5F504208A36F0D6DD7EAF200 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BDBBDEA89D59FB584042F4A9 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */; };
-		7CE851DA155C463A766ECDF8 /* Pods_PublicSpeakingAPPTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3FB7F432C78D629616FA649B /* Pods_PublicSpeakingAPPTests.framework */; };
-		DD24F122C7CC08C3B9C52EBE /* Pods_PublicSpeakingAPP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61E6E345EB8465F6CC18B06C /* Pods_PublicSpeakingAPP.framework */; };
+		3DDD048A922A4F5FC80E45AF /* Pods_PublicSpeakingAPP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 108B2A7AB80B0FF7489680C8 /* Pods_PublicSpeakingAPP.framework */; };
+		453E62BAD9F1FD1E3C0059D3 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 848CB677225521FD75273E79 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */; };
+		FDDF0923BBB307835DAD58B4 /* Pods_PublicSpeakingAPPTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B4F756936BE7D025C0DBCB7 /* Pods_PublicSpeakingAPPTests.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,33 +32,39 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		016D9560FE89F0C72E5C21A8 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig"; sourceTree = "<group>"; };
-		066ECDE1A03F55BC483FB13D /* Pods-PublicSpeakingAPPTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPPTests.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPPTests/Pods-PublicSpeakingAPPTests.debug.xcconfig"; sourceTree = "<group>"; };
+		108B2A7AB80B0FF7489680C8 /* Pods_PublicSpeakingAPP.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPP.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		12BCF36B2E8BACB400FD1CF8 /* PublicSpeakingAPP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PublicSpeakingAPP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		12BCF37A2E8BACB500FD1CF8 /* PublicSpeakingAPPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PublicSpeakingAPPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		12BCF3842E8BACB500FD1CF8 /* PublicSpeakingAPPUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PublicSpeakingAPPUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		2B5CCB8D1661E906DE9DC6C3 /* Pods-PublicSpeakingAPP.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.debug.xcconfig"; sourceTree = "<group>"; };
-		3FB7F432C78D629616FA649B /* Pods_PublicSpeakingAPPTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPPTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		61E6E345EB8465F6CC18B06C /* Pods_PublicSpeakingAPP.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPP.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		67E79AA2EC4971F34195DCF3 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; sourceTree = "<group>"; };
-		A64080B740B2D5CFEA07545E /* Pods-PublicSpeakingAPPTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPPTests.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPPTests/Pods-PublicSpeakingAPPTests.release.xcconfig"; sourceTree = "<group>"; };
-		BDBBDEA89D59FB584042F4A9 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		D0956CE89974888098C971A5 /* Pods-PublicSpeakingAPP.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.release.xcconfig"; sourceTree = "<group>"; };
+		2412DCD4AF4E254BD58EE05C /* Pods-PublicSpeakingAPPTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPPTests.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPPTests/Pods-PublicSpeakingAPPTests.debug.xcconfig"; sourceTree = "<group>"; };
+		2D721B32B274620CE21FD1ED /* Pods-PublicSpeakingAPP.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.release.xcconfig"; sourceTree = "<group>"; };
+		36AF860007A8211AFB29276A /* Pods-PublicSpeakingAPP.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.debug.xcconfig"; sourceTree = "<group>"; };
+		68A55BD85F57EB26B08E1469 /* Pods-PublicSpeakingAPPTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPPTests.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPPTests/Pods-PublicSpeakingAPPTests.release.xcconfig"; sourceTree = "<group>"; };
+		6B4F756936BE7D025C0DBCB7 /* Pods_PublicSpeakingAPPTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPPTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		848CB677225521FD75273E79 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A80510468EFF6A7E7834BF80 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig"; sourceTree = "<group>"; };
+		CF7D7FD67A9B783FB474BF02 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		12BCF36D2E8BACB400FD1CF8 /* PublicSpeakingAPP */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = PublicSpeakingAPP;
 			sourceTree = "<group>";
 		};
 		12BCF37D2E8BACB500FD1CF8 /* PublicSpeakingAPPTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = PublicSpeakingAPPTests;
 			sourceTree = "<group>";
 		};
 		12BCF3872E8BACB500FD1CF8 /* PublicSpeakingAPPUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = PublicSpeakingAPPUITests;
 			sourceTree = "<group>";
 		};
@@ -71,7 +77,7 @@
 			files = (
 				17BA4F042E9F94990030B293 /* WhisperKit in Frameworks */,
 				17BA4F062E9F94990030B293 /* whisperkit-cli in Frameworks */,
-				DD24F122C7CC08C3B9C52EBE /* Pods_PublicSpeakingAPP.framework in Frameworks */,
+				3DDD048A922A4F5FC80E45AF /* Pods_PublicSpeakingAPP.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,7 +85,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7CE851DA155C463A766ECDF8 /* Pods_PublicSpeakingAPPTests.framework in Frameworks */,
+				FDDF0923BBB307835DAD58B4 /* Pods_PublicSpeakingAPPTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -87,7 +93,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5F504208A36F0D6DD7EAF200 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */,
+				453E62BAD9F1FD1E3C0059D3 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,7 +108,7 @@
 				12BCF3872E8BACB500FD1CF8 /* PublicSpeakingAPPUITests */,
 				12BCF36C2E8BACB400FD1CF8 /* Products */,
 				DFBACB3A5B126BA9D06A63F4 /* Pods */,
-				C7365DD0208C7E68DE4D88ED /* Frameworks */,
+				BA3305C7019AC53AB67C228E /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -116,12 +122,12 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		C7365DD0208C7E68DE4D88ED /* Frameworks */ = {
+		BA3305C7019AC53AB67C228E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				61E6E345EB8465F6CC18B06C /* Pods_PublicSpeakingAPP.framework */,
-				BDBBDEA89D59FB584042F4A9 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */,
-				3FB7F432C78D629616FA649B /* Pods_PublicSpeakingAPPTests.framework */,
+				108B2A7AB80B0FF7489680C8 /* Pods_PublicSpeakingAPP.framework */,
+				848CB677225521FD75273E79 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */,
+				6B4F756936BE7D025C0DBCB7 /* Pods_PublicSpeakingAPPTests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -129,12 +135,12 @@
 		DFBACB3A5B126BA9D06A63F4 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				2B5CCB8D1661E906DE9DC6C3 /* Pods-PublicSpeakingAPP.debug.xcconfig */,
-				D0956CE89974888098C971A5 /* Pods-PublicSpeakingAPP.release.xcconfig */,
-				67E79AA2EC4971F34195DCF3 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */,
-				016D9560FE89F0C72E5C21A8 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */,
-				066ECDE1A03F55BC483FB13D /* Pods-PublicSpeakingAPPTests.debug.xcconfig */,
-				A64080B740B2D5CFEA07545E /* Pods-PublicSpeakingAPPTests.release.xcconfig */,
+				36AF860007A8211AFB29276A /* Pods-PublicSpeakingAPP.debug.xcconfig */,
+				2D721B32B274620CE21FD1ED /* Pods-PublicSpeakingAPP.release.xcconfig */,
+				CF7D7FD67A9B783FB474BF02 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */,
+				A80510468EFF6A7E7834BF80 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */,
+				2412DCD4AF4E254BD58EE05C /* Pods-PublicSpeakingAPPTests.debug.xcconfig */,
+				68A55BD85F57EB26B08E1469 /* Pods-PublicSpeakingAPPTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -146,12 +152,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 12BCF38E2E8BACB500FD1CF8 /* Build configuration list for PBXNativeTarget "PublicSpeakingAPP" */;
 			buildPhases = (
-				3C66375FDC68752E36DA60E9 /* [CP] Check Pods Manifest.lock */,
+				4D3AF4BCCAD834521C24DA84 /* [CP] Check Pods Manifest.lock */,
 				12BCF3672E8BACB400FD1CF8 /* Sources */,
 				12BCF3682E8BACB400FD1CF8 /* Frameworks */,
 				12BCF3692E8BACB400FD1CF8 /* Resources */,
-				4C175B1442C5A6F2D99379ED /* [CP] Copy Pods Resources */,
-				F055A54106308D95B2E430D9 /* [CP] Embed Pods Frameworks */,
+				E1173127D704E1BCABC6DB15 /* [CP] Embed Pods Frameworks */,
+				673E8240FCC0353326A51D26 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -173,7 +179,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 12BCF3912E8BACB500FD1CF8 /* Build configuration list for PBXNativeTarget "PublicSpeakingAPPTests" */;
 			buildPhases = (
-				485837873FAB3C220BDC2346 /* [CP] Check Pods Manifest.lock */,
+				033EEBD4D40577744E161095 /* [CP] Check Pods Manifest.lock */,
 				12BCF3762E8BACB500FD1CF8 /* Sources */,
 				12BCF3772E8BACB500FD1CF8 /* Frameworks */,
 				12BCF3782E8BACB500FD1CF8 /* Resources */,
@@ -195,12 +201,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 12BCF3942E8BACB500FD1CF8 /* Build configuration list for PBXNativeTarget "PublicSpeakingAPPUITests" */;
 			buildPhases = (
-				0B10F45DE7623D02925BC4C4 /* [CP] Check Pods Manifest.lock */,
+				63D432710A3D26CA62254674 /* [CP] Check Pods Manifest.lock */,
 				12BCF3802E8BACB500FD1CF8 /* Sources */,
 				12BCF3812E8BACB500FD1CF8 /* Frameworks */,
 				12BCF3822E8BACB500FD1CF8 /* Resources */,
-				DE0DDCDA10C5CC4FFA26FEBA /* [CP] Copy Pods Resources */,
-				EE31AB3AE95B55D0D0C0AC56 /* [CP] Embed Pods Frameworks */,
+				5270CFB77D27601E87DF1113 /* [CP] Embed Pods Frameworks */,
+				D10C10AFE5A9D564EB2E2A51 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -288,51 +294,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		0B10F45DE7623D02925BC4C4 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		3C66375FDC68752E36DA60E9 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-PublicSpeakingAPP-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		485837873FAB3C220BDC2346 /* [CP] Check Pods Manifest.lock */ = {
+		033EEBD4D40577744E161095 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -354,41 +316,29 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		4C175B1442C5A6F2D99379ED /* [CP] Copy Pods Resources */ = {
+		4D3AF4BCCAD834521C24DA84 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			name = "[CP] Copy Pods Resources";
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-PublicSpeakingAPP-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources.sh\"\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		DE0DDCDA10C5CC4FFA26FEBA /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		EE31AB3AE95B55D0D0C0AC56 /* [CP] Embed Pods Frameworks */ = {
+		5270CFB77D27601E87DF1113 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -405,7 +355,63 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		F055A54106308D95B2E430D9 /* [CP] Embed Pods Frameworks */ = {
+		63D432710A3D26CA62254674 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		673E8240FCC0353326A51D26 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		D10C10AFE5A9D564EB2E2A51 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E1173127D704E1BCABC6DB15 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -593,7 +599,7 @@
 		};
 		12BCF38F2E8BACB500FD1CF8 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2B5CCB8D1661E906DE9DC6C3 /* Pods-PublicSpeakingAPP.debug.xcconfig */;
+			baseConfigurationReference = 36AF860007A8211AFB29276A /* Pods-PublicSpeakingAPP.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -629,7 +635,7 @@
 		};
 		12BCF3902E8BACB500FD1CF8 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D0956CE89974888098C971A5 /* Pods-PublicSpeakingAPP.release.xcconfig */;
+			baseConfigurationReference = 2D721B32B274620CE21FD1ED /* Pods-PublicSpeakingAPP.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -665,7 +671,7 @@
 		};
 		12BCF3922E8BACB500FD1CF8 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 066ECDE1A03F55BC483FB13D /* Pods-PublicSpeakingAPPTests.debug.xcconfig */;
+			baseConfigurationReference = 2412DCD4AF4E254BD58EE05C /* Pods-PublicSpeakingAPPTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -688,7 +694,7 @@
 		};
 		12BCF3932E8BACB500FD1CF8 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A64080B740B2D5CFEA07545E /* Pods-PublicSpeakingAPPTests.release.xcconfig */;
+			baseConfigurationReference = 68A55BD85F57EB26B08E1469 /* Pods-PublicSpeakingAPPTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -711,7 +717,7 @@
 		};
 		12BCF3952E8BACB500FD1CF8 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 67E79AA2EC4971F34195DCF3 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */;
+			baseConfigurationReference = CF7D7FD67A9B783FB474BF02 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -732,7 +738,7 @@
 		};
 		12BCF3962E8BACB500FD1CF8 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 016D9560FE89F0C72E5C21A8 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */;
+			baseConfigurationReference = A80510468EFF6A7E7834BF80 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

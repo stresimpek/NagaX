@@ -231,7 +231,18 @@ class SimulationViewModel: ObservableObject {
     private func processEvaluation() {
         print("Memproses evaluasi...")
 
-        self.finalTranscript = self.whisperKitVM.confirmedText
+        let confirmed: String
+        let unconfirmed: String
+
+        if self.whisperKitVM.enableEagerDecoding {
+            confirmed = self.whisperKitVM.confirmedText
+            unconfirmed = self.whisperKitVM.hypothesisText
+        } else {
+            confirmed = self.whisperKitVM.confirmedSegments.map { $0.text }.joined()
+            unconfirmed = self.whisperKitVM.unconfirmedSegments.map { $0.text }.joined()
+        }
+        
+        self.finalTranscript = confirmed + unconfirmed
 
         if self.finalTranscript.isEmpty {
             print("Evaluasi dibatalkan: Tidak ada transkrip.")
