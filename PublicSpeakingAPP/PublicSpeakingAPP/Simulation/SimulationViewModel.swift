@@ -32,6 +32,7 @@ class SimulationViewModel: ObservableObject {
     @Published var finalTranscript: String = ""
     
     private let settings: PracticeSettings
+    @Published var showNoTranscriptAlert: Bool = false
     
     private var gameTimer: Timer?
     private var cancellables = Set<AnyCancellable>()

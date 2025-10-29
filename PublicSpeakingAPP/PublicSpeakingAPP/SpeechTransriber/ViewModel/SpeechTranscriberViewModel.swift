@@ -48,7 +48,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var selectedTask: String = "transcribe"
     @Published var selectedLanguage: String = "indonesian"
     @Published var repoName: String = "argmaxinc/whisperkit-coreml"
-    @Published var enableTimestamps: Bool = true
+    @Published var enableTimestamps: Bool = false
     @Published var enablePromptPrefill: Bool = true
     @Published var enableCachePrefill: Bool = true
     @Published var enableSpecialCharacters: Bool = false
@@ -58,7 +58,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var fallbackCount: Double = 5
     @Published var compressionCheckWindow: Double = 60
     @Published var sampleLength: Double = 224
-    @Published var silenceThreshold: Double = 0.3
+    @Published var silenceThreshold: Double = 0.5
     @Published var realtimeDelayInterval: Double = 1.0
     @Published var useVAD: Bool = true
     @Published var tokenConfirmationsNeeded: Double = 2
@@ -612,9 +612,18 @@ final class SpeechTranscriberViewModel: ObservableObject {
         guard let whisperKit = whisperKit else { return nil }
 
         let languageCode = Constants.languages[selectedLanguage, default: Constants.defaultLanguageCode]
+        
         let task: DecodingTask = selectedTask == "transcribe" ? .transcribe : .translate
         let seekClip: [Float] = [lastConfirmedSegmentEndSeconds]
-
+        let prompt = "Kalimat ini mungkin terpotong, jangan mengarang kata-kata untuk mengisi sisa kalimat."
+        
+        let myPromptTokenIDs: [Int]
+        if let tokenizer = whisperKit.tokenizer {
+            myPromptTokenIDs = try tokenizer.encode(text: prompt)
+        } else {
+            myPromptTokenIDs = []
+        }
+        
         let options = DecodingOptions(
             verbose: true,
             task: task,
@@ -628,7 +637,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             withoutTimestamps: !enableTimestamps,
             wordTimestamps: true,
             clipTimestamps: seekClip,
-            concurrentWorkerCount: Int(concurrentWorkerCount),
+            promptTokens: myPromptTokenIDs,
             chunkingStrategy: chunkingStrategy
         )
 
