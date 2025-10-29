@@ -25,13 +25,17 @@ struct EvaluationView: View {
     @Namespace private var tabAnimation
     
     let result: EvaluationModel
+    let fullTranscript: String
     
     let whisperKitVM: SpeechTranscriberViewModel?
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     let intonationAnalyzerVM: IntonationAnalyzerViewModel?
     let tempoVM: TempoViewModel?
+    let settings: PracticeSettings
+    let onBack: () -> Void
+    let onNext: (PracticeSettings) -> Void
     
-    let fullTranscript: String
+    
     
     init(
         result: EvaluationModel,
@@ -39,7 +43,10 @@ struct EvaluationView: View {
         textAnalyzerVM: TextFrequencyAnalyzerViewModel? = nil,
         intonationAnalyzerVM: IntonationAnalyzerViewModel? = nil,
         tempoVM: TempoViewModel? = nil,
-        fullTranscript: String
+        fullTranscript: String,
+        settings: PracticeSettings,
+        onBack: @escaping () -> Void,
+        onNext: @escaping (PracticeSettings) -> Void
     ) {
         self.result = result
         self.whisperKitVM = whisperKitVM
@@ -47,6 +54,9 @@ struct EvaluationView: View {
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
         self.fullTranscript = fullTranscript
+        self.settings = settings
+        self.onBack = onBack
+        self.onNext = onNext
     }
 
     var body: some View {
@@ -93,11 +103,19 @@ struct EvaluationView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            FooterButtonsView(whisperKitVM: whisperKitVM,
-                              textAnalyzerVM: textAnalyzerVM,
-                              intonationAnalyzerVM: intonationAnalyzerVM,
-                              tempoVM: tempoVM)
-                .background(.bar)
+            FooterButtonsView(
+                onBack: self.onBack, // Teruskan closure 'onBack'
+                onNext: {
+                    // Saat 'onNext' dipanggil, kita eksekusi
+                    // closure 'onNext' yang asli dengan 'settings'
+                    self.onNext(self.settings)
+                    whisperKitVM?.resetState()
+                    tempoVM?.clearResults()
+                    intonationAnalyzerVM?.clearResults()
+                    textAnalyzerVM?.clearResults()
+                }
+            )
+            .background(.bar)
         }
         .background(Color(.systemGroupedBackground))
     }
@@ -281,39 +299,13 @@ struct WaveformLineView: View {
 struct FooterButtonsView: View {
     @Environment(\.dismiss) var dismiss
     
-    let whisperKitVM: SpeechTranscriberViewModel?
-    let textAnalyzerVM: TextFrequencyAnalyzerViewModel?
-    let intonationAnalyzerVM: IntonationAnalyzerViewModel?
-    let tempoVM: TempoViewModel?
+    let onBack: () -> Void
+    let onNext: () -> Void
     
     var body: some View {
         HStack(spacing: 15) {
-            if let whisperKitVM = whisperKitVM,
-               let textAnalyzerVM = textAnalyzerVM,
-               let intonationAnalyzerVM = intonationAnalyzerVM,
-               let tempoVM = tempoVM {
-                NavigationLink(destination:
-                    SimulationViewWrapper(
-                        whisperKitVM: whisperKitVM,
-                        textAnalyzerVM: textAnalyzerVM,
-                        intonationAnalyzerVM: intonationAnalyzerVM,
-                        tempoVM: tempoVM
-                    )
-                ) {
-                    Text("Latihan lagi")
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity)
-               
-            }
-            
-            NavigationLink(destination: HomeView()) {
-                Text("Selesai")
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
+            ButtonComponent(text: "Latihan Lagi", action: onNext)
+            ButtonComponent(text: "Selesai", action: onBack)
         }
         .padding()
     }

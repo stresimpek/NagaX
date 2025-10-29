@@ -10,139 +10,207 @@ import AVFoundation
 import Combine
 import TensorFlowLite
 
+// Enum untuk error handling yang lebih jelas
+enum IntonationError: Error, LocalizedError {
+    case modelNotFound
+    case interpreterFailed(Error)
+    
+    var errorDescription: String? {
+        switch self {
+        case .modelNotFound:
+            return "Error: Model file (spice.tflite) tidak ditemukan."
+        case .interpreterFailed(let error):
+            return "Error: Gagal memuat model TFLite. \(error.localizedDescription)"
+        }
+    }
+}
+
 @MainActor
 final class IntonationAnalyzerViewModel: ObservableObject {
-    
+     
     // MARK: - Published Properties for UI
-    @Published var pitchHistory: [Double] = []
     @Published var intonationLabel: String = "Speak to begin..."
     @Published var standardDeviation: Double = 0.0
-    
+    @Published var intonationRating: Int = 0 // 0: N/A, 1: Datar, 2: Cukup, 3: Dinamis
+    @Published var publishedError: String? = nil
+
+    // MARK: - Pitch History (Time-based Window)
+    // Diubah untuk menyimpan (timestamp, pitch)
+    @Published var pitchHistory: [(timestamp: TimeInterval, pitch: Double)] = []
+    private let windowSize: TimeInterval = 10.0 // Menggunakan window 10 detik
+    // private let historySize = 200 // <-- Dihapus
+     
     // MARK: - TFLite Properties
     private var interpreter: Interpreter?
-    private let historySize = 200
     private let requiredSampleRate = 16000.0
     private var audioBuffer = [Float]()
-    private var requiredInputSize = 0
-    
-    private let windowSamples = 16000
-    private let hopSamples = 8000
-    
+    private let windowSamples = 16000 // 1 detik audio
+    private let hopSamples = 8000   // 0.5 detik geser
+     
     // MARK: - Audio Conversion
     private var audioConverter: AVAudioConverter?
     private let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
-                                              sampleRate: 16000.0,
-                                              channels: 1,
-                                              interleaved: false)!
-    
+                                            sampleRate: 16000.0,
+                                            channels: 1,
+                                            interleaved: false)!
+     
     init() {
         loadModel()
     }
-    
-
-    private var inputBaseShape: [Int] = [] // contoh: [-1, 1024] atau [1, 16000]
-    private var inputRank: Int = 2
-
+     
     private func loadModel() {
-       guard let modelPath = Bundle.main.path(forResource: "spice", ofType: "tflite") else {
-           print("❌ FATAL: spice.tflite not found"); intonationLabel = "Error: Model file not found."; return
-       }
-       do {
-           interpreter = try Interpreter(modelPath: modelPath)
-           // Alokasikan awal supaya tensor terinisialisasi
-           try interpreter?.allocateTensors()
-           print("✅ TFLite model loaded.")
-       } catch {
-           print("❌ Interpreter init error: \(error)"); intonationLabel = "Error: Could not load model."
-       }
-   }
-
-    func analyze(buffer: AVAudioPCMBuffer) {
-           guard let converted = convertAudio(buffer: buffer) else { return }
-           let n = Int(converted.frameLength)
-           guard let ch = converted.floatChannelData?.pointee else { return }
-           let chunk = Array(UnsafeBufferPointer(start: ch, count: n))
-           audioBuffer.append(contentsOf: chunk)
-
-           // Proses per frame tetap
-           while audioBuffer.count >= windowSamples {
-               let frame = Array(audioBuffer.prefix(windowSamples))
-               // slide dengan hop (overlap)
-               audioBuffer.removeFirst(hopSamples)
-               runInference(on: frame)
-           }
-       }
-
-        private func runInference(on audioFrame: [Float]) {
-            guard let interpreter = interpreter else { return }
-            // Pastikan panjang frame sesuai
-            let N = audioFrame.count
-            guard N > 0 else { return }
-
-            do {
-                // ✅ Model kamu mengharapkan rank-1 (vector), jadi gunakan [N] saja.
-                try interpreter.resizeInput(at: 0, to: Tensor.Shape([N]))
-                try interpreter.allocateTensors() // WAJIB setelah resize
-
-                let inputData = Data(buffer: UnsafeBufferPointer(start: audioFrame, count: N))
-                try interpreter.copy(inputData, toInputAt: 0)
-
-                try interpreter.invoke()
-
-                let pitchTensor = try interpreter.output(at: 0)
-                let unctTensor  = try interpreter.output(at: 1)
-
-                let pitchVals = pitchTensor.data.toArray(type: Float.self)
-                let unctVals  = unctTensor.data.toArray(type: Float.self)
-                let confVals  = unctVals.map { 1.0 - $0 }
-
-                let f0Hz = zip(pitchVals, confVals).compactMap { (p, c) -> Double? in
-                    guard c >= 0.85 else { return nil }
-                    return Double(spiceOutputToHz(p))
-                }
-                updatePitchHistory(with: f0Hz)
-
-            } catch {
-                print("❌ Inference error: \(error)")
-            }
+        guard let modelPath = Bundle.main.path(forResource: "spice", ofType: "tflite") else {
+            let err = IntonationError.modelNotFound
+            print("❌ FATAL: \(err.localizedDescription)")
+            self.intonationLabel = "Error: Model file not found."
+            self.publishedError = err.localizedDescription
+            return
         }
+        do {
+            interpreter = try Interpreter(modelPath: modelPath)
+            try interpreter?.allocateTensors()
+            print("✅ TFLite model loaded.")
+        } catch {
+            let err = IntonationError.interpreterFailed(error)
+            print("❌ Interpreter init error: \(err.localizedDescription)")
+            self.intonationLabel = "Error: Could not load model."
+            self.publishedError = err.localizedDescription
+        }
+    }
 
+    // --- FUNGSI UTAMA YANG DIUBAH ---
+    // Anda harus memasukkan `currentTime` dari audio engine Anda
+    func analyze(buffer: AVAudioPCMBuffer, currentTime: TimeInterval) {
+        guard let converted = convertAudio(buffer: buffer) else { return }
+        let n = Int(converted.frameLength)
+        guard let ch = converted.floatChannelData?.pointee else { return }
+        let chunk = Array(UnsafeBufferPointer(start: ch, count: n))
+        audioBuffer.append(contentsOf: chunk)
 
-       @inline(__always)
-       private func spiceOutputToHz(_ p: Float) -> Float {
-           let PT_OFFSET: Float = 25.58
-           let PT_SLOPE:  Float = 63.07
-           let FMIN:      Float = 10.0
-           let BINS_PER_OCT: Float = 12.0
-           let cqtBin = p * PT_SLOPE + PT_OFFSET
-           return FMIN * powf(2.0, cqtBin / BINS_PER_OCT)
-       }
+        // Proses per frame (geser 0.5 detik)
+        while audioBuffer.count >= windowSamples {
+            let frame = Array(audioBuffer.prefix(windowSamples))
+            audioBuffer.removeFirst(hopSamples)
+            
+            // Kirim `currentTime` ke proses inference
+            runInference(on: frame, at: currentTime)
+        }
+    }
 
-       private func updatePitchHistory(with newPitches: [Double]) {
-           let valid = newPitches.filter { $0 > 0 }
-           guard !valid.isEmpty else { return }
-           pitchHistory.append(contentsOf: valid)
-           if pitchHistory.count > historySize {
-               pitchHistory.removeFirst(pitchHistory.count - historySize)
-           }
-           calculateStatistics()
-       }
-    
-    private func calculateStatistics() {
-        guard pitchHistory.count > 1 else { return }
-        let mean = pitchHistory.reduce(0, +) / Double(pitchHistory.count)
-        let sumOfSquaredDiffs = pitchHistory.map { pow($0 - mean, 2) }.reduce(0, +)
-        self.standardDeviation = sqrt(sumOfSquaredDiffs / Double(pitchHistory.count))
+    // Diubah untuk menerima `currentTime`
+    private func runInference(on audioFrame: [Float], at currentTime: TimeInterval) {
+        guard let interpreter = interpreter else { return }
+        let N = audioFrame.count
+        guard N > 0 else { return }
+
+        do {
+            try interpreter.resizeInput(at: 0, to: Tensor.Shape([N]))
+            try interpreter.allocateTensors()
+
+            let inputData = Data(buffer: UnsafeBufferPointer(start: audioFrame, count: N))
+            try interpreter.copy(inputData, toInputAt: 0)
+
+            try interpreter.invoke()
+
+            let pitchTensor = try interpreter.output(at: 0)
+            let unctTensor  = try interpreter.output(at: 1)
+
+            let pitchVals = pitchTensor.data.toArray(type: Float.self)
+            let unctVals  = unctTensor.data.toArray(type: Float.self)
+            let confVals  = unctVals.map { 1.0 - $0 }
+
+            let f0Hz = zip(pitchVals, confVals).compactMap { (p, c) -> Double? in
+                guard c >= 0.85 else { return nil }
+                return Double(spiceOutputToHz(p))
+            }
+            
+            // Kirim data pitch baru DAN `currentTime` ke history
+            updatePitchHistory(with: f0Hz, at: currentTime)
+
+        } catch {
+            // Error runtime sebaiknya di-print agar tidak spam UI
+            print("❌ Inference error: \(error)")
+        }
+    }
+
+    @inline(__always)
+    private func spiceOutputToHz(_ p: Float) -> Float {
+        let PT_OFFSET: Float = 25.58
+        let PT_SLOPE:  Float = 63.07
+        let FMIN:      Float = 10.0
+        let BINS_PER_OCT: Float = 12.0
+        let cqtBin = p * PT_SLOPE + PT_OFFSET
+        return FMIN * powf(2.0, cqtBin / BINS_PER_OCT)
+    }
+
+    // Diubah untuk menerima `currentTime` dan memanggil `calculateStatistics`
+    private func updatePitchHistory(with newPitches: [Double], at time: TimeInterval) {
+        let valid = newPitches.filter { $0 > 0 }
+        guard !valid.isEmpty else { return }
         
+        // Tambahkan data baru sebagai tuple (timestamp, pitch)
+        let newEntries = valid.map { (timestamp: time, pitch: $0) }
+        pitchHistory.append(contentsOf: newEntries)
+        
+        // Panggil kalkulasi, kirim `currentTime` untuk proses filter window
+        calculateStatistics(at: time)
+    }
+     
+    // Diubah untuk mem-filter berdasarkan `windowSize` 10 detik
+    private func calculateStatistics(at currentTime: TimeInterval) {
+        
+        // 1. Filter pitchHistory untuk 10 detik terakhir
+        pitchHistory = pitchHistory.filter { (timestamp, _) in
+            (currentTime - timestamp) <= windowSize
+        }
+        
+        // 2. Ekstrak nilai pitch dari data yang sudah di-filter
+        let pitchesInWindow = pitchHistory.map { $0.pitch }
+        
+        // 3. Lakukan kalkulasi (sama seperti sebelumnya)
+        guard pitchesInWindow.count > 1 else {
+            // Reset jika tidak ada data
+            self.standardDeviation = 0.0
+            self.intonationLabel = "..."
+            self.intonationRating = 0
+            return
+        }
+        
+        let mean = pitchesInWindow.reduce(0, +) / Double(pitchesInWindow.count)
+        let sumOfSquaredDiffs = pitchesInWindow.map { pow($0 - mean, 2) }.reduce(0, +)
+        self.standardDeviation = sqrt(sumOfSquaredDiffs / Double(pitchesInWindow.count))
+         
+        // Logika Penilaian 3-2-1
         if standardDeviation < 18.0 {
-            intonationLabel = "Intonasi Cenderung Datar"
-        } else if standardDeviation < 35.0 {
-            intonationLabel = "Intonasi Cukup Bervariasi"
+            self.intonationLabel = "Intonasi Cenderung Datar"
+            self.intonationRating = 1 // Jelek
+        } else if standardDeviation < 30.0 {
+            self.intonationLabel = "Intonasi Cukup Bervariasi"
+            self.intonationRating = 2 // Cukup
         } else {
-            intonationLabel = "Intonasi Sangat Dinamis!"
+            self.intonationLabel = "Intonasi Sangat Dinamis!"
+            self.intonationRating = 3 // Bagus
         }
     }
     
+    func calculateFinalStandardDeviation() -> Double {
+        // 1. TIDAK MEMFILTER history berdasarkan waktu
+        let allPitches = pitchHistory.map { $0.pitch }
+        
+        // 2. Lakukan kalkulasi pada SEMUA data
+        guard allPitches.count > 1 else {
+            print("[IntonationVM Final] GUARD FAILED (total pitches <= 1). Returning 0.0")
+            return 0.0 // Kembalikan 0 jika data tidak cukup
+        }
+        
+        let mean = allPitches.reduce(0, +) / Double(allPitches.count)
+        let sumOfSquaredDiffs = allPitches.map { pow($0 - mean, 2) }.reduce(0, +)
+        let finalStdDev = sqrt(sumOfSquaredDiffs / Double(allPitches.count))
+        
+        print("[IntonationVM Final] Total Pitches=\(allPitches.count), Final StdDev=\(finalStdDev)")
+        return finalStdDev
+    }
+     
     private func convertAudio(buffer: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
         if audioConverter == nil {
             audioConverter = AVAudioConverter(from: buffer.format, to: targetFormat)
@@ -157,6 +225,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         }
         converter.convert(to: convertedBuffer, error: &error, withInputFrom: inputBlock)
         if let error = error {
+            // Error runtime
             print("❌ Error during audio conversion: \(error.localizedDescription)")
             return nil
         }
@@ -168,10 +237,13 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         audioBuffer.removeAll()
         intonationLabel = "Speak to begin..."
         standardDeviation = 0.0
+        intonationRating = 0
         audioConverter = nil
+        publishedError = nil
     }
 }
 
+// (Helper extension Data.toArray tidak berubah)
 extension Data {
     func toArray<T>(type: T.Type) -> [T] {
         return self.withUnsafeBytes { $0.bindMemory(to: T.self) }.map { $0 }

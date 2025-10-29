@@ -7,12 +7,6 @@
 
 import SwiftUI
 
-struct AspectOption: Identifiable, Hashable {
-    let id = UUID()
-    let title: String
-    let systemImage: String
-}
-
 struct AspectCheckTile: View {
     let option: AspectOption
     @Binding var isSelected: Bool

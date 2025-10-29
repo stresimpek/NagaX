@@ -4,15 +4,9 @@
 //
 //  Created by Regina Celine Adiwinata on 22/10/25.
 //
-
 import SwiftUI
 
 struct SettingsView: View {
-    // Controls
-    @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
-    @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
-    @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
-    @EnvironmentObject private var tempoVM: TempoViewModel
     
     @State private var durationMinutes: Int = 5
     @State private var distractionLevel: Double = 0.0
@@ -20,42 +14,47 @@ struct SettingsView: View {
     @State private var randomTopic: Bool = false
     
     let onBack: () -> Void
-    let onNext: () -> Void
+    let onNext: (PracticeSettings) -> Void
 
-    // Aspect options
-    private let aspectOptions: [AspectOption] = [
-        .init(title: "Intonasi",     systemImage: "waveform"),
-        .init(title: "Filler Words", systemImage: "text.badge.plus"),
-        .init(title: "Tempo",        systemImage: "metronome"),
-        .init(title: "Kontak Mata",  systemImage: "eye")
-    ]
+    // DIUBAH: Mengambil dari static var
+    private let aspectOptions: [AspectOption] = AspectOption.allOptions
 
-    // Selection state (id -> Bool)
     @State private var selectedAspects: Set<AspectOption> = []
+    
+    private var shouldDisableNext: Bool {
+        selectedAspects.isEmpty // True jika tidak ada aspek yang dipilih
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             SettingsHeader(
                 title: "Pilih tempat presentasimu",
                 onBack: onBack,
-                onNext: onNext
+                onNext: {
+                    // Kumpulkan semua state ke dalam satu struct
+                    let settings = PracticeSettings(
+                        durationMinutes: durationMinutes,
+                        distractionLevel: distractionLevel,
+                        enableQnA: enableQnA,
+                        randomTopic: randomTopic,
+                        selectedAspects: selectedAspects
+                    )
+                    // Kirim settings saat onNext dipanggil
+                    onNext(settings)
+                },
+                isNextDisabled: shouldDisableNext
             )
 
-            HStack(alignment: .top, spacing: 20) {
-                // Left: room preview
+            HStack(alignment: .center) {
                 RoomPreview()
                     .frame(maxWidth: 280)
                     .padding(.leading, 12)
 
-                // Right: controls
                 VStack(alignment: .leading, spacing: 16) {
-
-                    // Durasi
                     HStack(alignment: .center) {
                         Text("Durasi")
                             .font(.headline)
-//                        Spacer()
-                        // “5 menit” pill
+                        Spacer()
                         Text("\(durationMinutes) menit")
                             .font(.subheadline.weight(.semibold))
                             .padding(.horizontal, 12)
@@ -64,23 +63,20 @@ struct SettingsView: View {
                             .clipShape(Capsule())
                     }
 
-
-                    // Distraksi
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text("Distraksi").font(.headline)
+                            Spacer()
                             VStack(spacing: 4) {
                                 Slider(value: $distractionLevel, in: 0...2, step: 1)
                                     .tint(.blue)
                                     .onChange(of: distractionLevel) { v, i in
-                                        distractionLevel = v.rounded()   // paksa ke 0/1/2
+                                        distractionLevel = v.rounded()
                                     }
-
-                                // Label di bawah track
                                 HStack {
-                                    Text("sedikit")
+                                    Text("tidak ada")
                                     Spacer()
-                                    Text("sedang")
+                                    Text("sedikit")
                                     Spacer()
                                     Text("banyak")
                                 }
@@ -91,7 +87,7 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 4)
 
-                    // Toggles
+
                     HStack(spacing: 24) {
                         Toggle("QnA", isOn: $enableQnA)
                             .toggleStyle(.switch)
@@ -107,14 +103,22 @@ struct SettingsView: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
+                            // DIUBAH: Menggunakan aspectOptions dari var
                             ForEach(aspectOptions) { opt in
                                 AspectCheckTile(
                                     option: opt,
                                     isSelected: Binding(
                                         get: { selectedAspects.contains(opt) },
                                         set: { newVal in
-                                            if newVal { selectedAspects.insert(opt) }
-                                            else { selectedAspects.remove(opt) }
+                                            if newVal {
+                                                selectedAspects.insert(opt)
+                                                print("Inserted: \(opt.title). Current selection: \(selectedAspects.map { $0.title })")
+                                            }
+                                            else {
+                                                
+                                                selectedAspects.remove(opt)
+                                                print("Removed: \(opt.title). Current selection: \(selectedAspects.map { $0.title })")
+                                            }
                                         }
                                     )
                                 )
@@ -129,9 +133,11 @@ struct SettingsView: View {
             }
             .padding(.vertical, 12)
         }
+        .ignoresSafeArea(edges: .trailing)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.white)
         .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .padding(.trailing, 16)
+//        .toolbar(.hidden, for: .navigationBar)
     }
 }

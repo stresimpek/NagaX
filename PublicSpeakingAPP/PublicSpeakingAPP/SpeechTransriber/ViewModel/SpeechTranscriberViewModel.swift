@@ -14,12 +14,20 @@ import WhisperKit
 import Combine
 import CoreML
 
+enum RecordingStatus {
+    case stopped
+    case starting
+    case recording
+    case stopping // Opsional, jika perlu
+}
+
 @MainActor
 final class SpeechTranscriberViewModel: ObservableObject {
     // MARK: - Core Properties
     @Published var whisperKit: WhisperKit?
     @Published var isRecording: Bool = false
     @Published var isTranscribing: Bool = false
+    @Published var recordingStatus: RecordingStatus = .stopped
     @Published var appStartTime = Date()
     @Published var transcriptionTask: Task<Void, Never>?
     @Published var transcribeTask: Task<Void, Never>?
@@ -78,6 +86,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var requiredSegmentsForConfirmation: Int = 4
     @Published var bufferEnergy: [Float] = []
     @Published var bufferSeconds: Double = 0
+    @Published var finalBufferDuration: Double = 0
     @Published var confirmedSegments: [TranscriptionSegment] = []
     @Published var unconfirmedSegments: [TranscriptionSegment] = []
 
@@ -98,6 +107,8 @@ final class SpeechTranscriberViewModel: ObservableObject {
     weak var tempoVM: TempoViewModel?
     
     private var analyzerLastSampleIndex: Int = 0
+    
+    @Published var publishedError: String? = nil
     
     func binding<T>(_ keyPath: ReferenceWritableKeyPath<SpeechTranscriberViewModel, T>) -> Binding<T> {
         Binding(get: { self[keyPath: keyPath] },
@@ -128,6 +139,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         transcriptionTask?.cancel()
         isRecording = false
         isTranscribing = false
+        recordingStatus = .stopped
         whisperKit?.audioProcessor.stopRecording()
         currentText = ""
         currentChunks = [:]
@@ -147,6 +159,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         requiredSegmentsForConfirmation = 2
         bufferEnergy = []
         bufferSeconds = 0
+        finalBufferDuration = 0
         confirmedSegments = []
         unconfirmedSegments = []
 
@@ -272,6 +285,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     try await whisperKit.prewarmModels()
                     progressBarTask.cancel()
                 } catch {
+                    self.publishedError = "Gagal memuat model: \(error.localizedDescription)"
                     print("Error prewarming models, retrying: \(error.localizedDescription)")
                     progressBarTask.cancel()
                     if !redownload {
@@ -365,10 +379,16 @@ final class SpeechTranscriberViewModel: ObservableObject {
     func startRecording(_ loop: Bool) {
         guard let whisperKit = whisperKit else { return }
         
+        self.recordingStatus = .starting
+        
         Task(priority: .userInitiated) {
             guard await AudioProcessor.requestRecordPermission() else {
                 print("Microphone access was not granted.")
-                await MainActor.run { self.isRecording = false }
+                self.publishedError = "Izin mikrofon ditolak. Mohon aktifkan di Pengaturan."
+                await MainActor.run {
+                    self.isRecording = false
+                    self.recordingStatus = .stopped
+                }
                 return
             }
 
@@ -379,40 +399,60 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     self.bufferEnergy = whisperKit.audioProcessor.relativeEnergy
                     self.bufferSeconds = Double(whisperKit.audioProcessor.audioSamples.count) / Double(WhisperKit.sampleRate)
                 }
-            }
+            } 
 
             await MainActor.run {
                 isRecording = true
                 isTranscribing = true
+                recordingStatus = .recording
             }
             
             if loop {
                 realtimeLoop()
             }
-        }
+        } 
+        
     }
 
     func stopRecording(_ loop: Bool) {
+        self.recordingStatus = .stopping
         isRecording = false
-        stopRealtimeTranscription()
+        
         if let audioProcessor = whisperKit?.audioProcessor {
             audioProcessor.stopRecording()
         }
-
-        if !loop {
+        
+        if loop {
+            stopRealtimeTranscription()
+            finalizeText()
+        } else {
+            transcriptionTask?.cancel()
+            
             transcribeTask = Task {
                 await MainActor.run { isTranscribing = true }
+                
                 do {
                     try await transcribeCurrentBuffer()
                 } catch {
-                    print("Error: \(error.localizedDescription)")
+                    print("Error pada transkripsi akhir: \(error.localizedDescription)")
                 }
                 finalizeText()
-                await MainActor.run { isTranscribing = false }
+
+                await MainActor.run {
+                    isTranscribing = false
+                }
             }
         }
-
-        finalizeText()
+        
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 detik
+            await MainActor.run {
+                if !self.isTranscribing { // Hanya set stopped jika transkripsi benar2 selesai
+                    self.recordingStatus = .stopped
+                    print("[SpeechTranscriber] Status -> .stopped")
+                }
+            }
+        }
     }
 
     func finalizeText() {
@@ -459,12 +499,15 @@ final class SpeechTranscriberViewModel: ObservableObject {
 
         let currentBuffer = whisperKit.audioProcessor.audioSamples
         let newCount = currentBuffer.count
+        
+        let totalDuration = Double(newCount) / Double(WhisperKit.sampleRate)
+        
         if newCount > analyzerLastSampleIndex {
             let delta = Array(currentBuffer[analyzerLastSampleIndex..<newCount])
             analyzerLastSampleIndex = newCount
             
             if let pcm = makePCMBuffer(from: delta, sampleRate: Double(WhisperKit.sampleRate)) {
-                intonationAnalyzerVM?.analyze(buffer: pcm)
+                intonationAnalyzerVM?.analyze(buffer: pcm, currentTime: totalDuration)
             }
         }
         
@@ -816,14 +859,26 @@ final class SpeechTranscriberViewModel: ObservableObject {
         guard let whisperKit = whisperKit else { return }
         
         let currentBuffer = whisperKit.audioProcessor.audioSamples
+        
+        
+        let totalDuration = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
+        
+        await MainActor.run {
+            self.finalBufferDuration = totalDuration
+        }
+        
         guard !currentBuffer.isEmpty else { return }
+//        let newCount = currentBuffer.count
+//        
+//        let totalDuration = Double(newCount) / Double(WhisperKit.sampleRate)
         
         let newCount = currentBuffer.count
         if newCount > analyzerLastSampleIndex {
             let delta = Array(currentBuffer[analyzerLastSampleIndex..<newCount])
             analyzerLastSampleIndex = newCount
             if let pcm = makePCMBuffer(from: delta, sampleRate: Double(WhisperKit.sampleRate)) {
-                intonationAnalyzerVM?.analyze(buffer: pcm)
+                // Gunakan totalDuration di sini juga
+                intonationAnalyzerVM?.analyze(buffer: pcm, currentTime: totalDuration)
             }
         }
         

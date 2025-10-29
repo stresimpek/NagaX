@@ -14,15 +14,21 @@ struct SimulationViewWrapper: View {
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
     let intonationAnalyzerVM: IntonationAnalyzerViewModel
     let tempoVM: TempoViewModel
+    let settings: PracticeSettings
+    let onBack: () -> Void
+    let onComplete: (EvaluationModel, String) -> Void
 
     var body: some View {
         SimulationView(
             viewModel: SimulationViewModel(
+                settings: settings,
                 whisperKitVM: whisperKitVM,
                 textAnalyzerVM: textAnalyzerVM,
                 intonationAnalyzerVM: intonationAnalyzerVM,
                 tempoVM: tempoVM
-            )
+            ),
+            onBack: onBack, // BARU: Teruskan closure
+            onComplete: onComplete // BARU: Teruskan closure
         )
     }
 }
@@ -30,10 +36,26 @@ struct SimulationViewWrapper: View {
 struct SimulationView: View {
     
     @StateObject private var viewModel: SimulationViewModel
-    @Environment(\.dismiss) var dismiss
+//    @Environment(\.dismiss) var dismiss
     
-    init(viewModel: SimulationViewModel) {
+    let onBack: () -> Void
+    let onComplete: (EvaluationModel, String) -> Void
+    
+    private var isProcessing: Bool {
+            // Tampilkan "Menganalisis..." HANYA JIKA:
+            // 1. Kita TIDAK sedang merekam
+            // 2. DAN WhisperKit SEDANG melakukan transkripsi (ini adalah Fase 1)
+            return !viewModel.isRecording && viewModel.whisperKitVM.isTranscribing
+        }
+    
+    init(
+        viewModel: SimulationViewModel,
+        onBack: @escaping () -> Void,
+        onComplete: @escaping (EvaluationModel, String) -> Void
+    ) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.onBack = onBack
+        self.onComplete = onComplete
     }
     
     var body: some View {
@@ -74,9 +96,7 @@ struct SimulationView: View {
                 VStack {
                     ZStack {
                         HStack {
-                            Button(action: {
-                                dismiss()
-                            }) {
+                            Button(action: onBack) {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 20, weight: .bold))
                                     .padding()
@@ -96,19 +116,19 @@ struct SimulationView: View {
                     .padding(.top, 20)
                     .padding(.horizontal)
 
-                    .overlay(alignment: .topTrailing) {
-                        VStack(spacing: 4) {
-                            Button("Teacher Happy") { viewModel.setTeacherMood(.happy) }
-                            Button("Teacher Angry") { viewModel.setTeacherMood(.angry) }
-                            Button("Students Focus") { viewModel.setStudentMoods(.focus) }
-                            Button("Students Sleep") { viewModel.setStudentMoods(.sleep) }
-                        }
-                        .padding(.top, 20)
-                        .padding(.trailing)
-                        .buttonStyle(.bordered)
-                        .tint(.gray)
-                        .font(.system(size: 10))
-                    }
+//                    .overlay(alignment: .topTrailing) {
+//                        VStack(spacing: 4) {
+//                            Button("Teacher Happy") { viewModel.setTeacherMood(.happy) }
+//                            Button("Teacher Angry") { viewModel.setTeacherMood(.angry) }
+//                            Button("Students Focus") { viewModel.setStudentMoods(.focus) }
+//                            Button("Students Sleep") { viewModel.setStudentMoods(.sleep) }
+//                        }
+//                        .padding(.top, 20)
+//                        .padding(.trailing)
+//                        .buttonStyle(.bordered)
+//                        .tint(.gray)
+//                        .font(.system(size: 10))
+//                    }
                     
                     Spacer()
                     
@@ -128,7 +148,7 @@ struct SimulationView: View {
                                     .font(.system(size: 40))
                                     .foregroundColor(viewModel.isRecording ? .red : .black)
                             }
-                            .disabled(viewModel.whisperModelState != .loaded)
+                            .disabled(viewModel.whisperModelState != .loaded || isProcessing )
                             
                             VStack(alignment: .leading) {
                                 Text(viewModel.isRecording ? "STOP\nRECORD" : "START\nRECORD")
@@ -153,24 +173,36 @@ struct SimulationView: View {
                 }
                 .zIndex(10)
                 
+                if isProcessing {
+                    Color.black.opacity(0.5)
+                        .edgesIgnoringSafeArea(.all)
+                        .zIndex(11)
+                    
+                    ProgressView("Menganalisis...")
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.5)
+                        .font(.title3)
+                        .foregroundColor(.white)
+                        .zIndex(12)
                 }
+                
+            }
             .frame(width: geo.size.width, height: geo.size.height)
             .onDisappear {
                 viewModel.cleanup()
             }
-            .navigationDestination(isPresented: $viewModel.isAnalysisComplete) {
-                if let result = viewModel.evaluationResult {
-                    EvaluationView(
-                        result: result,
-                        whisperKitVM: viewModel.whisperKitVM,
-                        textAnalyzerVM: viewModel.textAnalyzerVM,
-                        intonationAnalyzerVM: viewModel.intonationAnalyzerVM,
-                        tempoVM: viewModel.tempoVM,
-                        fullTranscript: viewModel.finalTranscript
-                    )
-                    .navigationBarBackButtonHidden(true)
-                } else {
-                    Text("Gagal memuat hasil evaluasi.")
+            .onReceive(viewModel.$isAnalysisComplete) { isComplete in
+                print("onReceive isAnalysisComplete: \(isComplete)") // Log 1
+                if isComplete {
+                    if let result = viewModel.evaluationResult {
+                        print("Evaluation result FOUND. Calling onComplete...") // Log 2a
+                        onComplete(result, viewModel.finalTranscript)
+                    } else {
+                        print("Evaluation result is NIL. Calling onBack...") // Log 2b
+                        // Mungkin tampilkan error dulu?
+                        // viewModel.errorMessage = "Gagal memproses hasil evaluasi."
+                        onBack() // Kembali jika tidak ada hasil
+                    }
                 }
             }
             .navigationBarBackButtonHidden(true)
