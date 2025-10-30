@@ -37,6 +37,8 @@ class SimulationViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     private var recordingStartTime: Date?
+    private var isEvaluating: Bool = false
+    private var didHaveActiveStateThisSession: Bool = false
     
     private var distractionPlayers: [AVAudioPlayer] = []
     
@@ -64,40 +66,30 @@ class SimulationViewModel: ObservableObject {
         self.whisperKitVM.$modelState
             .receive(on: DispatchQueue.main)
             .assign(to: &$whisperModelState)
-         
-        // BARU: Pantau error dari WhisperKit
+
         self.whisperKitVM.$publishedError
             .receive(on: DispatchQueue.main)
-            .compactMap { $0 } // Hanya teruskan jika tidak nil
+            .compactMap { $0 }
             .sink { [weak self] errorText in
                 // Tampilkan error ini di UI kita
                 self?.errorMessage = errorText
             }
             .store(in: &cancellables)
         
-        recordingStatus()
-        
         setupRecordingObserver()
         setupAnalysisSubscribers()
-        
-        // BARU: Logika mood terpusat
         setupMoodAggregation()
-        
-        // DIHAPUS: Subscriber tempo.$tempoLabel dihapus
-        // karena sudah ditangani di setupMoodAggregation()
         
         setupAudioPlayers(named: ["fast-knocking-on-door.mp3", "opening-door.mp3"])
     }
     
     private func setupMoodAggregation() {
-            // Gabungkan semua publisher rating yang relevan
         intonationAnalyzerVM.$intonationRating
             .combineLatest(tempoVM.$tempoRating)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] (intonation, tempo) in
                 guard let self = self else { return }
-                
-                // Panggil fungsi logika baru
+
                 self.updateAggregateMood(
                     intonationRating: intonation,
                     tempoRating: tempo
@@ -155,9 +147,9 @@ class SimulationViewModel: ObservableObject {
         switch finalRating {
         case 3:
             setTeacherMood(.happy)
-            setStudentMoods(.focus) // Student juga
+            setStudentMoods(.focus)
         case 2:
-            setTeacherMood(.idle) // "flat"
+            setTeacherMood(.idle)
             setStudentMoods(.idle)
         case 1:
             setTeacherMood(.angry)
@@ -170,108 +162,58 @@ class SimulationViewModel: ObservableObject {
             print("--------------------")
     }
 
-//    private func setupRecordingObserver() {
-//        whisperKitVM.$isRecording
-//            .combineLatest(whisperKitVM.$isTranscribing)
-//            .receive(on: DispatchQueue.main)
-//            .sink { [weak self] (isRec, isTrans) in
-//                guard let self = self else { return }
-//
-//                // Kondisi tetap sama
-//                if !isRec && !isTrans && self.recordingStartTime != nil {
-//                    print("Recording observer triggered for final evaluation.")
-//                    // Cukup panggil processEvaluation. Biarkan dia yang mengelola 'recordingStartTime'.
-//                    self.processEvaluation()
-//                    // HAPUS BARIS INI: self.recordingStartTime = nil
-//                }
-//            }
-//            .store(in: &cancellables)
-//    }
-    
+
     private func setupRecordingObserver() {
-            // Simpan state sebelumnya di dalam scope sink
-            var previousRecState: Bool? = nil // Awalnya nil
-            var previousTransState: Bool? = nil // Awalnya nil
+        var prevRec: Bool = false
+        var prevTrans: Bool = false
 
-            whisperKitVM.$isRecording
-                .combineLatest(whisperKitVM.$isTranscribing)
-                .receive(on: DispatchQueue.main)
-                // Hapus debounce dulu untuk melihat state mentah
-                // .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
-                .sink { [weak self] (isRec, isTrans) in
-                    guard let self = self else { return }
-
-                    let startTimeStatus = (self.recordingStartTime == nil) ? "nil" : "set"
-        
-
-                    // --- KONDISI BARU YANG LEBIH KUAT ---
-                    // Cek apakah ini transisi DARI AKTIF KE BERHENTI?
-                    // Yaitu, state sebelumnya TIDAK false,false DAN state sekarang ADALAH false,false
-                    let justStoppedCompletely = (previousRecState != false || previousTransState != false) && (!isRec && !isTrans)
-
-                    // Hanya panggil evaluasi JIKA:
-                    // 1. Transisinya adalah "baru saja berhenti total"
-                    // 2. DAN sesi rekaman ini memang sudah dimulai (startTime tidak nil)
-                    if justStoppedCompletely && self.recordingStartTime != nil {
-                        print(">>> Observer Condition MET for final evaluation (Just Stopped Completely).")
-                        self.processEvaluation()
-                    } else {
-                        var reasons: [String] = []
-                        if !justStoppedCompletely { reasons.append("Not a 'Just Stopped Completely' transition") }
-                        if self.recordingStartTime == nil { reasons.append("startTime is nil") }
-                        // Tambahkan debug jika perlu:
-                        if previousRecState == nil { reasons.append("previous state was nil (initial run?)") }
-                        print(">>> Observer Condition FAILED: Reasons - \(reasons.joined(separator: ", "))")
-                    }
-
-                    // Update state sebelumnya untuk pengecekan berikutnya
-                    previousRecState = isRec
-                    previousTransState = isTrans
-                }
-                .store(in: &cancellables)
-        }
-    
-    private func recordingStatus() {
-        whisperKitVM.$recordingStatus
+        whisperKitVM.$isRecording
+            .combineLatest(whisperKitVM.$isTranscribing)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] newStatus in
+            .sink { [weak self] (isRec, isTrans) in
                 guard let self = self else { return }
+                let wasActive = (prevRec || prevTrans)
+                let nowActive = (isRec || isTrans)
+                if !wasActive && nowActive && self.recordingStartTime == nil {
+                    self.recordingStartTime = Date()
+                    self.didHaveActiveStateThisSession = true
+                    print(">>> startTime SET (rising-edge) at \(self.recordingStartTime!)")
+                }
+                prevRec = isRec
+                prevTrans = isTrans
+            }
+            .store(in: &cancellables)
 
-                print("[SimulationVM] Received Recording Status: \(newStatus)")
-
-                switch newStatus {
-                case .recording:
-                    // BARU: Set isRecording jadi true HANYA saat dikonfirmasi
-                    if !self.isRecording { // Hanya set jika belum true
-                        self.isRecording = true
-                        print("[SimulationVM] State -> isRecording = true")
-                    }
-                    // Set startTime jika belum ada (logika sebelumnya sudah benar)
-                    if self.recordingStartTime == nil {
-                        self.recordingStartTime = Date()
-                        print("[SimulationVM] Recording confirmed STARTED at: \(self.recordingStartTime!)")
-                    }
-                    
-                case .starting:
-                    // Saat starting, kita anggap BELUM recording
-                    if self.isRecording { // Jika sebelumnya true (jarang terjadi), set false
-                         self.isRecording = false
-                         print("[SimulationVM] State -> isRecording = false (During Starting)")
-                    }
-                    // Jangan set startTime di sini
-                    
-                case .stopping, .stopped:
-                    // BARU: Set isRecording jadi false saat berhenti atau sudah berhenti
-                    if self.isRecording { // Hanya set jika belum false
-                        self.isRecording = false
-                        print("[SimulationVM] State -> isRecording = false (Stopped/Stopping)")
-                    }
-                    // Reset startTime di sini juga aman, sebagai backup jika processEvaluation gagal
-                    // self.recordingStartTime = nil // Opsional, karena processEvaluation sudah handle
+        whisperKitVM.$isRecording
+            .combineLatest(whisperKitVM.$isTranscribing)
+            .receive(on: DispatchQueue.main)
+            .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
+            .scan<(Bool,Bool), (prev:(Bool,Bool), curr:(Bool,Bool))>((prev:(false,false), curr:(false,false))) { acc, curr in
+                (prev: acc.curr, curr: curr)
+            }
+            .sink { [weak self] pair in
+                guard let self = self else { return }
+                let (prevRec, prevTrans) = pair.prev
+                let (isRec, isTrans) = pair.curr
+                let justStopped = (prevRec || prevTrans) && (!isRec && !isTrans)
+                let stOK = (self.recordingStartTime != nil)
+                if justStopped && stOK && self.didHaveActiveStateThisSession && !self.isEvaluating {
+                    print(">>> Observer Condition MET for final evaluation.")
+                    self.isEvaluating = true
+                    self.processEvaluation()
+                } else if justStopped {
+                    let st = (self.recordingStartTime == nil) ? "nil" : "set"
+                    print(">>> Observer Condition FAILED (startTime=\(st), didHaveActive=\(self.didHaveActiveStateThisSession), isEvaluating=\(self.isEvaluating))")
                 }
             }
             .store(in: &cancellables)
+
+        whisperKitVM.$isRecording
+            .receive(on: DispatchQueue.main)
+            .removeDuplicates()
+            .assign(to: &self.$isRecording)
     }
+
     
     private func setupAnalysisSubscribers() {
         whisperKitVM.$confirmedText
@@ -374,7 +316,6 @@ class SimulationViewModel: ObservableObject {
                 print("Audio Distraksi: Gagal memilih player.")
             }
             
-            // Schedule next distraction
             self.playAndScheduleDistraction()
         }
     }
@@ -388,34 +329,32 @@ class SimulationViewModel: ObservableObject {
             return
         }
 
-        let shouldStart = (whisperKitVM.recordingStatus == .stopped)
-
-        if shouldStart {
-            print("Requesting START recording...")
-            startGame()
-            whisperKitVM.toggleRecording(shouldLoop: true)
-        } else {
-            print("Requesting STOP recording...")
+        if self.isRecording {
             stopGame()
             whisperKitVM.toggleRecording(shouldLoop: false)
+        } else {
+            print("Requesting START recording...")
+            if self.recordingStartTime == nil {
+                self.recordingStartTime = Date()
+                self.didHaveActiveStateThisSession = true
+                print(">>> Optimistic: startTime SET at \(self.recordingStartTime!)")
+            }
+            startGame()
+            whisperKitVM.toggleRecording(shouldLoop: true)
         }
     }
 
 
         private func processEvaluation() {
-            guard !self.isRecording else { /* ... */ return }
             print("Memproses evaluasi...")
-
-            // ---- GUARD BARU: Kunci Sekali Pakai ----
-            // 1. Pastikan evaluasi belum pernah dijalankan (cek recordingStartTime)
-            guard self.recordingStartTime != nil else {
-                 print("processEvaluation called again after completion or during processing, ignoring.")
-                 return // Jangan lakukan apa-apa jika sudah nil
-            }
-            // 2. Jika belum, SEGERA atur ke nil untuk mencegah pemanggilan ganda
-            self.recordingStartTime = nil
-            // -----------------------------------------
-
+            guard let start = self.recordingStartTime else {
+                   print("processEvaluation called but startTime is nil (already processed?), ignoring.")
+                   self.isEvaluating = false
+                   return
+               }
+               self.recordingStartTime = nil
+               self.didHaveActiveStateThisSession = false
+            
             let finalDuration = whisperKitVM.finalBufferDuration
             
             let finalIntonationStdDev = intonationAnalyzerVM.calculateFinalStandardDeviation()
@@ -424,6 +363,8 @@ class SimulationViewModel: ObservableObject {
                 self.errorMessage = "Tidak ada data audio yang direkam (durasi: \(finalDuration))."
                 print("Tidak ada data audio yang direkam (durasi: \(finalDuration))")
                 self.isAnalysisComplete = true // Tetap set complete agar UI tahu
+                self.isEvaluating = false
+                self.recordingStartTime = nil
                 return
             }
             
@@ -443,7 +384,7 @@ class SimulationViewModel: ObservableObject {
             
             self.isAnalysisComplete = true
             print("Evaluasi selesai, navigasi ke hasil")
-        }
+            self.isEvaluating = false        }
 
     
     func setTeacherMood(_ mood: TeacherMood) {
@@ -476,11 +417,11 @@ class SimulationViewModel: ObservableObject {
         self.isAnalysisComplete = false
         self.evaluationResult = nil
         self.finalTranscript = ""
-        // Reset juga error message lama
         self.errorMessage = nil
         self.recordingStartTime  = nil
+        self.isEvaluating = false
+        self.didHaveActiveStateThisSession = false
         
-        whisperKitVM.resetState()
         tempoVM.clearResults()
         intonationAnalyzerVM.clearResults()
         textAnalyzerVM.clearResults()
@@ -517,6 +458,6 @@ class SimulationViewModel: ObservableObject {
     func cleanup() {
         gameTimer?.invalidate()
         gameTimer = nil
-        cancellables.removeAll()
     }
 }
+

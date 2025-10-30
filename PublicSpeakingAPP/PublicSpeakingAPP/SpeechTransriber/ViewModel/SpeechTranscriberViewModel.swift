@@ -366,13 +366,17 @@ final class SpeechTranscriberViewModel: ObservableObject {
     
     // MARK: - Recording Logic
     func toggleRecording(shouldLoop: Bool) {
-        isRecording.toggle()
+//        isRecording.toggle()
 
         if isRecording {
-            resetState()
-            startRecording(shouldLoop)
-        } else {
+            print("[SpeechTranscriber] toggleRecording -> STOPPING")
+            isRecording = false // Set internal state
             stopRecording(shouldLoop)
+        } else {
+            print("[SpeechTranscriber] toggleRecording -> STARTING")
+            resetState() // Bersihkan state lama SEBELUM mulai
+            
+            startRecording(shouldLoop)
         }
     }
 
@@ -393,30 +397,41 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
 
             var deviceId: DeviceID?
-
-            try? whisperKit.audioProcessor.startRecordingLive(inputDeviceID: deviceId) { _ in
-                DispatchQueue.main.async {
-                    self.bufferEnergy = whisperKit.audioProcessor.relativeEnergy
-                    self.bufferSeconds = Double(whisperKit.audioProcessor.audioSamples.count) / Double(WhisperKit.sampleRate)
-                }
-            } 
-
-            await MainActor.run {
-                isRecording = true
-                isTranscribing = true
-                recordingStatus = .recording
-            }
             
-            if loop {
-                realtimeLoop()
+            do {
+                try whisperKit.audioProcessor.startRecordingLive(inputDeviceID: deviceId) { _ in
+                    DispatchQueue.main.async {
+                        self.bufferEnergy = whisperKit.audioProcessor.relativeEnergy
+                        self.bufferSeconds = Double(whisperKit.audioProcessor.audioSamples.count) / Double(WhisperKit.sampleRate)
+                    }
+                }
+
+                await MainActor.run {
+                    isRecording = true
+                    isTranscribing = true
+                    recordingStatus = .recording
+                }
+                
+                if loop {
+                    realtimeLoop()
+                }
+            } catch {
+                print("❌ Error starting audio recording: \(error.localizedDescription)")
+                self.publishedError = "Gagal memulai perekaman audio."
+                await MainActor.run {
+                    isRecording = false
+                    isTranscribing = false
+                    recordingStatus = .stopped
+                    print("[SpeechTranscriber] Status -> .stopped (Start Failed)")
+                }
             }
-        } 
+        }
         
     }
 
     func stopRecording(_ loop: Bool) {
-        self.recordingStatus = .stopping
         isRecording = false
+        self.recordingStatus = .stopping
         
         if let audioProcessor = whisperKit?.audioProcessor {
             audioProcessor.stopRecording()
@@ -868,9 +883,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
         
         guard !currentBuffer.isEmpty else { return }
-//        let newCount = currentBuffer.count
-//        
-//        let totalDuration = Double(newCount) / Double(WhisperKit.sampleRate)
         
         let newCount = currentBuffer.count
         if newCount > analyzerLastSampleIndex {

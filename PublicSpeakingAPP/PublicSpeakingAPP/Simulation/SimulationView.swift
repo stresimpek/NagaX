@@ -27,24 +27,19 @@ struct SimulationViewWrapper: View {
                 intonationAnalyzerVM: intonationAnalyzerVM,
                 tempoVM: tempoVM
             ),
-            onBack: onBack, // BARU: Teruskan closure
-            onComplete: onComplete // BARU: Teruskan closure
+            onBack: onBack,
+            onComplete: onComplete
         )
     }
 }
 
 struct SimulationView: View {
-    
     @StateObject private var viewModel: SimulationViewModel
-//    @Environment(\.dismiss) var dismiss
     
     let onBack: () -> Void
     let onComplete: (EvaluationModel, String) -> Void
     
     private var isProcessing: Bool {
-            // Tampilkan "Menganalisis..." HANYA JIKA:
-            // 1. Kita TIDAK sedang merekam
-            // 2. DAN WhisperKit SEDANG melakukan transkripsi (ini adalah Fase 1)
             return !viewModel.isRecording && viewModel.whisperKitVM.isTranscribing
         }
     
