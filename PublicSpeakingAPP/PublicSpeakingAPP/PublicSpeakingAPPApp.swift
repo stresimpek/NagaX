@@ -23,14 +23,12 @@ struct PublicSpeakingAPPApp: App {
                 .environmentObject(textAnalyzerVM)
                 .environmentObject(intonationAnalyzerVM)
                 .environmentObject(tempoVM)
-
-//            NavigationStack {
-//                HomeView()
-//                    .environmentObject(whisperKitVM)
-//                    .environmentObject(textAnalyzerVM)
-//                    .environmentObject(intonationAnalyzerVM)
-//                    .environmentObject(tempoVM)
-//            }
+                .task {
+                    guard whisperKitVM.textAnalyzerVM == nil else { return }
+                    whisperKitVM.textAnalyzerVM = textAnalyzerVM
+                    whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
+                    whisperKitVM.tempoVM = tempoVM
+                }
         }
     }
 }

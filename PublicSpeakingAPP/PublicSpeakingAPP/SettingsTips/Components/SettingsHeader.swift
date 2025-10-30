@@ -11,6 +11,7 @@ struct SettingsHeader: View {
     var title: String
     let onBack: () -> Void
     let onNext: () -> Void
+    var isNextDisabled: Bool = false
 
     var body: some View {
         HStack {
@@ -29,6 +30,7 @@ struct SettingsHeader: View {
                     Image(systemName: "chevron.right")
                 }
             }
+            .disabled(isNextDisabled)
         }
         .buttonStyle(.plain)
         .padding()

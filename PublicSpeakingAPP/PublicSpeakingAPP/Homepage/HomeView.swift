@@ -7,67 +7,64 @@
 
 import SwiftUI
 
-enum Route: Hashable {
-    case tips
-    case settings
-    case simulation
-}
-
 struct HomeView: View {
-    @State private var path: [Route] = []
-
-    @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
-    @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
-    @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
-    @EnvironmentObject private var tempoVM: TempoViewModel
+    @StateObject private var coordinator = NavigationCoordinator()
 
     var body: some View {
-        NavigationStack(path: $path) {
-            // ROOT (Home)
+        NavigationStack(path: $coordinator.path) {
             HomeContentView(
-                onStart: { path.append(.tips) } // tombol "Mulai Presentasi"
+                onStart: { coordinator.goToTips() }
             )
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .tips:
                     TipsPresentasiView(
-                        onBack: {                      // kembali ke Home
-                            path.removeAll()
+                        onBack: {
+                            coordinator.returnToHome()
                         },
-                        onContinue: {                  // ke Settings
-                            path.append(.settings)
+                        onContinue: {
+                            coordinator.goToSettings()
                         }
                     )
-
+                    
                 case .settings:
                     SettingsView(
-                        onBack: {                      // balik ke Tips
-                            path.removeLast()
+                        onBack: {
+                            coordinator.goBack()
                         },
-                        onNext: {                      // ke Simulation
-                            path.append(.simulation)
+                        onNext: { settings in
+                            coordinator.goToSimulation(settings)
                         }
                     )
-
-                case .simulation:
-                    // Bisa pakai env objects (disarankan), jadi tak perlu param:
+                    
+                case .simulation(let settings):
                     SimulationViewWrapper(
-                        whisperKitVM: whisperKitVM,
-                        textAnalyzerVM: textAnalyzerVM,
-                        intonationAnalyzerVM: intonationAnalyzerVM,
-                        tempoVM: tempoVM
+                        settings: settings,
+                        onBack: {
+                            coordinator.goBack()
+                        },
+                        onComplete: { result, transcript in
+                            coordinator.goToEvaluation(result: result, transcript: transcript, settings: settings)
+                        }
                     )
                     .navigationBarBackButtonHidden(true)
+                    
+                case .evaluation(let result, let transcript, let settings):
+                    EvaluationView(
+                        result: result,
+                        fullTranscript: transcript,
+                        settings: settings,
+                        onBack: {
+                            coordinator.returnToHome()
+                        },
+                        onNext: { passedSettings in
+                            coordinator.retrySimulation(from: passedSettings)
+                        }
+                    )
                 }
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear {
-            // wiring tambahan kalau perlu
-            whisperKitVM.textAnalyzerVM = textAnalyzerVM
-            whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
-            whisperKitVM.tempoVM = tempoVM
-            whisperKitVM.onAppear()
-        }
+        .environmentObject(coordinator)
     }
 }

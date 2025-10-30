@@ -18,6 +18,7 @@ class SimulationViewModel: ObservableObject {
     @Published var studentMoods: [StudentMood] = Array(repeating: .idle, count: 9)
     @Published var timerSeconds: Int = 0
     @Published var isRecording: Bool = false
+    @Published var errorMessage: String? = nil
     
     let whisperKitVM: SpeechTranscriberViewModel
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
@@ -28,14 +29,12 @@ class SimulationViewModel: ObservableObject {
     @Published var isAnalysisComplete: Bool = false
     @Published var whisperModelState: ModelState = .unloaded
     @Published var finalTranscript: String = ""
-    
     @Published var showNoTranscriptAlert: Bool = false
     
+    private let settings: PracticeSettings
     private var gameTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
-    
     private var recordingStartTime: Date?
-    
     private var distractionPlayers: [AVAudioPlayer] = []
     
     var formattedTime: String {
@@ -45,60 +44,181 @@ class SimulationViewModel: ObservableObject {
     }
     
     init(
+        settings: PracticeSettings,
         whisperKitVM: SpeechTranscriberViewModel,
         textAnalyzerVM: TextFrequencyAnalyzerViewModel,
         intonationAnalyzerVM: IntonationAnalyzerViewModel,
-        tempoVM: TempoViewModel
+        tempoVM: TempoViewModel,
     ) {
+        self.settings = settings
         self.whisperKitVM = whisperKitVM
         self.textAnalyzerVM = textAnalyzerVM
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
-        
         self.whisperKitVM.$modelState
             .receive(on: DispatchQueue.main)
             .assign(to: &$whisperModelState)
+         
+        self.whisperKitVM.$publishedError
+            .receive(on: DispatchQueue.main)
+            .compactMap { $0 } // Hanya teruskan jika tidak nil
+            .sink { [weak self] errorText in
+                self?.errorMessage = errorText
+            }
+            .store(in: &cancellables)
+        
+        recordingStatus()
         
         setupRecordingObserver()
         setupAnalysisSubscribers()
-        
-        tempoVM.$tempoLabel
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] tempoLabel in
-                guard let self = self else { return }
-                
-                guard self.isRecording else {
-                    self.setTeacherMood(.idle)
-                    return
-                }
-                
-                switch tempoLabel {
-                case "Tempo Ideal":
-                    self.setTeacherMood(.happy)
-                case "Tempo Lambat", "Tempo Cepat":
-                    self.setTeacherMood(.angry)
-                default:
-                    self.setTeacherMood(.idle)
-                }
-            }
-            .store(in: &cancellables)
+        setupMoodAggregation()
         
         setupAudioPlayers(named: ["fast-knocking-on-door.mp3", "opening-door.mp3"])
     }
     
-    private func setupRecordingObserver() {
-        whisperKitVM.$isRecording
-            .combineLatest(whisperKitVM.$isTranscribing)
+    private func setupMoodAggregation() {
+        intonationAnalyzerVM.$intonationRating
+            .combineLatest(tempoVM.$tempoRating)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] (isRec, isTrans) in
+            .sink { [weak self] (intonation, tempo) in
                 guard let self = self else { return }
                 
-                if !isRec && !isTrans && self.recordingStartTime != nil {
-                    print("Recording selesai, memulai evaluasi...")
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.updateAggregateMood(
+                    intonationRating: intonation,
+                    tempoRating: tempo
+                )
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func updateAggregateMood(intonationRating: Int, tempoRating: Int) {
+        guard isRecording else {
+            setTeacherMood(.idle)
+            setStudentMoods(.idle)
+            return
+        }
+    
+        print("--- Update Mood ---")
+        print("Settings Aspects: \(settings.selectedAspects.map { $0.title })")
+        print("Incoming Ratings: Intonation=\(intonationRating), Tempo=\(tempoRating)")
+        
+        var activeRatings: [Int] = []
+        
+        if settings.selectedAspects.contains(.intonasi) {
+            print("Intonation aspect IS selected.")
+            activeRatings.append(intonationRating)
+        }
+        if settings.selectedAspects.contains(.tempo) {
+            print("Tempo aspect IS selected.")
+            activeRatings.append(tempoRating)
+        }
+//            if settings.selectedAspects.contains(.fillerWords) {
+//                activeRatings.append(fillerRating)
+//            }
+//            if settings.selectedAspects.contains(.kontakMata) {
+//                activeRatings.append(eyeContactRating)
+//            }
+        
+        // Filter rating '0' (N/A atau belum dihitung)
+        let validRatings = activeRatings.filter { $0 > 0 }
+        print("Valid Ratings for Averaging: \(validRatings)")
+        
+        guard !validRatings.isEmpty else {
+            setTeacherMood(.idle)
+            setStudentMoods(.idle)
+            return
+        }
+        
+        let totalRating = validRatings.reduce(0, +)
+        let averageRating = Double(totalRating) / Double(validRatings.count)
+        let finalRating = Int(floor(averageRating))
+        print("Final Aggregate Rating: \(finalRating)")
+
+        switch finalRating {
+        case 3:
+            setTeacherMood(.happy)
+            setStudentMoods(.focus)
+        case 2:
+            setTeacherMood(.idle)
+            setStudentMoods(.idle)
+        case 1:
+            setTeacherMood(.angry)
+            setStudentMoods(.sleep)
+        default:
+            setTeacherMood(.idle)
+            setStudentMoods(.idle)
+        }
+    print("Setting Mood: Teacher=\(teacherMood), Students=\(studentMoods.first ?? .idle)")
+            print("--------------------")
+    }
+    
+    private func setupRecordingObserver() {
+            var previousRecState: Bool? = nil
+            var previousTransState: Bool? = nil
+
+            whisperKitVM.$isRecording
+                .combineLatest(whisperKitVM.$isTranscribing)
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] (isRec, isTrans) in
+                    guard let self = self else { return }
+
+                    let startTimeStatus = (self.recordingStartTime == nil) ? "nil" : "set"
+        
+                    // --- KONDISI BARU YANG LEBIH KUAT ---
+                    // Cek apakah ini transisi DARI AKTIF KE BERHENTI?
+                    // Yaitu, state sebelumnya TIDAK false,false DAN state sekarang ADALAH false,false
+                    let justStoppedCompletely = (previousRecState != false || previousTransState != false) && (!isRec && !isTrans)
+
+                    // Hanya panggil evaluasi JIKA:
+                    // 1. Transisinya adalah "baru saja berhenti total"
+                    // 2. DAN sesi rekaman ini memang sudah dimulai (startTime tidak nil)
+                    if justStoppedCompletely && self.recordingStartTime != nil {
+                        print(">>> Observer Condition MET for final evaluation (Just Stopped Completely).")
                         self.processEvaluation()
-                        self.recordingStartTime = nil
+                    } else {
+                        var reasons: [String] = []
+                        if !justStoppedCompletely { reasons.append("Not a 'Just Stopped Completely' transition") }
+                        if self.recordingStartTime == nil { reasons.append("startTime is nil") }
+                        // Tambahkan debug jika perlu:
+                        if previousRecState == nil { reasons.append("previous state was nil (initial run?)") }
+                        print(">>> Observer Condition FAILED: Reasons - \(reasons.joined(separator: ", "))")
+                    }
+
+                    previousRecState = isRec
+                    previousTransState = isTrans
+                }
+                .store(in: &cancellables)
+        }
+    
+    private func recordingStatus() {
+        whisperKitVM.$recordingStatus
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newStatus in
+                guard let self = self else { return }
+
+                print("[SimulationVM] Received Recording Status: \(newStatus)")
+
+                switch newStatus {
+                case .recording:
+                    if !self.isRecording {
+                        self.isRecording = true
+                        print("[SimulationVM] State -> isRecording = true")
+                    }
+                    if self.recordingStartTime == nil {
+                        self.recordingStartTime = Date()
+                        print("[SimulationVM] Recording confirmed STARTED at: \(self.recordingStartTime!)")
+                    }
+                    
+                case .starting:
+                    if self.isRecording {
+                         self.isRecording = false
+                         print("[SimulationVM] State -> isRecording = false (During Starting)")
+                    }
+                    
+                case .stopping, .stopped:
+                    if self.isRecording {
+                        self.isRecording = false
+                        print("[SimulationVM] State -> isRecording = false (Stopped/Stopping)")
                     }
                 }
             }
@@ -117,7 +237,6 @@ class SimulationViewModel: ObservableObject {
                 
                 if !liveText.isEmpty && duration > 0 {
                     self.textAnalyzerVM.analyze(text: liveText)
-//                    self.tempoVM.updateTempo(text: liveText, duration: duration)
                 }
             }
             .store(in: &cancellables)
@@ -133,7 +252,6 @@ class SimulationViewModel: ObservableObject {
                 
                 if !liveText.isEmpty && duration > 0 {
                     self.textAnalyzerVM.analyze(text: liveText)
-//                    self.tempoVM.updateTempo(text: liveText, duration: duration)
                 }
             }
             .store(in: &cancellables)
@@ -168,11 +286,25 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func playAndScheduleDistraction() {
-        guard isRecording else { return }
+        
+        guard settings.distractionLevel > 0 else {
+            print("Distraksi dinonaktifkan (Level 0).")
+            return
+        }
         
         guard !distractionPlayers.isEmpty else { return }
         
-        let randomDelay = TimeInterval.random(in: 15.0...25.0)
+        let delayRange: ClosedRange<TimeInterval>
+        
+        if settings.distractionLevel == 1.0 {
+            delayRange = 30.0...45.0
+            print("Distraksi Level: Sedikit (delay 30-45s)")
+        } else {
+            delayRange = 15.0...25.0
+            print("Distraksi Level: Banyak (delay 15-25s)")
+        }
+        
+        let randomDelay = TimeInterval.random(in: delayRange)
         
         print("Audio Distraksi: Dijadwalkan dalam \(String(format: "%.1f", randomDelay)) detik.")
         
@@ -197,70 +329,67 @@ class SimulationViewModel: ObservableObject {
     }
     
     func toggleRecording() {
+        self.errorMessage = nil
+
         guard whisperModelState == .loaded else {
             print("Model belum siap, tidak bisa merekam.")
+            self.errorMessage = "Model belum siap, tidak bisa merekam."
             return
         }
-    
-        let wasRecording = isRecording
-        isRecording.toggle()
-        
-        if wasRecording {
-            print("Menghentikan recording...")
-            stopGame()
-            whisperKitVM.toggleRecording(shouldLoop: true)
-            
-        } else {
-            print("Memulai recording...")
+
+        let shouldStart = (whisperKitVM.recordingStatus == .stopped)
+
+        if shouldStart {
+            print("Requesting START recording...")
             startGame()
-            isAnalysisComplete = false
-            evaluationResult = nil
-            finalTranscript = ""
-            
             whisperKitVM.toggleRecording(shouldLoop: true)
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                if self.whisperKitVM.isRecording {
-                    self.recordingStartTime = Date()
-                    print("Recording dimulai pada: \(self.recordingStartTime!)")
-                }
-            }
+        } else {
+            print("Requesting STOP recording...")
+            stopGame()
+            whisperKitVM.toggleRecording(shouldLoop: false)
         }
     }
-    
-    private func processEvaluation() {
-        print("Memproses evaluasi...")
 
-        self.finalTranscript = self.whisperKitVM.confirmedText
 
-        if self.finalTranscript.isEmpty {
-            print("Evaluasi dibatalkan: Tidak ada transkrip.")
-            self.isAnalysisComplete = false
-            self.showNoTranscriptAlert = true
+        private func processEvaluation() {
+            guard !self.isRecording else { /* ... */ return }
+            print("Memproses evaluasi...")
 
-        } else {
-            print("Transkrip ditemukan, melanjutkan evaluasi...")
-            let duration = whisperKitVM.bufferSeconds
-
+            guard self.recordingStartTime != nil else {
+                 print("processEvaluation called again after completion or during processing, ignoring.")
+                 return
+            }
+            self.recordingStartTime = nil
+            
+            let finalDuration = whisperKitVM.finalBufferDuration
+            
+            let finalIntonationStdDev = intonationAnalyzerVM.calculateFinalStandardDeviation()
+            
+            guard finalDuration > 0 else {
+                self.errorMessage = "Tidak ada data audio yang direkam (durasi: \(finalDuration))."
+                print("Tidak ada data audio yang direkam (durasi: \(finalDuration))")
+                self.isAnalysisComplete = true
+                return
+            }
+            
             print("Data Evaluasi:")
-            print("- Duration: \(duration)s")
+            print("- Duration: \(finalDuration)s")
             print("- Tempo WPM: \(tempoVM.wpm)")
             print("- Filler Words: \(textAnalyzerVM.fillerWordCount)")
-            print("- Intonation StdDev: \(intonationAnalyzerVM.standardDeviation)")
-
+            print("- Intonation StdDev (Final Full): \(finalIntonationStdDev)")
+            
+            self.finalTranscript = self.whisperKitVM.confirmedText
             self.evaluationResult = EvaluationViewModel.process(
                 tempoVM: self.tempoVM,
                 textAnalyzerVM: self.textAnalyzerVM,
-                intonationVM: self.intonationAnalyzerVM,
-                duration: duration
+                intonationVM: finalIntonationStdDev,
+                duration: finalDuration
             )
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self.isAnalysisComplete = true
-                print("Evaluasi selesai, navigasi ke hasil")
-            }
+            
+            self.isAnalysisComplete = true
+            print("Evaluasi selesai, navigasi ke hasil")
         }
-    }
+
     
     func setTeacherMood(_ mood: TeacherMood) {
         if self.teacherMood == mood && self.isRecording {
@@ -286,8 +415,19 @@ class SimulationViewModel: ObservableObject {
     
     private func startGame() {
         resetGame()
-                self.teacherMood = .idle
+        self.teacherMood = .idle
         self.studentMoods = Array(repeating: .idle, count: 9)
+        
+        self.isAnalysisComplete = false
+        self.evaluationResult = nil
+        self.finalTranscript = ""
+        self.errorMessage = nil
+        self.recordingStartTime  = nil
+        
+        whisperKitVM.resetState()
+        tempoVM.clearResults()
+        intonationAnalyzerVM.clearResults()
+        textAnalyzerVM.clearResults()
         
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.updateGameLogic()
@@ -321,6 +461,5 @@ class SimulationViewModel: ObservableObject {
     func cleanup() {
         gameTimer?.invalidate()
         gameTimer = nil
-        cancellables.removeAll()
     }
 }

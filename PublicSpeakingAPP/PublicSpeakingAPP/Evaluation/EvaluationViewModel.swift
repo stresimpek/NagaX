@@ -13,7 +13,7 @@ struct EvaluationViewModel {
     static func process(
         tempoVM: TempoViewModel,
         textAnalyzerVM: TextFrequencyAnalyzerViewModel,
-        intonationVM: IntonationAnalyzerViewModel,
+        intonationVM: Double,
         duration: TimeInterval
     ) -> EvaluationModel {
         
@@ -22,15 +22,15 @@ struct EvaluationViewModel {
             counts: textAnalyzerVM.fillerWordCount,
             duration: duration
         )
-        let (intonationGrade, intonationFeedback, intonationScore) = gradeIntonation(stdDev: intonationVM.standardDeviation)
+        let (intonationGrade, intonationFeedback, intonationScore) = gradeIntonation(stdDev: intonationVM)
         
         // Dummy Data
         let eyeContactScore = 0.5
         let eyeContactGrade = "C"
         let eyeContactFeedback = "Kontak mata belum dianalisis"
-
+        
         // Rata-rata Nilai
-        let allScores = [tempoScore, fillerScore, intonationScore, eyeContactScore]
+        let allScores = [tempoScore, fillerScore, intonationScore]
         let overallScore = allScores.reduce(0, +) / Double(allScores.count)
         let overallGrade = percentageToGrade(overallScore * 100)
         
@@ -49,7 +49,7 @@ struct EvaluationViewModel {
             fillerWordsPerMinute: fillerWPM,
             fillerWordGrade: fillerGrade,
             fillerWordFeedback: fillerFeedback,
-            intonationStdDev: intonationVM.standardDeviation,
+            intonationStdDev: intonationVM,
             intonationGrade: intonationGrade,
             intonationFeedback: intonationFeedback,
             eyeContactScore: eyeContactScore * 100,
@@ -59,12 +59,17 @@ struct EvaluationViewModel {
     }
     
     private static func gradeTempo(wpm: Double) -> (String, String, Double) {
-        if wpm < 100.0 {
-            return ("D", "Tempo Lambat", 0.25)
-        } else if wpm >= 100.0 && wpm <= 150.0 {
+        let roundedWPM = wpm.rounded()
+
+        if roundedWPM >= 100.0 && roundedWPM <= 150.0 {
             return ("A", "Tempo Ideal", 1.0)
+        } else if (roundedWPM >= 80.0 && roundedWPM < 100.0) ||
+                  (roundedWPM > 150.0 && roundedWPM <= 170.0) { 
+             let feedback = (roundedWPM < 100.0) ? "Tempo Agak Lambat" : "Tempo Agak Cepat"
+            return ("B", feedback, 0.75)
         } else {
-            return ("C", "Tempo Cepat", 0.5)
+            let feedback = (roundedWPM < 80.0) ? "Tempo Sangat Lambat" : "Tempo Sangat Cepat"
+            return ("C", feedback, 0.5)
         }
     }
     
@@ -90,28 +95,23 @@ struct EvaluationViewModel {
     }
 
     private static func gradeIntonation(stdDev: Double) -> (String, String, Double) {
-        if stdDev < 18.0 {
-            return ("D", "Cenderung Datar", 0.25)
-        } else if stdDev < 22.0 {
-            return ("C", "Agak Bervariasi", 0.5)
-        } else if stdDev < 25.0 {
+        if stdDev >= 25.0 && stdDev <= 35.0 {
+            return ("A", "Sangat Dinamis", 1.0)
+        } else if stdDev >= 18.0 && stdDev < 25.0 {
             return ("B", "Cukup Bervariasi", 0.75)
-        } else if stdDev >= 25.0 && stdDev <= 30.0 {
-            return ("A", "Sangat Bervariasi", 0.75)
         } else {
-            return ("D", "Terlalu Berlebihan", 1.0)
+            let feedback = (stdDev < 18.0) ? "Cenderung Datar" : "Agak Berlebihan"
+            return ("C", feedback, 0.5)
         }
     }
 
     private static func percentageToGrade(_ percentage: Double) -> String {
         if percentage >= 90.0 {
             return "A"
-        } else if percentage >= 75.0 {
+        } else if percentage >= 70.0 {
             return "B"
-        } else if percentage >= 50.0 {
-            return "C"
         } else {
-            return "D"
+            return "C"
         }
     }
     

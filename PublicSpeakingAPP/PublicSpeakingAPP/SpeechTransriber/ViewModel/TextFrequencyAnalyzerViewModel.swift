@@ -141,7 +141,6 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
     }
 
     // MARK: - Analysis Functions
-    
     private func preprocess(text: String) -> (allTokens: [String], filteredTokens: [String]) {
         let tagger = NLTagger(tagSchemes: [.tokenType])
         tagger.string = text

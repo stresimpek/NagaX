@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct EvaluationModel: Identifiable {
+struct EvaluationModel: Identifiable, Hashable {
     let id: UUID
     let presentationDate: Date
     let durationInSeconds: TimeInterval
@@ -36,7 +36,6 @@ struct EvaluationModel: Identifiable {
     let eyeContactScore: Double
     let eyeContactGrade: String
     let eyeContactFeedback: String
-    
 
     init(
         id: UUID = UUID(),

@@ -11,7 +11,7 @@ import Combine
 struct ImageSequenceView: View {
     let baseName: String = "teacher_happy"
     let frameCount: Int = 15
-    let fps: Double = 12     // 12 frame per detik
+    let fps: Double = 12
 
     @State private var frameIndex = 0
 

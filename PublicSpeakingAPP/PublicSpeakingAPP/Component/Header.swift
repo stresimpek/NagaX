@@ -13,14 +13,6 @@ struct Header: View {
 
     var body: some View {
         ZStack {
-//            HStack {
-//                Button(action: onBack) {
-//                    Image(systemName: "chevron.left")
-//                        .font(.title2.weight(.semibold))
-//                        .padding(8)
-//                }
-//                Spacer()
-//            }
             Text(title)
                 .font(.headline)
                 .padding(.horizontal, 20)
@@ -28,11 +20,5 @@ struct Header: View {
                 .background(.gray.opacity(0.6))
                 .clipShape(Capsule())
         }.padding(.bottom, 16)
-//        .padding(.horizontal, 16)
-//        .padding(.top, 8)
     }
-}
-
-#Preview {
-    Header(title: "Hello World")
 }

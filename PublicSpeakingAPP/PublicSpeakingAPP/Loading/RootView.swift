@@ -7,12 +7,13 @@
 
 import SwiftUI
 import WhisperKit
+
 struct RootView: View {
     @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
 
     var body: some View {
         if whisperKitVM.modelState == .loaded {
-            NavigationView {
+            NavigationStack {
                 HomeView()
             }
         } else {
