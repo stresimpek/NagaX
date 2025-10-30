@@ -14,12 +14,13 @@ struct EvaluationViewModel {
         tempoVM: TempoViewModel,
         textAnalyzerVM: TextFrequencyAnalyzerViewModel,
         intonationVM: IntonationAnalyzerViewModel,
+        fillerWordVM: FillerWordViewModel,
         duration: TimeInterval
     ) -> EvaluationModel {
         
         let (tempoGrade, tempoFeedback, tempoScore) = gradeTempo(wpm: tempoVM.wpm)
         let (fillerGrade, fillerFeedback, fillerCount, fillerWPM, fillerScore) = gradeFillerWords(
-            counts: textAnalyzerVM.fillerWordCount,
+            counts: fillerWordVM.fillerWordCounts,
             duration: duration
         )
         let (intonationGrade, intonationFeedback, intonationScore) = gradeIntonation(stdDev: intonationVM.standardDeviation)

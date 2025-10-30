@@ -14,6 +14,7 @@ struct SimulationViewWrapper: View {
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
     let intonationAnalyzerVM: IntonationAnalyzerViewModel
     let tempoVM: TempoViewModel
+    let fillerWordVM: FillerWordViewModel
 
     var body: some View {
         SimulationView(
@@ -21,7 +22,8 @@ struct SimulationViewWrapper: View {
                 whisperKitVM: whisperKitVM,
                 textAnalyzerVM: textAnalyzerVM,
                 intonationAnalyzerVM: intonationAnalyzerVM,
-                tempoVM: tempoVM
+                tempoVM: tempoVM,
+                fillerWordVM: fillerWordVM
             )
         )
     }
@@ -186,7 +188,8 @@ struct SimulationView: View {
                         textAnalyzerVM: viewModel.textAnalyzerVM,
                         intonationAnalyzerVM: viewModel.intonationAnalyzerVM,
                         tempoVM: viewModel.tempoVM,
-                        fullTranscript: viewModel.finalTranscript
+                        fillerWordVM: viewModel.fillerWordVM
+//                        ,fullTranscript: viewModel.finalTranscript
                     )
                     .navigationBarBackButtonHidden(true)
                 } else {

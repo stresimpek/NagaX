@@ -16,6 +16,7 @@ struct SpeechTranscriberView: View {
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
     let intonationAnalyzerVM: IntonationAnalyzerViewModel
     let tempoVM: TempoViewModel
+    let fillerWordVM: FillerWordViewModel
 
     var body: some View {
         NavigationStack {
@@ -31,7 +32,8 @@ struct SpeechTranscriberView: View {
                             whisperKitVM: whisperKitVM,
                             textAnalyzerVM: textAnalyzerVM,
                             intonationAnalyzerVM: intonationAnalyzerVM,
-                            tempoVM: tempoVM
+                            tempoVM: tempoVM,
+                            fillerWordVM: fillerWordVM
                         )
                         .navigationBarBackButtonHidden(true)
                         .toolbar(.hidden, for: .navigationBar)
@@ -165,6 +167,7 @@ struct SpeechTranscriberView: View {
             whisperKitVM.textAnalyzerVM = textAnalyzerVM
             whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
             whisperKitVM.tempoVM = tempoVM
+            whisperKitVM.fillerWordVM = fillerWordVM
             whisperKitVM.onAppear()
         }
     }

@@ -36,7 +36,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var specializationProgressRatio: Float = 0.7
 
     // MARK: - Transcription Settings
-    @Published var selectedModel: String = "openai_whisper-small_216MB"
+    @Published var selectedModel: String = "openai_whisper-large-v3-v20240930_547MB"
     @Published var selectedTask: String = "transcribe"
     @Published var selectedLanguage: String = "indonesian"
     @Published var repoName: String = "argmaxinc/whisperkit-coreml"
@@ -96,6 +96,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     weak var intonationAnalyzerVM: IntonationAnalyzerViewModel?
     weak var tempoVM: TempoViewModel?
+    weak var fillerWordVM: FillerWordViewModel?
     
     private var analyzerLastSampleIndex: Int = 0
     
@@ -164,10 +165,12 @@ final class SpeechTranscriberViewModel: ObservableObject {
         textAnalyzerVM?.clearResults()
         intonationAnalyzerVM?.clearResults()
         tempoVM?.clearResults()
+        fillerWordVM?.clearResults()
     }
 
     // MARK: - Model Management Logic
     func fetchModels() {
+        
         availableModels = [selectedModel]
 
         if let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
@@ -391,9 +394,11 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
         }
     }
-
     func stopRecording(_ loop: Bool) {
         isRecording = false
+        
+        let oldTask = transcriptionTask
+        
         stopRealtimeTranscription()
 
         if let audioProcessor = whisperKit?.audioProcessor {
@@ -401,30 +406,65 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
 
         transcribeTask = Task {
+            await oldTask?.value
+            
             do {
                 try await transcribeCurrentBuffer()
             } catch {
                 print("Error: \(error.localizedDescription)")
             }
+            
             finalizeText()
 
             await MainActor.run { isTranscribing = false }
         }
 
-        finalizeText()
     }
+
+//    func stopRecording(_ loop: Bool) {
+//        isRecording = false
+//        stopRealtimeTranscription()
+//
+//        if let audioProcessor = whisperKit?.audioProcessor {
+//            audioProcessor.stopRecording()
+//        }
+//
+//        transcribeTask = Task {
+//            do {
+//                try await transcribeCurrentBuffer()
+//            } catch {
+//                print("Error: \(error.localizedDescription)")
+//            }
+//            finalizeText()
+//
+//            await MainActor.run { isTranscribing = false }
+//        }
+//
+//        finalizeText()
+//    }
 
     func finalizeText() {
         Task {
             await MainActor.run {
-                if hypothesisText != "" {
-                    confirmedText += hypothesisText
-                    hypothesisText = ""
-                }
-
+                
                 if !unconfirmedSegments.isEmpty {
                     confirmedSegments.append(contentsOf: unconfirmedSegments)
                     unconfirmedSegments = []
+                }
+                
+                if !hypothesisWords.isEmpty {
+                    let newWords = hypothesisWords.filter { hypoWord in
+                        !confirmedWords.contains(where: { $0.start == hypoWord.start })
+                    }
+                    
+                    confirmedWords.append(contentsOf: newWords)
+                    
+                    hypothesisWords = []
+                }
+
+                if hypothesisText != "" {
+                    confirmedText = confirmedWords.map { $0.word }.joined()
+                    hypothesisText = ""
                 }
             }
         }
@@ -574,7 +614,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         
         let myPromptTokenIDs: [Int]
         if let tokenizer = whisperKit.tokenizer {
-            myPromptTokenIDs = try tokenizer.encode(text: prompt)
+            myPromptTokenIDs = tokenizer.encode(text: prompt)
         } else {
             myPromptTokenIDs = []
         }
@@ -699,7 +739,8 @@ final class SpeechTranscriberViewModel: ObservableObject {
             withoutTimestamps: !enableTimestamps,
             wordTimestamps: true,
 //            promptTokens: myPromptTokenIDs,
-            supressTokens: tokensToSuppress, firstTokenLogProbThreshold: -1.5,
+            supressTokens: tokensToSuppress, logProbThreshold: -2,
+            firstTokenLogProbThreshold: -2,
             chunkingStrategy: ChunkingStrategy.none
         )
 
@@ -800,11 +841,17 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     tempoVM.updateTempo(from: allCurrentWords, totalDuration: totalDuration)
                 }
                 
-                textAnalyzerVM?.analyze(text: self.confirmedText + self.hypothesisText)
+                let currentText = self.confirmedText + self.hypothesisText
+                                
+                textAnalyzerVM?.analyze(text: currentText)
+                
+                if let fillerWordVM = self.fillerWordVM {
+                    fillerWordVM.analyze(text: currentText)
+                }
             }
         } catch {
-            print("[EagerMode] Error: \(error)")
-            finalizeText()
+            print("[EagerMode] Error during transcription: \(error)")
+            throw error
         }
 
         let mergedResult = TranscriptionUtilities.mergeTranscriptionResults(eagerResults, confirmedWords: confirmedWords)

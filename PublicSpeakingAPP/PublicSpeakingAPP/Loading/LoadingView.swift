@@ -13,6 +13,7 @@ struct LoadingView: View {
     @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
     @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
     @EnvironmentObject private var tempoVM: TempoViewModel
+    @EnvironmentObject private var fillerWordVM: FillerWordViewModel
 
     private var statusText: String {
         switch whisperKitVM.modelState {
@@ -54,6 +55,7 @@ struct LoadingView: View {
             whisperKitVM.textAnalyzerVM = textAnalyzerVM
             whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
             whisperKitVM.tempoVM = tempoVM
+            whisperKitVM.fillerWordVM = fillerWordVM
             whisperKitVM.onAppear()
         }
     }

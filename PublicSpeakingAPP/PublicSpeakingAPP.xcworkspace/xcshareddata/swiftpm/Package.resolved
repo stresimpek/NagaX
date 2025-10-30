@@ -1,5 +1,5 @@
 {
-  "originHash" : "8f61689e55c5551e76f2c686d145061dc1fa621a58cbca576565ebfabc15c894",
+  "originHash" : "007065d9b8ad79262b0396e9325095757a00f66c9684b21ebd63df10d9400079",
   "pins" : [
     {
       "identity" : "jinja",
@@ -52,7 +52,7 @@
       "location" : "https://github.com/argmaxinc/whisperkit",
       "state" : {
         "branch" : "main",
-        "revision" : "0926e5293f210b3045665d7a7be2836c94c1c0cb"
+        "revision" : "4ef384ec769b6fd51b49c0e8e74e8d8083e44926"
       }
     }
   ],

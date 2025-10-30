@@ -18,11 +18,11 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
     @Published var repeatedBigrams: [String: Int] = [:]
     @Published var repeatedTrigrams: [String: Int] = [:]
     
-    @Published var fillerWordCount: [String: Int] = [:]
+//    @Published var fillerWordCount: [String: Int] = [:]
     
-    private let fillerWordsID: Set<String> = [
-        "eh", "ehm", "hmm", "ee", "um", "uh", "anu", "um", "eee"
-    ]
+//    private let fillerWordsID: Set<String> = [
+//        "eh", "ehm", "hmm", "ee", "um", "uh", "anu", "um", "eee"
+//    ]
 
     // MARK: - Indonesian Stop Words
     private let stopWordsID: Set<String> = [
@@ -125,7 +125,7 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
 
         let (allTokens, filteredTokens) = preprocess(text: text)
 
-        analyzeFillerWords(tokens: allTokens)
+//        analyzeFillerWords(tokens: allTokens)
         analyzeFrequency(tokens: filteredTokens)
         analyzeProximity(tokens: filteredTokens, windowSize: 15)
         analyzeNGrams(tokens: filteredTokens)
@@ -137,7 +137,7 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
         repeatedBigrams = [:]
         repeatedTrigrams = [:]
 
-        fillerWordCount = [:]
+//        fillerWordCount = [:]
     }
 
     // MARK: - Analysis Functions
@@ -163,18 +163,18 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
         return (tokens, filteredTokens)
     }
     
-    private func analyzeFillerWords(tokens: [String]) {
-        var counts: [String: Int] = [:]
-        for token in tokens {
-            if fillerWordsID.contains(token) {
-                counts[token, default: 0] += 1
-            }
-        }
-        self.fillerWordCount = counts
-        
-        print("Filler Word Analysis")
-        self.fillerWordCount.forEach { print("'\($0.key)': \($0.value) kali") }
-    }
+//    private func analyzeFillerWords(tokens: [String]) {
+//        var counts: [String: Int] = [:]
+//        for token in tokens {
+//            if fillerWordsID.contains(token) {
+//                counts[token, default: 0] += 1
+//            }
+//        }
+//        self.fillerWordCount = counts
+//        
+//        print("Filler Word Analysis")
+//        self.fillerWordCount.forEach { print("'\($0.key)': \($0.value) kali") }
+//    }
 
     private func analyzeFrequency(tokens: [String]) {
         let totalTokens = tokens.count

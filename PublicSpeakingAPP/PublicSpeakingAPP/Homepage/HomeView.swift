@@ -20,6 +20,7 @@ struct HomeView: View {
     @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
     @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
     @EnvironmentObject private var tempoVM: TempoViewModel
+    @EnvironmentObject private var fillerWordVM: FillerWordViewModel
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -55,7 +56,8 @@ struct HomeView: View {
                         whisperKitVM: whisperKitVM,
                         textAnalyzerVM: textAnalyzerVM,
                         intonationAnalyzerVM: intonationAnalyzerVM,
-                        tempoVM: tempoVM
+                        tempoVM: tempoVM,
+                        fillerWordVM: fillerWordVM
                     )
                     .navigationBarBackButtonHidden(true)
                 }
@@ -67,6 +69,7 @@ struct HomeView: View {
             whisperKitVM.textAnalyzerVM = textAnalyzerVM
             whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
             whisperKitVM.tempoVM = tempoVM
+            whisperKitVM.fillerWordVM = fillerWordVM
             whisperKitVM.onAppear()
         }
     }

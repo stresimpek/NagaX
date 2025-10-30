@@ -23,6 +23,7 @@ class SimulationViewModel: ObservableObject {
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
     let intonationAnalyzerVM: IntonationAnalyzerViewModel
     let tempoVM: TempoViewModel
+    let fillerWordVM: FillerWordViewModel
     
     @Published var evaluationResult: EvaluationModel? = nil
     @Published var isAnalysisComplete: Bool = false
@@ -48,12 +49,14 @@ class SimulationViewModel: ObservableObject {
         whisperKitVM: SpeechTranscriberViewModel,
         textAnalyzerVM: TextFrequencyAnalyzerViewModel,
         intonationAnalyzerVM: IntonationAnalyzerViewModel,
-        tempoVM: TempoViewModel
+        tempoVM: TempoViewModel,
+        fillerWordVM: FillerWordViewModel
     ) {
         self.whisperKitVM = whisperKitVM
         self.textAnalyzerVM = textAnalyzerVM
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
+        self.fillerWordVM = fillerWordVM
         
         self.whisperKitVM.$modelState
             .receive(on: DispatchQueue.main)
@@ -63,8 +66,9 @@ class SimulationViewModel: ObservableObject {
         setupAnalysisSubscribers()
         
         tempoVM.$tempoLabel
+            .combineLatest(fillerWordVM.$fillerWordLabel)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] tempoLabel in
+            .sink { [weak self] (tempoLabel,fillerWordLabel) in
                 guard let self = self else { return }
                 
                 guard self.isRecording else {
@@ -76,6 +80,8 @@ class SimulationViewModel: ObservableObject {
                 case "Tempo Ideal":
                     self.setTeacherMood(.happy)
                 case "Tempo Lambat", "Tempo Cepat":
+                    self.setTeacherMood(.angry)
+                case "FillerAda":
                     self.setTeacherMood(.angry)
                 default:
                     self.setTeacherMood(.idle)
@@ -116,7 +122,7 @@ class SimulationViewModel: ObservableObject {
                 let duration = self.whisperKitVM.bufferSeconds
                 
                 if !liveText.isEmpty && duration > 0 {
-                    self.textAnalyzerVM.analyze(text: liveText)
+//                    self.textAnalyzerVM.analyze(text: liveText)
 //                    self.tempoVM.updateTempo(text: liveText, duration: duration)
                 }
             }
@@ -132,7 +138,7 @@ class SimulationViewModel: ObservableObject {
                 let duration = self.whisperKitVM.bufferSeconds
                 
                 if !liveText.isEmpty && duration > 0 {
-                    self.textAnalyzerVM.analyze(text: liveText)
+//                    self.textAnalyzerVM.analyze(text: liveText)
 //                    self.tempoVM.updateTempo(text: liveText, duration: duration)
                 }
             }
@@ -256,13 +262,14 @@ class SimulationViewModel: ObservableObject {
             print("Data Evaluasi:")
             print("- Duration: \(duration)s")
             print("- Tempo WPM: \(tempoVM.wpm)")
-            print("- Filler Words: \(textAnalyzerVM.fillerWordCount)")
+            print("- Filler Words: \(fillerWordVM.fillerWordCounts)")
             print("- Intonation StdDev: \(intonationAnalyzerVM.standardDeviation)")
 
             self.evaluationResult = EvaluationViewModel.process(
                 tempoVM: self.tempoVM,
                 textAnalyzerVM: self.textAnalyzerVM,
                 intonationVM: self.intonationAnalyzerVM,
+                fillerWordVM: self.fillerWordVM,
                 duration: duration
             )
 

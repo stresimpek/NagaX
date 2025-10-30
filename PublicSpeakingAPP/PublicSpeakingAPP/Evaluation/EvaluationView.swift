@@ -30,8 +30,9 @@ struct EvaluationView: View {
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     let intonationAnalyzerVM: IntonationAnalyzerViewModel?
     let tempoVM: TempoViewModel?
+    let fillerWordVM: FillerWordViewModel?
     
-    let fullTranscript: String
+//    let fullTranscript: String
     
     init(
         result: EvaluationModel,
@@ -39,14 +40,16 @@ struct EvaluationView: View {
         textAnalyzerVM: TextFrequencyAnalyzerViewModel? = nil,
         intonationAnalyzerVM: IntonationAnalyzerViewModel? = nil,
         tempoVM: TempoViewModel? = nil,
-        fullTranscript: String
+        fillerWordVM: FillerWordViewModel? = nil
+//        ,fullTranscript: String
     ) {
         self.result = result
         self.whisperKitVM = whisperKitVM
         self.textAnalyzerVM = textAnalyzerVM
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
-        self.fullTranscript = fullTranscript
+        self.fillerWordVM = fillerWordVM
+//        self.fullTranscript = fullTranscript
     }
 
     var body: some View {
@@ -75,15 +78,26 @@ struct EvaluationView: View {
                                 .font(.headline)
                                 .padding(.bottom, 5)
                             
-                            ScrollView {
-                                Text(fullTranscript.isEmpty ? "Tidak ada transkrip yang terekam." : fullTranscript)
-                                    .font(.system(.body, design: .serif))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            if let vm = whisperKitVM {
+                                TranscriptConfidenceView(vm: vm)
+                            } else {
+                                Text("Data transkrip tidak tersedia.")
                                     .padding()
+                                    .frame(height: 350, alignment: .top)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Color(UIColor.secondarySystemBackground))
+                                    .cornerRadius(10)
                             }
-                            .frame(height: 350)
-                            .background(Color(UIColor.secondarySystemBackground))
-                            .cornerRadius(10)
+                            
+//                            ScrollView {
+//                                Text(fullTranscript.isEmpty ? "Tidak ada transkrip yang terekam." : fullTranscript)
+//                                    .font(.system(.body, design: .serif))
+//                                    .frame(maxWidth: .infinity, alignment: .leading)
+//                                    .padding()
+//                            }
+//                            .frame(height: 350)
+//                            .background(Color(UIColor.secondarySystemBackground))
+//                            .cornerRadius(10)
                         }
                     }
                 }
@@ -96,7 +110,8 @@ struct EvaluationView: View {
             FooterButtonsView(whisperKitVM: whisperKitVM,
                               textAnalyzerVM: textAnalyzerVM,
                               intonationAnalyzerVM: intonationAnalyzerVM,
-                              tempoVM: tempoVM)
+                              tempoVM: tempoVM,
+                              fillerWordVM: fillerWordVM)
                 .background(.bar)
         }
         .background(Color(.systemGroupedBackground))
@@ -285,19 +300,22 @@ struct FooterButtonsView: View {
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     let intonationAnalyzerVM: IntonationAnalyzerViewModel?
     let tempoVM: TempoViewModel?
+    let fillerWordVM: FillerWordViewModel?
     
     var body: some View {
         HStack(spacing: 15) {
             if let whisperKitVM = whisperKitVM,
                let textAnalyzerVM = textAnalyzerVM,
                let intonationAnalyzerVM = intonationAnalyzerVM,
-               let tempoVM = tempoVM {
+               let tempoVM = tempoVM,
+               let fillerWordVM = fillerWordVM {
                 NavigationLink(destination:
                     SimulationViewWrapper(
                         whisperKitVM: whisperKitVM,
                         textAnalyzerVM: textAnalyzerVM,
                         intonationAnalyzerVM: intonationAnalyzerVM,
-                        tempoVM: tempoVM
+                        tempoVM: tempoVM,
+                        fillerWordVM: fillerWordVM
                     )
                 ) {
                     Text("Latihan lagi")
