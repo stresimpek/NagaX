@@ -35,8 +35,6 @@ struct EvaluationView: View {
     let onBack: () -> Void
     let onNext: (PracticeSettings) -> Void
     
-    
-    
     init(
         result: EvaluationModel,
         whisperKitVM: SpeechTranscriberViewModel? = nil,
@@ -104,10 +102,8 @@ struct EvaluationView: View {
         }
         .safeAreaInset(edge: .bottom) {
             FooterButtonsView(
-                onBack: self.onBack, // Teruskan closure 'onBack'
+                onBack: self.onBack,
                 onNext: {
-                    // Saat 'onNext' dipanggil, kita eksekusi
-                    // closure 'onNext' yang asli dengan 'settings'
                     self.onNext(self.settings)
                     whisperKitVM?.resetState()
                     tempoVM?.clearResults()

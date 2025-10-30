@@ -10,7 +10,6 @@ import AVFoundation
 import Combine
 import TensorFlowLite
 
-// Enum untuk error handling yang lebih jelas
 enum IntonationError: Error, LocalizedError {
     case modelNotFound
     case interpreterFailed(Error)
@@ -28,31 +27,22 @@ enum IntonationError: Error, LocalizedError {
 @MainActor
 final class IntonationAnalyzerViewModel: ObservableObject {
      
-    // MARK: - Published Properties for UI
     @Published var intonationLabel: String = "Speak to begin..."
     @Published var standardDeviation: Double = 0.0
-    @Published var intonationRating: Int = 0 // 0: N/A, 1: Datar, 2: Cukup, 3: Dinamis
+    @Published var intonationRating: Int = 0
     @Published var publishedError: String? = nil
 
-    // MARK: - Pitch History (Time-based Window)
-    // Diubah untuk menyimpan (timestamp, pitch)
     @Published var pitchHistory: [(timestamp: TimeInterval, pitch: Double)] = []
-    private let windowSize: TimeInterval = 10.0 // Menggunakan window 10 detik
-    // private let historySize = 200 // <-- Dihapus
-     
-    // MARK: - TFLite Properties
+    private let windowSize: TimeInterval = 10.0
+    
     private var interpreter: Interpreter?
     private let requiredSampleRate = 16000.0
     private var audioBuffer = [Float]()
-    private let windowSamples = 16000 // 1 detik audio
-    private let hopSamples = 8000   // 0.5 detik geser
-     
-    // MARK: - Audio Conversion
+    private let windowSamples = 16000
+    private let hopSamples = 8000
+    
     private var audioConverter: AVAudioConverter?
-    private let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
-                                            sampleRate: 16000.0,
-                                            channels: 1,
-                                            interleaved: false)!
+    private let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16000.0, channels: 1, interleaved: false)!
      
     init() {
         loadModel()
@@ -77,9 +67,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
             self.publishedError = err.localizedDescription
         }
     }
-
-    // --- FUNGSI UTAMA YANG DIUBAH ---
-    // Anda harus memasukkan `currentTime` dari audio engine Anda
+    
     func analyze(buffer: AVAudioPCMBuffer, currentTime: TimeInterval) {
         guard let converted = convertAudio(buffer: buffer) else { return }
         let n = Int(converted.frameLength)
@@ -87,17 +75,14 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         let chunk = Array(UnsafeBufferPointer(start: ch, count: n))
         audioBuffer.append(contentsOf: chunk)
 
-        // Proses per frame (geser 0.5 detik)
         while audioBuffer.count >= windowSamples {
             let frame = Array(audioBuffer.prefix(windowSamples))
             audioBuffer.removeFirst(hopSamples)
             
-            // Kirim `currentTime` ke proses inference
             runInference(on: frame, at: currentTime)
         }
     }
 
-    // Diubah untuk menerima `currentTime`
     private func runInference(on audioFrame: [Float], at currentTime: TimeInterval) {
         guard let interpreter = interpreter else { return }
         let N = audioFrame.count
@@ -123,12 +108,9 @@ final class IntonationAnalyzerViewModel: ObservableObject {
                 guard c >= 0.85 else { return nil }
                 return Double(spiceOutputToHz(p))
             }
-            
-            // Kirim data pitch baru DAN `currentTime` ke history
             updatePitchHistory(with: f0Hz, at: currentTime)
-
+            
         } catch {
-            // Error runtime sebaiknya di-print agar tidak spam UI
             print("❌ Inference error: \(error)")
         }
     }
@@ -143,33 +125,29 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         return FMIN * powf(2.0, cqtBin / BINS_PER_OCT)
     }
 
-    // Diubah untuk menerima `currentTime` dan memanggil `calculateStatistics`
     private func updatePitchHistory(with newPitches: [Double], at time: TimeInterval) {
         let valid = newPitches.filter { $0 > 0 }
         guard !valid.isEmpty else { return }
-        
-        // Tambahkan data baru sebagai tuple (timestamp, pitch)
+
         let newEntries = valid.map { (timestamp: time, pitch: $0) }
         pitchHistory.append(contentsOf: newEntries)
         
-        // Panggil kalkulasi, kirim `currentTime` untuk proses filter window
+        // Kirim `currentTime` untuk proses filter window
         calculateStatistics(at: time)
     }
      
-    // Diubah untuk mem-filter berdasarkan `windowSize` 10 detik
+    // Ubah untuk mem-filter berdasarkan `windowSize` 10 detik
     private func calculateStatistics(at currentTime: TimeInterval) {
         
-        // 1. Filter pitchHistory untuk 10 detik terakhir
+        // Filter pitchHistory untuk 10 detik terakhir
         pitchHistory = pitchHistory.filter { (timestamp, _) in
             (currentTime - timestamp) <= windowSize
         }
         
-        // 2. Ekstrak nilai pitch dari data yang sudah di-filter
+        // Ekstrak nilai pitch dari data yang sudah di-filter
         let pitchesInWindow = pitchHistory.map { $0.pitch }
         
-        // 3. Lakukan kalkulasi (sama seperti sebelumnya)
         guard pitchesInWindow.count > 1 else {
-            // Reset jika tidak ada data
             self.standardDeviation = 0.0
             self.intonationLabel = "..."
             self.intonationRating = 0
@@ -180,27 +158,24 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         let sumOfSquaredDiffs = pitchesInWindow.map { pow($0 - mean, 2) }.reduce(0, +)
         self.standardDeviation = sqrt(sumOfSquaredDiffs / Double(pitchesInWindow.count))
          
-        // Logika Penilaian 3-2-1
         if standardDeviation < 18.0 {
             self.intonationLabel = "Intonasi Cenderung Datar"
-            self.intonationRating = 1 // Jelek
+            self.intonationRating = 1
         } else if standardDeviation < 30.0 {
             self.intonationLabel = "Intonasi Cukup Bervariasi"
-            self.intonationRating = 2 // Cukup
+            self.intonationRating = 2
         } else {
             self.intonationLabel = "Intonasi Sangat Dinamis!"
-            self.intonationRating = 3 // Bagus
+            self.intonationRating = 3
         }
     }
     
     func calculateFinalStandardDeviation() -> Double {
-        // 1. TIDAK MEMFILTER history berdasarkan waktu
         let allPitches = pitchHistory.map { $0.pitch }
         
-        // 2. Lakukan kalkulasi pada SEMUA data
         guard allPitches.count > 1 else {
             print("[IntonationVM Final] GUARD FAILED (total pitches <= 1). Returning 0.0")
-            return 0.0 // Kembalikan 0 jika data tidak cukup
+            return 0.0
         }
         
         let mean = allPitches.reduce(0, +) / Double(allPitches.count)
@@ -225,7 +200,6 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         }
         converter.convert(to: convertedBuffer, error: &error, withInputFrom: inputBlock)
         if let error = error {
-            // Error runtime
             print("❌ Error during audio conversion: \(error.localizedDescription)")
             return nil
         }

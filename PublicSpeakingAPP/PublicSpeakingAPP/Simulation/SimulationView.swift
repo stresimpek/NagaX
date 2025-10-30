@@ -10,10 +10,11 @@ import Combine
 import WhisperKit
 
 struct SimulationViewWrapper: View {
-    let whisperKitVM: SpeechTranscriberViewModel
-    let textAnalyzerVM: TextFrequencyAnalyzerViewModel
-    let intonationAnalyzerVM: IntonationAnalyzerViewModel
-    let tempoVM: TempoViewModel
+    @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
+    @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
+    @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
+    @EnvironmentObject private var tempoVM: TempoViewModel
+    
     let settings: PracticeSettings
     let onBack: () -> Void
     let onComplete: (EvaluationModel, String) -> Void
@@ -27,8 +28,8 @@ struct SimulationViewWrapper: View {
                 intonationAnalyzerVM: intonationAnalyzerVM,
                 tempoVM: tempoVM
             ),
-            onBack: onBack, // BARU: Teruskan closure
-            onComplete: onComplete // BARU: Teruskan closure
+            onBack: onBack,
+            onComplete: onComplete
         )
     }
 }
@@ -36,17 +37,13 @@ struct SimulationViewWrapper: View {
 struct SimulationView: View {
     
     @StateObject private var viewModel: SimulationViewModel
-//    @Environment(\.dismiss) var dismiss
     
     let onBack: () -> Void
     let onComplete: (EvaluationModel, String) -> Void
     
     private var isProcessing: Bool {
-            // Tampilkan "Menganalisis..." HANYA JIKA:
-            // 1. Kita TIDAK sedang merekam
-            // 2. DAN WhisperKit SEDANG melakukan transkripsi (ini adalah Fase 1)
-            return !viewModel.isRecording && viewModel.whisperKitVM.isTranscribing
-        }
+        return !viewModel.isRecording && viewModel.whisperKitVM.isTranscribing
+    }
     
     init(
         viewModel: SimulationViewModel,
@@ -115,20 +112,6 @@ struct SimulationView: View {
                     }
                     .padding(.top, 20)
                     .padding(.horizontal)
-
-//                    .overlay(alignment: .topTrailing) {
-//                        VStack(spacing: 4) {
-//                            Button("Teacher Happy") { viewModel.setTeacherMood(.happy) }
-//                            Button("Teacher Angry") { viewModel.setTeacherMood(.angry) }
-//                            Button("Students Focus") { viewModel.setStudentMoods(.focus) }
-//                            Button("Students Sleep") { viewModel.setStudentMoods(.sleep) }
-//                        }
-//                        .padding(.top, 20)
-//                        .padding(.trailing)
-//                        .buttonStyle(.bordered)
-//                        .tint(.gray)
-//                        .font(.system(size: 10))
-//                    }
                     
                     Spacer()
                     
@@ -192,20 +175,26 @@ struct SimulationView: View {
                 viewModel.cleanup()
             }
             .onReceive(viewModel.$isAnalysisComplete) { isComplete in
-                print("onReceive isAnalysisComplete: \(isComplete)") // Log 1
+                print("onReceive isAnalysisComplete: \(isComplete)")
                 if isComplete {
                     if let result = viewModel.evaluationResult {
-                        print("Evaluation result FOUND. Calling onComplete...") // Log 2a
+                        print("Evaluation result FOUND. Calling onComplete...")
                         onComplete(result, viewModel.finalTranscript)
                     } else {
-                        print("Evaluation result is NIL. Calling onBack...") // Log 2b
-                        // Mungkin tampilkan error dulu?
-                        // viewModel.errorMessage = "Gagal memproses hasil evaluasi."
-                        onBack() // Kembali jika tidak ada hasil
+                        print("Evaluation result is NIL. Calling onBack...")
+                      
+                        onBack()
                     }
                 }
             }
             .navigationBarBackButtonHidden(true)
+            .task {
+                print("[SimulationView.task] Mereset state VM...")
+                viewModel.whisperKitVM.resetState()
+                viewModel.textAnalyzerVM.clearResults()
+                viewModel.intonationAnalyzerVM.clearResults()
+                viewModel.tempoVM.clearResults()
+            }
         }
     }
 }

@@ -7,69 +7,44 @@
 
 import SwiftUI
 
-enum Route: Hashable {
-    case tips
-    case settings
-    case simulation(PracticeSettings)
-    case evaluation(result: EvaluationModel, transcript: String, settings: PracticeSettings)
-}
-
 struct HomeView: View {
-    @State private var path: [Route] = []
-
-    @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
-    @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
-    @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
-    @EnvironmentObject private var tempoVM: TempoViewModel
+    @StateObject private var coordinator = NavigationCoordinator()
 
     var body: some View {
-        NavigationStack(path: $path) {
-            // ROOT (Home)
+        NavigationStack(path: $coordinator.path) {
             HomeContentView(
-                onStart: { path.append(.tips) } // tombol "Mulai Presentasi"
+                onStart: { coordinator.goToTips() }
             )
-            .onAppear {
-                // wiring tambahan kalau perlu
-                whisperKitVM.textAnalyzerVM = textAnalyzerVM
-                whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
-                whisperKitVM.tempoVM = tempoVM
-                whisperKitVM.onAppear()
-            }
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .tips:
                     TipsPresentasiView(
-                        onBack: {                      // kembali ke Home
-                            path.removeAll()
+                        onBack: {
+                            coordinator.returnToHome()
                         },
-                        onContinue: {                  // ke Settings
-                            path.append(.settings)
+                        onContinue: {
+                            coordinator.goToSettings()
                         }
                     )
                     
                 case .settings:
                     SettingsView(
-                        onBack: {                      // balik ke Tips
-                            path.removeLast()
+                        onBack: {
+                            coordinator.goBack()
                         },
                         onNext: { settings in
-                            path.append(.simulation(settings))
+                            coordinator.goToSimulation(settings)
                         }
                     )
                     
                 case .simulation(let settings):
-                    // Bisa pakai env objects (disarankan), jadi tak perlu param:
                     SimulationViewWrapper(
-                        whisperKitVM: whisperKitVM,
-                        textAnalyzerVM: textAnalyzerVM,
-                        intonationAnalyzerVM: intonationAnalyzerVM,
-                        tempoVM: tempoVM,
                         settings: settings,
-                        onBack: {                      // balik ke Tips
-                            path.removeLast()
+                        onBack: {
+                            coordinator.goBack()
                         },
                         onComplete: { result, transcript in
-                            path.append(.evaluation(result: result, transcript: transcript, settings: settings))
+                            coordinator.goToEvaluation(result: result, transcript: transcript, settings: settings)
                         }
                     )
                     .navigationBarBackButtonHidden(true)
@@ -78,30 +53,18 @@ struct HomeView: View {
                     EvaluationView(
                         result: result,
                         fullTranscript: transcript,
-                        settings: settings, // <-- Teruskan 'settings'
+                        settings: settings,
                         onBack: {
-                            // "Selesai" -> Kembali ke Home
-                            path.removeAll()
+                            coordinator.returnToHome()
                         },
                         onNext: { passedSettings in
-                            guard path.count >= 2 else {
-                                print("Error: Path tidak cukup panjang untuk removeLast(2)")
-                                // Mungkin kembali ke home sebagai fallback?
-                                path.removeAll()
-                                return
-                            }
-                            
-                            // 2. Hapus DUA elemen terakhir (.evaluation DAN .simulation sebelumnya)
-                            path.removeLast(2)
-                            
-                            // 3. Tambahkan Simulation baru
-                            path.append(.simulation(passedSettings))
+                            coordinator.retrySimulation(from: passedSettings)
                         }
                     )
                 }
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        
+        .environmentObject(coordinator)
     }
 }

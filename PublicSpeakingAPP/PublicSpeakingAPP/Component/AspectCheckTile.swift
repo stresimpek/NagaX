@@ -13,7 +13,6 @@ struct AspectCheckTile: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            // Tile body
             VStack(spacing: 8) {
                 Image(systemName: option.systemImage)
                     .font(.system(size: 24, weight: .semibold))
@@ -47,7 +46,7 @@ struct AspectCheckTile: View {
                 }
             }
         }
-        .contentShape(Rectangle()) // seluruh tile bisa diklik
+        .contentShape(Rectangle())
         .onTapGesture {
             withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                 isSelected.toggle()

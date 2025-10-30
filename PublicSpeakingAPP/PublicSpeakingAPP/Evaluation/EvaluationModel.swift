@@ -36,7 +36,6 @@ struct EvaluationModel: Identifiable, Hashable {
     let eyeContactScore: Double
     let eyeContactGrade: String
     let eyeContactFeedback: String
-    
 
     init(
         id: UUID = UUID(),

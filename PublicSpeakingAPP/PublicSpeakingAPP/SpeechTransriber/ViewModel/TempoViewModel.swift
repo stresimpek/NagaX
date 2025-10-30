@@ -16,7 +16,6 @@ final class TempoViewModel: ObservableObject {
     @Published var tempoLabel: String = "..."
     @Published var tempoRating: Int = 0
 
-    // Standar WPM Bahasa Indonesia
     private let wpmIdealMin: Double = 100.0
     private let wpmIdealMax: Double = 150.0
     private let wpmCukupMin: Double = 80.0
@@ -83,16 +82,16 @@ final class TempoViewModel: ObservableObject {
         
         if roundedWPM >= wpmIdealMin && roundedWPM <= wpmIdealMax {
             self.tempoLabel = "Tempo Ideal"
-            self.tempoRating = 3 // Bagus
+            self.tempoRating = 3
         } else if (roundedWPM >= wpmCukupMin && roundedWPM < wpmIdealMin) || (roundedWPM > wpmIdealMax && roundedWPM <= wpmCukupMax) {
             self.tempoLabel = "Tempo Cukup"
-            self.tempoRating = 2 // Cukup
+            self.tempoRating = 2
         } else if roundedWPM < wpmCukupMin {
             self.tempoLabel = "Tempo Lambat"
-            self.tempoRating = 1 // Jelek
-        } else { // roundedWPM > wpmCukupMax
+            self.tempoRating = 1
+        } else {
             self.tempoLabel = "Tempo Cepat"
-            self.tempoRating = 1 // Jelek
+            self.tempoRating = 1
         }
     }
     

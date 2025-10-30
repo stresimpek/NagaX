@@ -16,13 +16,12 @@ struct SettingsView: View {
     let onBack: () -> Void
     let onNext: (PracticeSettings) -> Void
 
-    // DIUBAH: Mengambil dari static var
     private let aspectOptions: [AspectOption] = AspectOption.allOptions
 
     @State private var selectedAspects: Set<AspectOption> = []
     
     private var shouldDisableNext: Bool {
-        selectedAspects.isEmpty // True jika tidak ada aspek yang dipilih
+        selectedAspects.isEmpty
     }
 
     var body: some View {
@@ -31,7 +30,6 @@ struct SettingsView: View {
                 title: "Pilih tempat presentasimu",
                 onBack: onBack,
                 onNext: {
-                    // Kumpulkan semua state ke dalam satu struct
                     let settings = PracticeSettings(
                         durationMinutes: durationMinutes,
                         distractionLevel: distractionLevel,
@@ -39,7 +37,6 @@ struct SettingsView: View {
                         randomTopic: randomTopic,
                         selectedAspects: selectedAspects
                     )
-                    // Kirim settings saat onNext dipanggil
                     onNext(settings)
                 },
                 isNextDisabled: shouldDisableNext
@@ -97,13 +94,11 @@ struct SettingsView: View {
 
                     Divider().padding(.vertical, 4)
 
-                    // Aspek yang dievaluasi
                     Text("Aspek yang dievaluasi")
                         .font(.headline)
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
-                            // DIUBAH: Menggunakan aspectOptions dari var
                             ForEach(aspectOptions) { opt in
                                 AspectCheckTile(
                                     option: opt,
@@ -126,7 +121,6 @@ struct SettingsView: View {
                         }
                         .padding(.vertical, 4)
                     }
-
                     Spacer(minLength: 0)
                 }
                 .padding(.trailing, 16)
@@ -138,6 +132,5 @@ struct SettingsView: View {
         .background(Color.white)
         .navigationBarBackButtonHidden(true)
         .padding(.trailing, 16)
-//        .toolbar(.hidden, for: .navigationBar)
     }
 }

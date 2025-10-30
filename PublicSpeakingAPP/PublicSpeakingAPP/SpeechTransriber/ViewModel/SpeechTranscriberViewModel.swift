@@ -18,7 +18,7 @@ enum RecordingStatus {
     case stopped
     case starting
     case recording
-    case stopping // Opsional, jika perlu
+    case stopping
 }
 
 @MainActor
@@ -101,7 +101,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var hypothesisWords: [WordTiming] = []
     @Published var hypothesisText: String = ""
     
-    // MARK: - Analyzer Links (DITAMBAHKAN KEMBALI)
+    // MARK: - Analyzer Links
     weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     weak var intonationAnalyzerVM: IntonationAnalyzerViewModel?
     weak var tempoVM: TempoViewModel?
@@ -114,9 +114,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
         Binding(get: { self[keyPath: keyPath] },
                 set: { self[keyPath: keyPath] = $0 })
     }
-    // -------------------------------------
-    
-    // MARK: - Public API (panggil dari View)
 
     func onAppear() {
         guard modelState == .unloaded else {
@@ -445,7 +442,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
         
         Task {
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 detik
+            try? await Task.sleep(nanoseconds: 100_000_000)
             await MainActor.run {
                 if !self.isTranscribing { // Hanya set stopped jika transkripsi benar2 selesai
                     self.recordingStatus = .stopped
@@ -472,7 +469,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
     }
     
     // MARK: - Transcription Logic
-
     func realtimeLoop() {
         transcriptionTask = Task {
             while isRecording && isTranscribing {
@@ -877,16 +873,12 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
         
         guard !currentBuffer.isEmpty else { return }
-//        let newCount = currentBuffer.count
-//        
-//        let totalDuration = Double(newCount) / Double(WhisperKit.sampleRate)
         
         let newCount = currentBuffer.count
         if newCount > analyzerLastSampleIndex {
             let delta = Array(currentBuffer[analyzerLastSampleIndex..<newCount])
             analyzerLastSampleIndex = newCount
             if let pcm = makePCMBuffer(from: delta, sampleRate: Double(WhisperKit.sampleRate)) {
-                // Gunakan totalDuration di sini juga
                 intonationAnalyzerVM?.analyze(buffer: pcm, currentTime: totalDuration)
             }
         }

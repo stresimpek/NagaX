@@ -11,7 +11,6 @@ struct TipsPresentasiView: View {
     let onBack: () -> Void
     let onContinue: () -> Void
     
-    
     var body: some View {
         VStack(spacing: 0) {
             Header(title: "Tips Presentasi")
@@ -34,7 +33,6 @@ struct TipsPresentasiView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                     ButtonComponent(text: "Presentasi? Aku belum siap…", action: onBack)
-//                    ButtonComponent(text: "Oke, aku mau langsung mulai!", action: {  })
                     ButtonComponent(text: "Oke, aku mau langsung mulai!", action: onContinue)
                 }
                 .padding(.trailing, 16)

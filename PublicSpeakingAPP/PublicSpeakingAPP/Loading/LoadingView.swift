@@ -10,10 +10,7 @@ import WhisperKit
 
 struct LoadingView: View {
     @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
-    @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
-    @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
-    @EnvironmentObject private var tempoVM: TempoViewModel
-
+    
     private var statusText: String {
         switch whisperKitVM.modelState {
         case .downloading:
@@ -51,9 +48,6 @@ struct LoadingView: View {
             }
         }
         .onAppear {
-            whisperKitVM.textAnalyzerVM = textAnalyzerVM
-            whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
-            whisperKitVM.tempoVM = tempoVM
             whisperKitVM.onAppear()
         }
     }
