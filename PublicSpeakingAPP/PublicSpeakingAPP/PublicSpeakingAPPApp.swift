@@ -18,13 +18,19 @@ struct PublicSpeakingAPPApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                HomeView()
-                    .environmentObject(whisperKitVM)
-                    .environmentObject(textAnalyzerVM)
-                    .environmentObject(intonationAnalyzerVM)
-                    .environmentObject(tempoVM)
-            }
+            RootView()
+                .environmentObject(whisperKitVM)
+                .environmentObject(textAnalyzerVM)
+                .environmentObject(intonationAnalyzerVM)
+                .environmentObject(tempoVM)
+
+//            NavigationStack {
+//                HomeView()
+//                    .environmentObject(whisperKitVM)
+//                    .environmentObject(textAnalyzerVM)
+//                    .environmentObject(intonationAnalyzerVM)
+//                    .environmentObject(tempoVM)
+//            }
         }
     }
 }
