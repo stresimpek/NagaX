@@ -12,14 +12,15 @@ struct EvaluationViewModel {
     
     static func process(
         tempoVM: TempoViewModel,
-        textAnalyzerVM: TextFrequencyAnalyzerViewModel,
+//        textAnalyzerVM: TextFrequencyAnalyzerViewModel,
         intonationVM: Double,
+        fillerWordVM: FillerWordViewModel,
         duration: TimeInterval
     ) -> EvaluationModel {
         
         let (tempoGrade, tempoFeedback, tempoScore) = gradeTempo(wpm: tempoVM.wpm)
         let (fillerGrade, fillerFeedback, fillerCount, fillerWPM, fillerScore) = gradeFillerWords(
-            counts: textAnalyzerVM.fillerWordCount,
+            totalCount: fillerWordVM.totalFillerCount,
             duration: duration
         )
         let (intonationGrade, intonationFeedback, intonationScore) = gradeIntonation(stdDev: intonationVM)
@@ -73,24 +74,21 @@ struct EvaluationViewModel {
         }
     }
     
-    private static func gradeFillerWords(counts: [String: Int], duration: TimeInterval) -> (String, String, Int, Double, Double) {
-        let totalCount = counts.values.reduce(0, +)
+    private static func gradeFillerWords(totalCount: Int, duration: TimeInterval) -> (String, String, Int, Double, Double) {
         let minutes = duration / 60.0
         
         guard minutes > 0 else {
-            return ("A", "OK", totalCount, 0.0, 1.0)
+            return ("A", "Baik", totalCount, 0.0, 1.0)
         }
         
         let fillerWPM = Double(totalCount) / minutes
         
         if fillerWPM <= 5.0 {
-            return ("A", "Sangat Baik", totalCount, fillerWPM, 1.0)
+            return ("A", "Baik", totalCount, fillerWPM, 1.0)
         } else if fillerWPM <= 10.0 {
-            return ("B", "Cukup Baik", totalCount, fillerWPM, 0.75)
-        } else if fillerWPM <= 15.0 {
-            return ("C", "Perlu Latihan", totalCount, fillerWPM, 0.5)
+            return ("B", "Acceptable", totalCount, fillerWPM, 0.75)
         } else {
-            return ("D", "Terlalu Banyak", totalCount, fillerWPM, 0.25)
+            return ("C", "Distracting", totalCount, fillerWPM, 0.5)
         }
     }
 

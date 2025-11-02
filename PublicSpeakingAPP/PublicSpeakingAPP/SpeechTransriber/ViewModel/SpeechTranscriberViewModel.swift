@@ -44,7 +44,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var specializationProgressRatio: Float = 0.7
 
     // MARK: - Transcription Settings
-    @Published var selectedModel: String = "openai_whisper-small_216MB"
+    @Published var selectedModel: String = "openai_whisper-large-v3-v20240930_547MB"
     @Published var selectedTask: String = "transcribe"
     @Published var selectedLanguage: String = "indonesian"
     @Published var repoName: String = "argmaxinc/whisperkit-coreml"
@@ -105,6 +105,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     weak var intonationAnalyzerVM: IntonationAnalyzerViewModel?
     weak var tempoVM: TempoViewModel?
+    weak var fillerWordVM: FillerWordViewModel?
     
     private var analyzerLastSampleIndex: Int = 0
     

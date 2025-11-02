@@ -24,6 +24,7 @@ class SimulationViewModel: ObservableObject {
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
     let intonationAnalyzerVM: IntonationAnalyzerViewModel
     let tempoVM: TempoViewModel
+    let fillerWordVM: FillerWordViewModel
     
     @Published var evaluationResult: EvaluationModel? = nil
     @Published var isAnalysisComplete: Bool = false
@@ -49,12 +50,14 @@ class SimulationViewModel: ObservableObject {
         textAnalyzerVM: TextFrequencyAnalyzerViewModel,
         intonationAnalyzerVM: IntonationAnalyzerViewModel,
         tempoVM: TempoViewModel,
+        fillerWordVM: FillerWordViewModel
     ) {
         self.settings = settings
         self.whisperKitVM = whisperKitVM
         self.textAnalyzerVM = textAnalyzerVM
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
+        self.fillerWordVM = fillerWordVM
         self.whisperKitVM.$modelState
             .receive(on: DispatchQueue.main)
             .assign(to: &$whisperModelState)
@@ -78,20 +81,21 @@ class SimulationViewModel: ObservableObject {
     
     private func setupMoodAggregation() {
         intonationAnalyzerVM.$intonationRating
-            .combineLatest(tempoVM.$tempoRating)
+            .combineLatest(tempoVM.$tempoRating, fillerWordVM.$fillerRating)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] (intonation, tempo) in
+            .sink { [weak self] (intonation, tempo, filler) in
                 guard let self = self else { return }
                 
                 self.updateAggregateMood(
                     intonationRating: intonation,
-                    tempoRating: tempo
+                    tempoRating: tempo,
+                    fillerRating: filler
                 )
             }
             .store(in: &cancellables)
     }
     
-    private func updateAggregateMood(intonationRating: Int, tempoRating: Int) {
+    private func updateAggregateMood(intonationRating: Int, tempoRating: Int, fillerRating: Int) {
         guard isRecording else {
             setTeacherMood(.idle)
             setStudentMoods(.idle)
@@ -100,7 +104,7 @@ class SimulationViewModel: ObservableObject {
     
         print("--- Update Mood ---")
         print("Settings Aspects: \(settings.selectedAspects.map { $0.title })")
-        print("Incoming Ratings: Intonation=\(intonationRating), Tempo=\(tempoRating)")
+        print("Incoming Ratings: Intonation=\(intonationRating), Tempo=\(tempoRating), FillerWords=\(fillerRating)")
         
         var activeRatings: [Int] = []
         
@@ -112,9 +116,9 @@ class SimulationViewModel: ObservableObject {
             print("Tempo aspect IS selected.")
             activeRatings.append(tempoRating)
         }
-//            if settings.selectedAspects.contains(.fillerWords) {
-//                activeRatings.append(fillerRating)
-//            }
+        if settings.selectedAspects.contains(.fillerWords) {
+            activeRatings.append(fillerRating)
+        }
 //            if settings.selectedAspects.contains(.kontakMata) {
 //                activeRatings.append(eyeContactRating)
 //            }
@@ -236,7 +240,7 @@ class SimulationViewModel: ObservableObject {
                 let duration = self.whisperKitVM.bufferSeconds
                 
                 if !liveText.isEmpty && duration > 0 {
-                    self.textAnalyzerVM.analyze(text: liveText)
+                    self.fillerWordVM.analyze(text: liveText, duration: duration)
                 }
             }
             .store(in: &cancellables)
@@ -251,11 +255,11 @@ class SimulationViewModel: ObservableObject {
                 let duration = self.whisperKitVM.bufferSeconds
                 
                 if !liveText.isEmpty && duration > 0 {
-                    self.textAnalyzerVM.analyze(text: liveText)
+                    self.fillerWordVM.analyze(text: liveText, duration: duration)
                 }
             }
             .store(in: &cancellables)
-        }
+    }
     
     private func setupAudioPlayers(named fileNames: [String]) {
         distractionPlayers.removeAll()
@@ -351,44 +355,44 @@ class SimulationViewModel: ObservableObject {
     }
 
 
-        private func processEvaluation() {
-            guard !self.isRecording else { /* ... */ return }
-            print("Memproses evaluasi...")
+    private func processEvaluation() {
+        guard !self.isRecording else { /* ... */ return }
+        print("Memproses evaluasi...")
 
-            guard self.recordingStartTime != nil else {
-                 print("processEvaluation called again after completion or during processing, ignoring.")
-                 return
-            }
-            self.recordingStartTime = nil
-            
-            let finalDuration = whisperKitVM.finalBufferDuration
-            
-            let finalIntonationStdDev = intonationAnalyzerVM.calculateFinalStandardDeviation()
-            
-            guard finalDuration > 0 else {
-                self.errorMessage = "Tidak ada data audio yang direkam (durasi: \(finalDuration))."
-                print("Tidak ada data audio yang direkam (durasi: \(finalDuration))")
-                self.isAnalysisComplete = true
-                return
-            }
-            
-            print("Data Evaluasi:")
-            print("- Duration: \(finalDuration)s")
-            print("- Tempo WPM: \(tempoVM.wpm)")
-            print("- Filler Words: \(textAnalyzerVM.fillerWordCount)")
-            print("- Intonation StdDev (Final Full): \(finalIntonationStdDev)")
-            
-            self.finalTranscript = self.whisperKitVM.confirmedText
-            self.evaluationResult = EvaluationViewModel.process(
-                tempoVM: self.tempoVM,
-                textAnalyzerVM: self.textAnalyzerVM,
-                intonationVM: finalIntonationStdDev,
-                duration: finalDuration
-            )
-            
-            self.isAnalysisComplete = true
-            print("Evaluasi selesai, navigasi ke hasil")
+        guard self.recordingStartTime != nil else {
+             print("processEvaluation called again after completion or during processing, ignoring.")
+             return
         }
+        self.recordingStartTime = nil
+        
+        let finalDuration = whisperKitVM.finalBufferDuration
+        
+        let finalIntonationStdDev = intonationAnalyzerVM.calculateFinalStandardDeviation()
+        
+        guard finalDuration > 0 else {
+            self.errorMessage = "Tidak ada data audio yang direkam (durasi: \(finalDuration))."
+            print("Tidak ada data audio yang direkam (durasi: \(finalDuration))")
+            self.isAnalysisComplete = true
+            return
+        }
+        
+        print("Data Evaluasi:")
+        print("- Duration: \(finalDuration)s")
+        print("- Tempo WPM: \(tempoVM.wpm)")
+        print("- Filler Words: \(fillerWordVM.totalFillerCount)")
+        print("- Intonation StdDev (Final Full): \(finalIntonationStdDev)")
+        
+        self.finalTranscript = self.whisperKitVM.confirmedText
+        self.evaluationResult = EvaluationViewModel.process(
+            tempoVM: self.tempoVM,
+            intonationVM: finalIntonationStdDev,
+            fillerWordVM: self.fillerWordVM,
+            duration: finalDuration
+        )
+        
+        self.isAnalysisComplete = true
+        print("Evaluasi selesai, navigasi ke hasil")
+    }
 
     
     func setTeacherMood(_ mood: TeacherMood) {
@@ -426,7 +430,7 @@ class SimulationViewModel: ObservableObject {
         
         whisperKitVM.resetState()
         tempoVM.clearResults()
-        intonationAnalyzerVM.clearResults()
+        fillerWordVM.clearResults()
         textAnalyzerVM.clearResults()
         
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in

@@ -31,6 +31,7 @@ struct EvaluationView: View {
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     let intonationAnalyzerVM: IntonationAnalyzerViewModel?
     let tempoVM: TempoViewModel?
+    let fillerWordVM: FillerWordViewModel?
     let settings: PracticeSettings
     let onBack: () -> Void
     let onNext: (PracticeSettings) -> Void
@@ -41,6 +42,7 @@ struct EvaluationView: View {
         textAnalyzerVM: TextFrequencyAnalyzerViewModel? = nil,
         intonationAnalyzerVM: IntonationAnalyzerViewModel? = nil,
         tempoVM: TempoViewModel? = nil,
+        fillerWordVM: FillerWordViewModel? = nil,
         fullTranscript: String,
         settings: PracticeSettings,
         onBack: @escaping () -> Void,
@@ -51,6 +53,7 @@ struct EvaluationView: View {
         self.textAnalyzerVM = textAnalyzerVM
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
+        self.fillerWordVM = fillerWordVM
         self.fullTranscript = fullTranscript
         self.settings = settings
         self.onBack = onBack
@@ -109,6 +112,7 @@ struct EvaluationView: View {
                     tempoVM?.clearResults()
                     intonationAnalyzerVM?.clearResults()
                     textAnalyzerVM?.clearResults()
+                    fillerWordVM?.clearResults()
                 }
             )
             .background(.bar)
