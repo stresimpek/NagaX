@@ -31,6 +31,8 @@ struct EvaluationModel: Identifiable, Hashable {
     let intonationStdDev: Double
     let intonationGrade: String
     let intonationFeedback: String
+    
+    let pitchSeries: [PitchPoint]
 
     // Kontak Mata (Dummy)
     let eyeContactScore: Double
@@ -54,6 +56,7 @@ struct EvaluationModel: Identifiable, Hashable {
         intonationStdDev: Double = 0.0,
         intonationGrade: String = "D",
         intonationFeedback: String = "N/A",
+        pitchSeries: [PitchPoint] = [],
         eyeContactScore: Double = 0.0,
         eyeContactGrade: String = "D",
         eyeContactFeedback: String = "N/A"
@@ -74,6 +77,7 @@ struct EvaluationModel: Identifiable, Hashable {
         self.intonationStdDev = intonationStdDev
         self.intonationGrade = intonationGrade
         self.intonationFeedback = intonationFeedback
+        self.pitchSeries = pitchSeries
         self.eyeContactScore = eyeContactScore
         self.eyeContactGrade = eyeContactGrade
         self.eyeContactFeedback = eyeContactFeedback

@@ -33,6 +33,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
     @Published var publishedError: String? = nil
 
     @Published var pitchHistory: [(timestamp: TimeInterval, pitch: Double)] = []
+    @Published var allPitchHistory: [(timestamp: TimeInterval, pitch: Double)] = []
     private let windowSize: TimeInterval = 10.0
     
     private var interpreter: Interpreter?
@@ -131,6 +132,12 @@ final class IntonationAnalyzerViewModel: ObservableObject {
 
         let newEntries = valid.map { (timestamp: time, pitch: $0) }
         pitchHistory.append(contentsOf: newEntries)
+        pitchHistory = pitchHistory.filter { (timestamp, _) in
+            (time - timestamp) <= windowSize
+        }
+
+        // 🔹 untuk hasil akhir & chart (tidak difilter)
+        allPitchHistory.append(contentsOf: newEntries)
         
         // Kirim `currentTime` untuk proses filter window
         calculateStatistics(at: time)
@@ -138,12 +145,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
      
     // Ubah untuk mem-filter berdasarkan `windowSize` 10 detik
     private func calculateStatistics(at currentTime: TimeInterval) {
-        
-        // Filter pitchHistory untuk 10 detik terakhir
-        pitchHistory = pitchHistory.filter { (timestamp, _) in
-            (currentTime - timestamp) <= windowSize
-        }
-        
+ 
         // Ekstrak nilai pitch dari data yang sudah di-filter
         let pitchesInWindow = pitchHistory.map { $0.pitch }
         
@@ -171,7 +173,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
     }
     
     func calculateFinalStandardDeviation() -> Double {
-        let allPitches = pitchHistory.map { $0.pitch }
+        let allPitches = allPitchHistory.map { $0.pitch }
         
         guard allPitches.count > 1 else {
             print("[IntonationVM Final] GUARD FAILED (total pitches <= 1). Returning 0.0")

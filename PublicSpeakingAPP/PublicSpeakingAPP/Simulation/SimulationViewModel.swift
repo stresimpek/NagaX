@@ -36,6 +36,7 @@ class SimulationViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var recordingStartTime: Date?
     private var distractionPlayers: [AVAudioPlayer] = []
+    private var isLockedOvertimeMood = false
     
     var formattedTime: String {
         let minutes = timerSeconds / 60
@@ -96,6 +97,26 @@ class SimulationViewModel: ObservableObject {
             setTeacherMood(.idle)
             setStudentMoods(.idle)
             return
+        }
+        
+        if isLockedOvertimeMood {
+            print("[LOCKED] Overtime mood sudah dikunci — abaikan update berikutnya.")
+            return
+        }
+        
+        if isOvertime {
+            if isMoreThanOneMinute {
+                print("[Overtime] >1m: teacher=angry, students=sleep")
+                setTeacherMood(.angry)
+                setStudentMoods(.sleep)
+                isLockedOvertimeMood = true
+                return
+            } else {
+                print("[Overtime] <1m: teacher=idle, students=idle")
+                setTeacherMood(.idle)
+                setStudentMoods(.idle)
+                return
+            }
         }
     
         print("--- Update Mood ---")
@@ -382,7 +403,7 @@ class SimulationViewModel: ObservableObject {
             self.evaluationResult = EvaluationViewModel.process(
                 tempoVM: self.tempoVM,
                 textAnalyzerVM: self.textAnalyzerVM,
-                intonationVM: finalIntonationStdDev,
+                intonationVM: self.intonationAnalyzerVM,
                 duration: finalDuration
             )
             
@@ -461,5 +482,24 @@ class SimulationViewModel: ObservableObject {
     func cleanup() {
         gameTimer?.invalidate()
         gameTimer = nil
+    }
+}
+
+extension SimulationViewModel {
+    var durationLimitSeconds: Int {
+        max(0, settings.durationMinutes * 60)
+    }
+
+    var isOvertime: Bool {
+        durationLimitSeconds > 0 && timerSeconds >= durationLimitSeconds
+    }
+
+    var overtimeSeconds: Int {
+        guard isOvertime else { return 0 }
+        return timerSeconds - durationLimitSeconds
+    }
+    
+    var isMoreThanOneMinute: Bool {
+        overtimeSeconds > 60
     }
 }

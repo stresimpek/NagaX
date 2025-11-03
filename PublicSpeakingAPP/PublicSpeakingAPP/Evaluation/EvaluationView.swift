@@ -69,8 +69,18 @@ struct EvaluationView: View {
                 VStack {
                     switch selectedTab {
                     case .intonasi:
-                        Text("Grafik Intonasi (StdDev: \(result.intonationStdDev, specifier: "%.2f"))")
-                            .frame(height: 350)
+                        VStack(alignment: .leading, spacing: 8) {
+                            ScrollView {                          
+                                Text("Grafik Intonasi (StdDev: \(result.intonationStdDev, specifier: "%.2f"))")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+
+                                IntonationResultChart(pitchSeries: result.pitchSeries)
+                                    .frame(height: 220)
+                            
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     case .kataPengisi:
                         Text("Detail Kata Pengisi (Total: \(result.fillerWordTotalCount))")
                             .frame(height: 350)

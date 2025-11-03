@@ -12,7 +12,6 @@ struct SettingsHeader: View {
     let onBack: () -> Void
     let onNext: () -> Void
     var isNextDisabled: Bool = false
-
     var body: some View {
         HStack {
             Button(action: onBack) {
