@@ -83,37 +83,17 @@ struct EvaluationView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     case .kataPengisi:
-                        Text("Detail Kata Pengisi (Total: \(result.fillerWordTotalCount))")
-                            .frame(height: 350)
+                        FillerWordTranscriptView(
+                            result: result,
+                            fullTranscript: fullTranscript
+                        )
                     case .tempo:
                         Text("Grafik Tempo (Avg: \(result.tempoWPM, specifier: "%.0f") WPM)")
                             .frame(height: 350)
                     case .transkrip:
-                        VStack(alignment: .leading) {
-                            Text("Transkrip Lengkap")
-                                .font(.headline)
-                                .padding(.bottom, 5)
-                            
-                            ScrollView {
-                                // 4. KODE INI SEKARANG BERFUNGSI SEMPURNA
-                                // (Karena 'whisperKitVM' didapat dari @EnvironmentObject)
-                                if !whisperKitVM.finalizedStyledTranscript.description.isEmpty {
-                                    Text(whisperKitVM.finalizedStyledTranscript)
-                                        .font(.system(.body, design: .serif))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding()
-                                } else {
-                                    // Fallback
-                                    Text(fullTranscript.isEmpty ? "Tidak ada transkrip yang terekam." : fullTranscript)
-                                        .font(.system(.body, design: .serif))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding()
-                                }
-                            }
-                            .frame(height: 350)
-                            .background(Color(UIColor.secondarySystemBackground))
-                            .cornerRadius(10)
-                        }
+                        ArticulationTranscriptView(
+                            fullTranscript: fullTranscript
+                        )
                     }
                 }
                 .padding(.horizontal)

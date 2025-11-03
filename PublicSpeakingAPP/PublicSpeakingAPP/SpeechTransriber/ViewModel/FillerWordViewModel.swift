@@ -20,7 +20,7 @@ final class FillerWordViewModel: ObservableObject {
     private var previousTotalFillerCount: Int = 0
     private var ratingResetTimer: Timer?
 
-    private let fillerWordsID: Set<String> = [
+    let fillerWordsID: Set<String> = [
         "eh", "hm", "ah", "um", "uh", "anu", "hmm"
     ]
 

@@ -476,33 +476,23 @@ final class SpeechTranscriberViewModel: ObservableObject {
     
     @MainActor
     func updateFinalizedStyledTranscript() {
+        print("Updating finalized styled transcript. Confirmed: \(confirmedWords.count), Prev: \(prevWords.count), LastAgreed: \(lastAgreedWords.count), Hypothesis: \(hypothesisWords.count)")
         
         var attributed = AttributedString("")
 
         for word in confirmedWords {
             var str = AttributedString(word.word + " ")
-            if word.probability < 0.8 {
-                str.foregroundColor = Color(.systemRed)
-            } else {
-                str.foregroundColor = Color(.label)
-            }
+            str.foregroundColor = Color(.label)
             attributed.append(str)
         }
         
         let finalHypothesisWords = self.lastAgreedWords + TranscriptionUtilities.findLongestDifferentSuffix(self.prevWords, self.hypothesisWords)
         
-        print("--- [ArtikulasiTESTTranscript] Final hypothesis (non-overlapping) has \(finalHypothesisWords.count) words.")
+        print("--- [DEBUG] Final hypothesis (non-overlapping) has \(finalHypothesisWords.count) words.")
 
         for word in finalHypothesisWords {
             var str = AttributedString(word.word + " ")
-            
-            if word.probability < 0.8 {
-                print("--- [ArtikulasiTESTTranscipt] Kata merah di hipotesis: '\(word.word)' (Prob: \(word.probability))")
-                str.foregroundColor = Color(.systemRed)
-            } else {
-                str.foregroundColor = Color(.label)
-            }
-            
+            str.foregroundColor = Color(.label)
             attributed.append(str)
         }
 
