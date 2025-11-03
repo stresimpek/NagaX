@@ -8,7 +8,7 @@ import SwiftUI
 
 struct SettingsView: View {
     
-    @State private var durationMinutes: Int = 5
+    @State private var durationMinutes: Int = 0
     @State private var distractionLevel: Double = 0.0
     @State private var enableQnA: Bool = false
     @State private var randomTopic: Bool = false
@@ -21,7 +21,7 @@ struct SettingsView: View {
     @State private var selectedAspects: Set<AspectOption> = []
     
     private var shouldDisableNext: Bool {
-        selectedAspects.isEmpty
+        selectedAspects.isEmpty || durationMinutes == 0
     }
 
     var body: some View {
@@ -52,12 +52,12 @@ struct SettingsView: View {
                         Text("Durasi")
                             .font(.headline)
                         Spacer()
-                        Text("\(durationMinutes) menit")
-                            .font(.subheadline.weight(.semibold))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(.gray.opacity(0.25))
-                            .clipShape(Capsule())
+                        Picker("Tentukan durasi", selection: $durationMinutes) {
+                            Text("Tentukan durasi").tag(0)
+                            Text("5 menit").tag(5)
+                            Text("10 menit").tag(10)
+                            Text("15 menit").tag(15)
+                        }
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -123,14 +123,14 @@ struct SettingsView: View {
                     }
                     Spacer(minLength: 0)
                 }
-                .padding(.trailing, 16)
+//                .padding(.trailing, 16)
             }
-            .padding(.vertical, 12)
+//            .padding(.vertical, 12)
         }
-        .ignoresSafeArea(edges: .trailing)
+//        .ignoresSafeArea(edges: .horizontal)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.white)
         .navigationBarBackButtonHidden(true)
-        .padding(.trailing, 16)
+        .padding(.top, 24)
     }
 }

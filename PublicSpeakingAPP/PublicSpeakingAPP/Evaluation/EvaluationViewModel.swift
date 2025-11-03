@@ -13,7 +13,7 @@ struct EvaluationViewModel {
     static func process(
         tempoVM: TempoViewModel,
         textAnalyzerVM: TextFrequencyAnalyzerViewModel,
-        intonationVM: Double,
+        intonationVM: IntonationAnalyzerViewModel,
         duration: TimeInterval
     ) -> EvaluationModel {
         
@@ -22,7 +22,13 @@ struct EvaluationViewModel {
             counts: textAnalyzerVM.fillerWordCount,
             duration: duration
         )
-        let (intonationGrade, intonationFeedback, intonationScore) = gradeIntonation(stdDev: intonationVM)
+        
+        let finalStd = intonationVM.calculateFinalStandardDeviation()
+        let (intonationGrade, intonationFeedback, intonationScore) = gradeIntonation(stdDev: finalStd)
+        
+        let pitchSeries: [PitchPoint] = intonationVM.allPitchHistory
+            .map { PitchPoint(time: $0.timestamp, pitch: $0.pitch) }
+            .sorted { $0.time < $1.time }
         
         // Dummy Data
         let eyeContactScore = 0.5
@@ -49,9 +55,10 @@ struct EvaluationViewModel {
             fillerWordsPerMinute: fillerWPM,
             fillerWordGrade: fillerGrade,
             fillerWordFeedback: fillerFeedback,
-            intonationStdDev: intonationVM,
+            intonationStdDev: finalStd,
             intonationGrade: intonationGrade,
             intonationFeedback: intonationFeedback,
+            pitchSeries: pitchSeries,
             eyeContactScore: eyeContactScore * 100,
             eyeContactGrade: eyeContactGrade,
             eyeContactFeedback: eyeContactFeedback
