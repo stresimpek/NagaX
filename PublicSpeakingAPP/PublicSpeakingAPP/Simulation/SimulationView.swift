@@ -30,6 +30,8 @@ struct SimulationView: View {
     
     @StateObject private var viewModel: SimulationViewModel
     @Environment(\.dismiss) var dismiss
+    @StateObject private var micMonitor = MicMonitor()
+
     
     init(viewModel: SimulationViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -61,11 +63,21 @@ struct SimulationView: View {
                         AnimatedActorView(targetFrames: viewModel.studentMoods[8].animationFrames, isAnimating: viewModel.isRecording)
                     }
                     .frame(height: gridHeight * 0.40)
+                    if viewModel.isRecording {
+                            AudioVisualizerView(micMonitor: micMonitor)
+                                .padding(.top, 8)
+                        }
                 }
                 .frame(height: gridHeight)
                 .frame(width: geo.size.width * 0.9)
                 .position(x: geo.size.width / 2, y: geo.size.height * 0.6)
-
+                .onChange(of: viewModel.isRecording) { isRecording in
+                    if isRecording {
+                        micMonitor.startMonitoring()
+                    } else {
+                        micMonitor.stopMonitoring()
+                    }
+                }
                 AnimatedActorView(targetFrames: viewModel.teacherMood.animationFrames, isAnimating: viewModel.isRecording)
                 .frame(height: geo.size.height * 0.65)
                 .position(x: geo.size.width / 2, y: geo.size.height * 0.7)

@@ -46,8 +46,8 @@ class QuestionGeneratorViewModel: ObservableObject {
 
                 print("🔗 Starting download from URL")
                 let modelURL = try await ModelDownloader.shared.downloadModel(
-                    from: "https://huggingface.co/unsloth/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf",
-                    fileName: "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+                    from: "https://huggingface.co/mradermacher/gemma-3n-E2B-GGUF/resolve/main/gemma-3n-E2B.Q2_K.gguf",
+                    fileName: "gemma-3n-E2B.Q2_K.gguf",
                     progressCallback: { progress in
                         print("📊 Progress: \(progress)")
                         Task { @MainActor in
@@ -92,21 +92,88 @@ class QuestionGeneratorViewModel: ObservableObject {
             return
         }
         
+//        let prompt = """
+//        Baca teks berikut dengan teliti dan buat 3-5 pertanyaan kritis yang langsung terkait dengan isi teks.
+//        
+//        Aturan ketat:
+//        - Setiap pertanyaan HARUS berdasar pada informasi yang secara eksplisit ada dalam teks
+//        - Jangan menambahkan fakta, asumsi, atau informasi dari luar teks
+//        - Fokus pada:
+//          * Apa yang tidak dijelaskan tetapi penting
+//          * Asumsi tersirat dalam pernyataan
+//          * Konsistensi logika dalam teks
+//        
+//        Teks:
+//        \(text)
+//        
+//        Pertanyaan kritis:
+//        """
         let prompt = """
-        Baca teks berikut dengan teliti dan buat 3-5 pertanyaan kritis yang langsung terkait dengan isi teks.
-        
-        Aturan ketat:
-        - Setiap pertanyaan HARUS berdasar pada informasi yang secara eksplisit ada dalam teks
-        - Jangan menambahkan fakta, asumsi, atau informasi dari luar teks
-        - Fokus pada:
-          * Apa yang tidak dijelaskan tetapi penting
-          * Asumsi tersirat dalam pernyataan
-          * Konsistensi logika dalam teks
-        
         Teks:
         \(text)
-        
-        Pertanyaan kritis:
+        Berdasarkan teks di atas, 
+        PERAN: Anda adalah seorang Asisten AI yang berperan sebagai Pakar Tata Bahasa Indonesia. Fokus utama Anda adalah menganalisis efektivitas kalimat berdasarkan prinsip Kehematan.
+
+        TUGAS UTAMA: Analisis paragraf input yang diberikan. Identifikasi setiap frasa atau kalimat yang melanggar 7 Kaidah Kehematan di bawah ini. Untuk setiap pelanggaran yang ditemukan, Anda harus menyajikan temuan dalam format output yang ditentukan.
+
+        KAIDAH KEHEMATAN: Anda harus mendasarkan seluruh analisis Anda hanya pada 7 kaidah berikut:
+
+        a. Penggunaan kata di dalam frasa yang tidak hemat: (Contoh: mempunyai hak -> berhak, tidak setuju -> menolak, tidak berhasil -> gagal). b. Penggunaan konjungsi yang tidak tepat: (Contoh: konjungsi ganda seperti disebabkan karena). c. Penggunaan kata ulang dengan makna yang sama secara bersamaan: (Contoh: para dosen-dosen). d. Penggunaan kata paling, amat, sangat secara bersamaan atau bertemu dengan kata berimbuhan ter-: (Contoh: amat sangat tampan sekali atau paling tersulit). e. Penggunaan sinonim yang kurang tepat: (Contoh: memerhatikan film seharusnya menonton film). f. Penggunaan subjek yang berulang dalam kalimat majemuk: (Contoh: Sesudah Presiden Jokowi berkunjung..., ia akan...). g. Penggunaan superordinat pada hiponimi kata: (Contoh: baju berwarna Putih).
+
+        FORMAT INPUT: Input akan berupa satu paragraf teks atau lebih.
+
+        FORMAT OUTPUT WAJIB: Anda harus mengikuti struktur ini dengan ketat untuk setiap kesalahan yang ditemukan. Jika ada lebih dari satu kesalahan, ulangi blok format ini.
+
+        Output:
+        Kalimat tidak efektif dari kalimat tersebut:
+        [Kutip frasa atau kalimat yang tidak efektif]
+
+        Pelanggaran Kaidah:
+        [Sebutkan kaidah yang dilanggar, misal: Penggunaan kata ulang dengan makna yang sama]
+
+        Perbaikan:
+        [Tulis ulang kalimat yang sudah diperbaiki]
+        Jika tidak ada kesalahan yang ditemukan dalam teks input, respons Anda hanya boleh: Teks sudah efektif berdasarkan 7 kaidah kehematan.
+
+        CONTOH EKSEKUSI:
+
+        Input: Para tamu-tamu undangan diharapkan agar segera masuk ke dalam ruangan. Acara ini adalah merupakan acara yang paling terpenting di tahun ini. Disebabkan karena acara ini akan dihadiri oleh Bapak Presiden.
+
+        Output: Kalimat tidak efektif dari kalimat tersebut: Para tamu-tamu undangan
+
+        Pelanggaran Kaidah: Penggunaan kata ulang dengan makna yang sama secara bersamaan.
+
+        Perbaikan: Para tamu (atau Tamu-tamu undangan)
+
+        Kalimat tidak efektif dari kalimat tersebut: diharapkan agar segera masuk
+
+        Pelanggaran Kaidah: Penggunaan konjungsi yang tidak tepat (ganda: diharapkan & agar).
+
+        Perbaikan: diharapkan segera masuk
+
+        Kalimat tidak efektif dari kalimat tersebut: masuk ke dalam ruangan
+
+        Pelanggaran Kaidah: Penggunaan kata di dalam frasa yang tidak hemat (kata 'masuk' sudah pasti 'ke dalam').
+
+        Perbaikan: masuk ruangan
+
+        Kalimat tidak efektif dari kalimat tersebut: Acara ini adalah merupakan acara
+
+        Pelanggaran Kaidah: Penggunaan kata di dalam frasa yang tidak hemat (sinonim 'adalah' dan 'merupakan').
+
+        Perbaikan: Acara ini merupakan acara (atau Acara ini adalah acara)
+
+        Kalimat tidak efektif dari kalimat tersebut: yang paling terpenting
+
+        Pelanggaran Kaidah: Penggunaan kata 'paling' bertemu dengan kata berimbuhan 'ter-'.
+
+        Perbaikan: yang terpenting (atau yang paling penting)
+
+        Kalimat tidak efektif dari kalimat tersebut: Disebabkan karena acara ini
+
+        Pelanggaran Kaidah: Penggunaan konjungsi yang tidak tepat (ganda: disebabkan & karena).
+
+        Perbaikan: Sebab, acara ini (atau Hal itu disebabkan acara ini)
         """
         
         Task {
