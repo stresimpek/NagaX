@@ -49,7 +49,7 @@ class SimulationViewModel: ObservableObject {
         whisperKitVM: SpeechTranscriberViewModel,
         textAnalyzerVM: TextFrequencyAnalyzerViewModel,
         intonationAnalyzerVM: IntonationAnalyzerViewModel,
-        tempoVM: TempoViewModel,
+        tempoVM: TempoViewModel
     ) {
         self.settings = settings
         self.whisperKitVM = whisperKitVM
