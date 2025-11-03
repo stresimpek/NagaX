@@ -14,6 +14,7 @@ struct SimulationViewWrapper: View {
     @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
     @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
     @EnvironmentObject private var tempoVM: TempoViewModel
+    @EnvironmentObject private var fillerWordVM: FillerWordViewModel
     
     let settings: PracticeSettings
     let onBack: () -> Void
@@ -26,7 +27,8 @@ struct SimulationViewWrapper: View {
                 whisperKitVM: whisperKitVM,
                 textAnalyzerVM: textAnalyzerVM,
                 intonationAnalyzerVM: intonationAnalyzerVM,
-                tempoVM: tempoVM
+                tempoVM: tempoVM,
+                fillerWordVM: fillerWordVM
             ),
             onBack: onBack,
             onComplete: onComplete
@@ -204,6 +206,7 @@ struct SimulationView: View {
                 viewModel.textAnalyzerVM.clearResults()
                 viewModel.intonationAnalyzerVM.clearResults()
                 viewModel.tempoVM.clearResults()
+                viewModel.fillerWordVM.clearResults()
             }
         }
     }

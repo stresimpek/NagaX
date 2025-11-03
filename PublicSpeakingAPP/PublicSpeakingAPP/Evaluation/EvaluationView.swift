@@ -27,30 +27,31 @@ struct EvaluationView: View {
     let result: EvaluationModel
     let fullTranscript: String
     
-    let whisperKitVM: SpeechTranscriberViewModel?
+    @EnvironmentObject var whisperKitVM: SpeechTranscriberViewModel
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     let intonationAnalyzerVM: IntonationAnalyzerViewModel?
     let tempoVM: TempoViewModel?
+    let fillerWordVM: FillerWordViewModel?
     let settings: PracticeSettings
     let onBack: () -> Void
     let onNext: (PracticeSettings) -> Void
     
     init(
         result: EvaluationModel,
-        whisperKitVM: SpeechTranscriberViewModel? = nil,
         textAnalyzerVM: TextFrequencyAnalyzerViewModel? = nil,
         intonationAnalyzerVM: IntonationAnalyzerViewModel? = nil,
         tempoVM: TempoViewModel? = nil,
+        fillerWordVM: FillerWordViewModel? = nil,
         fullTranscript: String,
         settings: PracticeSettings,
         onBack: @escaping () -> Void,
         onNext: @escaping (PracticeSettings) -> Void
     ) {
         self.result = result
-        self.whisperKitVM = whisperKitVM
         self.textAnalyzerVM = textAnalyzerVM
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
+        self.fillerWordVM = fillerWordVM
         self.fullTranscript = fullTranscript
         self.settings = settings
         self.onBack = onBack
@@ -94,10 +95,20 @@ struct EvaluationView: View {
                                 .padding(.bottom, 5)
                             
                             ScrollView {
-                                Text(fullTranscript.isEmpty ? "Tidak ada transkrip yang terekam." : fullTranscript)
-                                    .font(.system(.body, design: .serif))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding()
+                                // 4. KODE INI SEKARANG BERFUNGSI SEMPURNA
+                                // (Karena 'whisperKitVM' didapat dari @EnvironmentObject)
+                                if !whisperKitVM.finalizedStyledTranscript.description.isEmpty {
+                                    Text(whisperKitVM.finalizedStyledTranscript)
+                                        .font(.system(.body, design: .serif))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding()
+                                } else {
+                                    // Fallback
+                                    Text(fullTranscript.isEmpty ? "Tidak ada transkrip yang terekam." : fullTranscript)
+                                        .font(.system(.body, design: .serif))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding()
+                                }
                             }
                             .frame(height: 350)
                             .background(Color(UIColor.secondarySystemBackground))
@@ -115,10 +126,11 @@ struct EvaluationView: View {
                 onBack: self.onBack,
                 onNext: {
                     self.onNext(self.settings)
-                    whisperKitVM?.resetState()
+                    whisperKitVM.resetState()
                     tempoVM?.clearResults()
                     intonationAnalyzerVM?.clearResults()
                     textAnalyzerVM?.clearResults()
+                    fillerWordVM?.clearResults()
                 }
             )
             .background(.bar)
