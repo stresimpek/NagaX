@@ -24,61 +24,33 @@ struct HomeContentView: View {
     let onStart: () -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                HStack(spacing: 4) {
-                    Text("Presentasimu dimulai dalam: ")
-                    CountdownBox(text: "3")
-                    Text("hari ")
-                    CountdownBox(text: "20")
-                    Text("jam ")
-                    CountdownBox(text: "30")
-                    Text("menit")
-                }
-                .font(.system(size: 14))
-                .padding(.top, 16)
-                
-                Spacer()
-                
-                HStack (spacing: 52) {
-                    VStack {
-                        Text("Noob Speaker")
-                        RiveViewModel(fileName:"noob cako new").view()
-                            .frame(width: 200, height: 120)
-                    }
+        VStack(spacing: 16) {
+            HStack(spacing: 4) {
+                Text("Presentasimu dimulai dalam: ")
+                CountdownBox(text: "3")
+                Text("hari ")
+                CountdownBox(text: "20")
+                Text("jam ")
+                CountdownBox(text: "30")
+                Text("menit")
+            }
+            .font(.system(size: 16))
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(Color.darkBlue)
+            .foregroundStyle(Color.white)
+            
+            Spacer()
+            
+            HStack(alignment: .top) {
+                VStack {
+                    Image(.titleNoob)
+                        .resizable()
+                        .frame(width: 180, height: 34)
                     
-                    VStack (alignment: .leading) {
-                        Text("Kamu belum siap untuk presentasi")
-                            .font(.system(size: 14))
-                        HStack {
-                            ProgressView(value: 0)
-                                .progressViewStyle(LinearProgressViewStyle(tint: .black))
-                                .frame(height: 8)
-                                .clipShape(Capsule())
-                            Text("%")
-                        }
-                        HStack (spacing: 20) {
-                            VStack (spacing: 20) {
-                                StatBar(title: "Intonasi", value: 0)
-                                StatBar(title: "Filler Words", value: 0)
-                            }
-                            VStack (spacing: 20) {
-                                StatBar(title: "Tempo", value: 0)
-                                StatBar(title: "Kontak Mata", value: 0)
-                            }
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                Text("Yuk, mulai latihan presentasi untuk meningkatkan rank mu")
-                    .font(.system(size: 14))
-                    .multilineTextAlignment(.center)
-
-                HStack(alignment: .center, spacing: 12) {
-                    CardButton(title: "Penghargaan", systemIcon: "star")
-                    CardButton(title: "Riwayat Latihan", systemIcon: "doc.text")
+                    RiveViewModel(fileName:"noob cako new").view()
+                        .frame(width: 200, height: 120)
+                    
                     ButtonComponent(
                         title: "MULAI LATIHAN",
                         systemImage: nil,
@@ -86,11 +58,18 @@ struct HomeContentView: View {
                         kind: .primaryYellow,
                         action: onStart
                     )
-                    .padding(.horizontal)
+                    .padding(.bottom, 40)
                 }
+                Image(.bubbleChat)
+                    .resizable()
+                    .frame(width: 208, height: 84)
             }
-            .toolbar(.hidden, for: .navigationBar)
+            .padding(.leading, 200)
+            .frame(alignment: .top)
         }
+        .ignoresSafeArea(edges: .horizontal)
+        .background(Color(.baseColorBlue))
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
@@ -98,9 +77,10 @@ struct CountdownBox: View {
     let text: String
     var body: some View {
         Text(text)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.black))
+            .frame(width: 28, height: 28)
+            .background(Color.white)
+            .cornerRadius(4)
+            .foregroundStyle(Color.black)
     }
 }
 

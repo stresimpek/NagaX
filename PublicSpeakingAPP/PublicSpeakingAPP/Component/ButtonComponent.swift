@@ -94,21 +94,21 @@ enum AppButtonStyleKind {
     var foreground: Color {
         switch self {
         case .secondaryBlue: .baseColorWhite
-        case .primaryYellow: .textDark
+        case .primaryYellow: .baseColorBrown
         case .disabled: .textGrey
         }
     }
     var background: Color {
         switch self {
-        case .secondaryBlue: .secondaryButton
-        case .primaryYellow: .primaryButton
+        case .secondaryBlue: .darkBlue2
+        case .primaryYellow: .baseColorYellow
         case .disabled: .disabledButton
         }
     }
     var shadow: Color {
         switch self {
-        case .secondaryBlue: .shadowSecondary
-        case .primaryYellow: .shadowPrimary
+        case .secondaryBlue: .darkBlue3
+        case .primaryYellow: .yellow2
         case .disabled: .shadowDisabled
         }
     }
