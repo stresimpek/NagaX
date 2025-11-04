@@ -160,15 +160,15 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         let sumOfSquaredDiffs = pitchesInWindow.map { pow($0 - mean, 2) }.reduce(0, +)
         self.standardDeviation = sqrt(sumOfSquaredDiffs / Double(pitchesInWindow.count))
          
-        if standardDeviation < 18.0 {
-            self.intonationLabel = "Intonasi Cenderung Datar"
+        if standardDeviation < 17.0 || standardDeviation > 32.0 {
+            self.intonationLabel = "Intonasi Cenderung Datar/Berlebihan"
             self.intonationRating = 1
-        } else if standardDeviation < 30.0 {
-            self.intonationLabel = "Intonasi Cukup Bervariasi"
-            self.intonationRating = 2
-        } else {
-            self.intonationLabel = "Intonasi Sangat Dinamis!"
+        } else if standardDeviation >= 22.0 && standardDeviation <= 32.0 {
+            self.intonationLabel = "Intonasi Sangat Bervariasi!"
             self.intonationRating = 3
+        } else if standardDeviation > 17.0 && standardDeviation < 22.0 {
+            self.intonationLabel = "Intonasi Cukup Dinamis"
+            self.intonationRating = 2
         }
     }
     
@@ -219,7 +219,6 @@ final class IntonationAnalyzerViewModel: ObservableObject {
     }
 }
 
-// (Helper extension Data.toArray tidak berubah)
 extension Data {
     func toArray<T>(type: T.Type) -> [T] {
         return self.withUnsafeBytes { $0.bindMemory(to: T.self) }.map { $0 }

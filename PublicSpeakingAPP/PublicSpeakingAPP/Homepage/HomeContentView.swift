@@ -79,15 +79,13 @@ struct HomeContentView: View {
                 HStack(alignment: .center, spacing: 12) {
                     CardButton(title: "Penghargaan", systemIcon: "star")
                     CardButton(title: "Riwayat Latihan", systemIcon: "doc.text")
-                    Button(action: onStart) {
-                        Text("Mulai Presentasi")
-                            .fontWeight(.bold)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.black)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                    }
+                    ButtonComponent(
+                        title: "MULAI LATIHAN",
+                        systemImage: nil,
+                        size: .large,
+                        kind: .primaryYellow,
+                        action: onStart
+                    )
                     .padding(.horizontal)
                 }
             }

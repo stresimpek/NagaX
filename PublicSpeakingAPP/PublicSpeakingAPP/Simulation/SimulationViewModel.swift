@@ -38,6 +38,15 @@ class SimulationViewModel: ObservableObject {
     private var distractionPlayers: [AVAudioPlayer] = []
     private var isLockedOvertimeMood = false
     
+    private var moodTimer: Timer?
+    private let uiUpdateInterval: TimeInterval = 2.0
+    private let minDwellTime: TimeInterval = 3.0
+    private var lastMoodChangeAt: Date = .distantPast
+    
+    private var moodScoreEMA: Double = 0.0
+//    private let emaAlpha: Double = 0.25
+    private let emaAlpha: Double = 0.4
+    
     var formattedTime: String {
         let minutes = timerSeconds / 60
         let seconds = timerSeconds % 60
@@ -99,25 +108,7 @@ class SimulationViewModel: ObservableObject {
             return
         }
         
-        if isLockedOvertimeMood {
-            print("[LOCKED] Overtime mood sudah dikunci — abaikan update berikutnya.")
-            return
-        }
-        
-        if isOvertime {
-            if isMoreThanOneMinute {
-                print("[Overtime] >1m: teacher=angry, students=sleep")
-                setTeacherMood(.angry)
-                setStudentMoods(.sleep)
-                isLockedOvertimeMood = true
-                return
-            } else {
-                print("[Overtime] <1m: teacher=idle, students=idle")
-                setTeacherMood(.idle)
-                setStudentMoods(.idle)
-                return
-            }
-        }
+        if isLockedOvertimeMood { return }
     
         print("--- Update Mood ---")
         print("Settings Aspects: \(settings.selectedAspects.map { $0.title })")
@@ -140,37 +131,12 @@ class SimulationViewModel: ObservableObject {
 //                activeRatings.append(eyeContactRating)
 //            }
         
-        // Filter rating '0' (N/A atau belum dihitung)
         let validRatings = activeRatings.filter { $0 > 0 }
-        print("Valid Ratings for Averaging: \(validRatings)")
-        
-        guard !validRatings.isEmpty else {
-            setTeacherMood(.idle)
-            setStudentMoods(.idle)
-            return
-        }
-        
-        let totalRating = validRatings.reduce(0, +)
-        let averageRating = Double(totalRating) / Double(validRatings.count)
-        let finalRating = Int(floor(averageRating))
-        print("Final Aggregate Rating: \(finalRating)")
+        guard !validRatings.isEmpty else { return }
 
-        switch finalRating {
-        case 3:
-            setTeacherMood(.happy)
-            setStudentMoods(.focus)
-        case 2:
-            setTeacherMood(.idle)
-            setStudentMoods(.idle)
-        case 1:
-            setTeacherMood(.angry)
-            setStudentMoods(.sleep)
-        default:
-            setTeacherMood(.idle)
-            setStudentMoods(.idle)
-        }
-    print("Setting Mood: Teacher=\(teacherMood), Students=\(studentMoods.first ?? .idle)")
-            print("--------------------")
+        let avg = Double(validRatings.reduce(0, +)) / Double(validRatings.count)
+        let instantScore = (avg - 2.0)
+        moodScoreEMA = emaAlpha * instantScore + (1.0 - emaAlpha) * moodScoreEMA
     }
     
     private func setupRecordingObserver() {
@@ -372,44 +338,44 @@ class SimulationViewModel: ObservableObject {
     }
 
 
-        private func processEvaluation() {
-            guard !self.isRecording else { /* ... */ return }
-            print("Memproses evaluasi...")
+    private func processEvaluation() {
+        guard !self.isRecording else { /* ... */ return }
+        print("Memproses evaluasi...")
 
-            guard self.recordingStartTime != nil else {
-                 print("processEvaluation called again after completion or during processing, ignoring.")
-                 return
-            }
-            self.recordingStartTime = nil
-            
-            let finalDuration = whisperKitVM.finalBufferDuration
-            
-            let finalIntonationStdDev = intonationAnalyzerVM.calculateFinalStandardDeviation()
-            
-            guard finalDuration > 0 else {
-                self.errorMessage = "Tidak ada data audio yang direkam (durasi: \(finalDuration))."
-                print("Tidak ada data audio yang direkam (durasi: \(finalDuration))")
-                self.isAnalysisComplete = true
-                return
-            }
-            
-            print("Data Evaluasi:")
-            print("- Duration: \(finalDuration)s")
-            print("- Tempo WPM: \(tempoVM.wpm)")
-            print("- Filler Words: \(textAnalyzerVM.fillerWordCount)")
-            print("- Intonation StdDev (Final Full): \(finalIntonationStdDev)")
-            
-            self.finalTranscript = self.whisperKitVM.confirmedText
-            self.evaluationResult = EvaluationViewModel.process(
-                tempoVM: self.tempoVM,
-                textAnalyzerVM: self.textAnalyzerVM,
-                intonationVM: self.intonationAnalyzerVM,
-                duration: finalDuration
-            )
-            
-            self.isAnalysisComplete = true
-            print("Evaluasi selesai, navigasi ke hasil")
+        guard self.recordingStartTime != nil else {
+             print("processEvaluation called again after completion or during processing, ignoring.")
+             return
         }
+        self.recordingStartTime = nil
+        
+        let finalDuration = whisperKitVM.finalBufferDuration
+        
+        let finalIntonationStdDev = intonationAnalyzerVM.calculateFinalStandardDeviation()
+        
+        guard finalDuration > 0 else {
+            self.errorMessage = "Tidak ada data audio yang direkam (durasi: \(finalDuration))."
+            print("Tidak ada data audio yang direkam (durasi: \(finalDuration))")
+            self.isAnalysisComplete = true
+            return
+        }
+        
+        print("Data Evaluasi:")
+        print("- Duration: \(finalDuration)s")
+        print("- Tempo WPM: \(tempoVM.wpm)")
+        print("- Filler Words: \(textAnalyzerVM.fillerWordCount)")
+        print("- Intonation StdDev (Final Full): \(finalIntonationStdDev)")
+        
+        self.finalTranscript = self.whisperKitVM.confirmedText
+        self.evaluationResult = EvaluationViewModel.process(
+            tempoVM: self.tempoVM,
+            textAnalyzerVM: self.textAnalyzerVM,
+            intonationVM: self.intonationAnalyzerVM,
+            duration: finalDuration
+        )
+        
+        self.isAnalysisComplete = true
+        print("Evaluasi selesai, navigasi ke hasil")
+    }
 
     
     func setTeacherMood(_ mood: TeacherMood) {
@@ -445,6 +411,10 @@ class SimulationViewModel: ObservableObject {
         self.errorMessage = nil
         self.recordingStartTime  = nil
         
+        isLockedOvertimeMood = false
+        moodScoreEMA = 0.0
+        lastMoodChangeAt = .distantPast
+        
         whisperKitVM.resetState()
         tempoVM.clearResults()
         intonationAnalyzerVM.clearResults()
@@ -454,6 +424,7 @@ class SimulationViewModel: ObservableObject {
             self?.updateGameLogic()
         }
         playAndScheduleDistraction()
+        startMoodTimer()
     }
     
     private func stopGame() {
@@ -468,7 +439,20 @@ class SimulationViewModel: ObservableObject {
         
         self.teacherMood = .idle
         self.studentMoods = Array(repeating: .idle, count: 9)
+        stopMoodTimer()
         
+    }
+    
+    private func startMoodTimer() {
+        stopMoodTimer()
+        moodTimer = Timer.scheduledTimer(withTimeInterval: uiUpdateInterval, repeats: true) { [weak self] _ in
+            self?.applySmoothedMoodToUI()
+        }
+    }
+
+    private func stopMoodTimer() {
+        moodTimer?.invalidate()
+        moodTimer = nil
     }
     
     private func resetGame() {
@@ -482,7 +466,56 @@ class SimulationViewModel: ObservableObject {
     func cleanup() {
         gameTimer?.invalidate()
         gameTimer = nil
+        stopMoodTimer()
     }
+    
+    private func applySmoothedMoodToUI() {
+        // Overtime rules dulu (prioritas)
+        if isLockedOvertimeMood {
+            setTeacherMood(.angry); setStudentMoods(.sleep); return
+        }
+        if isOvertime {
+            if isMoreThanOneMinute {
+                setTeacherMood(.angry); setStudentMoods(.sleep)
+                isLockedOvertimeMood = true
+            } else {
+                setTeacherMood(.idle); setStudentMoods(.idle)
+            }
+            return
+        }
+
+        // Diskretisasi dari moodScoreEMA → target mood
+        let targetMood: TeacherMood
+        if moodScoreEMA > 0.25 {
+            targetMood = .happy
+        } else if moodScoreEMA < -0.35 {
+            targetMood = .angry
+        } else {
+            targetMood = .idle
+        }
+
+        // Minimum dwell: jangan gonta-ganti terlalu cepat
+        let now = Date()
+        let previous = teacherMood
+        let elapsed = now.timeIntervalSince(lastMoodChangeAt)
+        if targetMood != previous && elapsed < minDwellTime {
+            return
+        }
+        // Apply perubahan
+        switch targetMood {
+        case .happy:
+            setTeacherMood(.happy); setStudentMoods(.focus)
+        case .angry:
+            setTeacherMood(.angry); setStudentMoods(.sleep)
+        case .idle:
+            setTeacherMood(.idle); setStudentMoods(.idle)
+        }
+
+        if targetMood != teacherMood {
+            lastMoodChangeAt = now
+        }
+    }
+
 }
 
 extension SimulationViewModel {

@@ -16,9 +16,9 @@ final class TempoViewModel: ObservableObject {
     @Published var tempoLabel: String = "..."
     @Published var tempoRating: Int = 0
 
-    private let wpmIdealMin: Double = 100.0
+    private let wpmIdealMin: Double = 90.0
     private let wpmIdealMax: Double = 150.0
-    private let wpmCukupMin: Double = 80.0
+    private let wpmCukupMin: Double = 75.0
     private let wpmCukupMax: Double = 170.0
     
     private var wordHistory: [(endTime: TimeInterval, duration: TimeInterval)] = []
@@ -75,10 +75,24 @@ final class TempoViewModel: ObservableObject {
         if totalWordsInWindow > 0 && totalSpeechDurationInWindow > 0.1 {
             calculatedWPM = (Double(totalWordsInWindow) / totalSpeechDurationInWindow) * 60.0
         }
+        
+//        if totalWordsInWindow > 0 {
+//            if totalSpeechDurationInWindow > 0.1 {
+//                // pakai total durasi vokal (tanpa jeda)
+//                calculatedWPM = (Double(totalWordsInWindow) / totalSpeechDurationInWindow) * 60.0
+//            } else if let first = wordHistory.first?.endTime,
+//                      let last  = wordHistory.last?.endTime,
+//                      last > first {
+//                // Fallback: pakai rentang waktu (termasuk jeda)
+//                let span = last - first
+//                calculatedWPM = (Double(totalWordsInWindow) / span) * 60.0
+//            }
+//        }
 
         self.wpm = (self.wpm * (1.0 - smoothingFactor)) + (calculatedWPM * smoothingFactor)
         
         let roundedWPM = self.wpm.rounded()
+        print("Rounded wpm : \(roundedWPM)")
         
         if roundedWPM >= wpmIdealMin && roundedWPM <= wpmIdealMax {
             self.tempoLabel = "Tempo Ideal"
