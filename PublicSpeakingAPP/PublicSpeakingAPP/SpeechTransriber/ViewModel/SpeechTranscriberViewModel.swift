@@ -44,7 +44,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var specializationProgressRatio: Float = 0.7
 
     // MARK: - Transcription Settings
-    @Published var selectedModel: String = "openai_whisper-small_216MB"
+    @Published var selectedModel: String = "openai_whisper-large-v3-v20240930_547MB"
     @Published var selectedTask: String = "transcribe"
     @Published var selectedLanguage: String = "indonesian"
     @Published var repoName: String = "argmaxinc/whisperkit-coreml"
@@ -101,10 +101,13 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var hypothesisWords: [WordTiming] = []
     @Published var hypothesisText: String = ""
     
+    @Published var finalizedStyledTranscript: AttributedString = AttributedString("")
+    
     // MARK: - Analyzer Links
     weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     weak var intonationAnalyzerVM: IntonationAnalyzerViewModel?
     weak var tempoVM: TempoViewModel?
+    weak var fillerWordVM: FillerWordViewModel?
     
     private var analyzerLastSampleIndex: Int = 0
     
@@ -174,6 +177,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         textAnalyzerVM?.clearResults()
         intonationAnalyzerVM?.clearResults()
         tempoVM?.clearResults()
+        fillerWordVM?.clearResults()
     }
 
     // MARK: - Model Management Logic
@@ -444,7 +448,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         Task {
             try? await Task.sleep(nanoseconds: 100_000_000)
             await MainActor.run {
-                if !self.isTranscribing { // Hanya set stopped jika transkripsi benar2 selesai
+                if !self.isTranscribing {
                     self.recordingStatus = .stopped
                     print("[SpeechTranscriber] Status -> .stopped")
                 }
@@ -464,8 +468,35 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     confirmedSegments.append(contentsOf: unconfirmedSegments)
                     unconfirmedSegments = []
                 }
+                
+                self.updateFinalizedStyledTranscript()
             }
         }
+    }
+    
+    @MainActor
+    func updateFinalizedStyledTranscript() {
+        print("Updating finalized styled transcript. Confirmed: \(confirmedWords.count), Prev: \(prevWords.count), LastAgreed: \(lastAgreedWords.count), Hypothesis: \(hypothesisWords.count)")
+        
+        var attributed = AttributedString("")
+
+        for word in confirmedWords {
+            var str = AttributedString(word.word + " ")
+            str.foregroundColor = Color(.label)
+            attributed.append(str)
+        }
+        
+        let finalHypothesisWords = self.lastAgreedWords + TranscriptionUtilities.findLongestDifferentSuffix(self.prevWords, self.hypothesisWords)
+        
+        print("--- [DEBUG] Final hypothesis (non-overlapping) has \(finalHypothesisWords.count) words.")
+
+        for word in finalHypothesisWords {
+            var str = AttributedString(word.word + " ")
+            str.foregroundColor = Color(.label)
+            attributed.append(str)
+        }
+
+        finalizedStyledTranscript = attributed
     }
     
     // MARK: - Transcription Logic
