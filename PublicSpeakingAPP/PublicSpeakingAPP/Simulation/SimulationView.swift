@@ -106,18 +106,6 @@ struct SimulationView: View {
                 
                 VStack {
                     ZStack {
-//                        HStack {
-//                            Button(action: onBack) {
-//                                Image(systemName: "xmark")
-//                                    .font(.system(size: 20, weight: .bold))
-//                                    .padding()
-//                                    .background(.black.opacity(0.1))
-//                                    .cornerRadius(10)
-//                                    .foregroundColor(.black)
-//                            }
-//                            Spacer()
-//                        }
-                        
                         Group {
                             if viewModel.isOvertime {
                                 Text(viewModel.isMoreThanOneMinute ? "LEWAT DURASI!" : "WAKTU HABIS!")
@@ -131,8 +119,6 @@ struct SimulationView: View {
                         .cornerRadius(10)
                         .animation(.easeInOut, value: viewModel.isOvertime)
                         .animation(.easeInOut, value: viewModel.isMoreThanOneMinute)
-                        
-                        
                     }
                     .padding(.top, 20)
                     .padding(.horizontal)

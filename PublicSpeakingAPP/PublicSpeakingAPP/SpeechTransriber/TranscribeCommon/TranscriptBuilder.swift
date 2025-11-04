@@ -7,6 +7,7 @@
 
 import Foundation
 import WhisperKit
+import SwiftUI
 
 struct TranscriptBuilder {
     
@@ -85,7 +86,7 @@ struct TranscriptBuilder {
                 var str = AttributedString(word.word + " ")
                 
                 if isProblematic(word) {
-                    str.foregroundColor = .red
+                    str.foregroundColor = .baseColorRed
                     str.font = .system(.body, design: .serif).bold()
                     
                     let globalIndexForThisWord = allWords.firstIndex(of: word)
