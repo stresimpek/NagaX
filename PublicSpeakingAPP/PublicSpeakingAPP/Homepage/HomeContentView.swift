@@ -34,10 +34,11 @@ struct HomeContentView: View {
                 CountdownBox(text: "30")
                 Text("menit")
             }
-            .font(.system(size: 14))
+            .font(.system(size: 16))
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
             .background(Color.darkBlue)
+            .foregroundStyle(Color.white)
             
             Spacer()
             
@@ -67,7 +68,7 @@ struct HomeContentView: View {
             .frame(alignment: .top)
         }
         .ignoresSafeArea(edges: .horizontal)
-        .background(Color(.blue))
+        .background(Color(.baseColorBlue))
         .toolbar(.hidden, for: .navigationBar)
     }
 }
@@ -76,9 +77,10 @@ struct CountdownBox: View {
     let text: String
     var body: some View {
         Text(text)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.black))
+            .frame(width: 28, height: 28)
+            .background(Color.white)
+            .cornerRadius(4)
+            .foregroundStyle(Color.black)
     }
 }
 
