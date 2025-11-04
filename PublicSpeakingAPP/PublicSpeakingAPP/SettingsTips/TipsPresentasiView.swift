@@ -32,8 +32,8 @@ struct TipsPresentasiView: View {
                     .frame(maxWidth: 280, alignment: .leading) // kontrol lebar bubble
                     .fixedSize(horizontal: false, vertical: true)
 
-                    ButtonComponent(text: "Presentasi? Aku belum siap…", action: onBack)
-                    ButtonComponent(text: "Oke, aku mau langsung mulai!", action: onContinue)
+//                    ButtonComponent(text: "Presentasi? Aku belum siap…", action: onBack)
+//                    ButtonComponent(text: "Oke, aku mau langsung mulai!", action: onContinue)
                 }
                 .padding(.trailing, 16)
             }

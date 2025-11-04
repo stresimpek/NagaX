@@ -302,8 +302,8 @@ struct FooterButtonsView: View {
     
     var body: some View {
         HStack(spacing: 15) {
-            ButtonComponent(text: "Latihan Lagi", action: onNext)
-            ButtonComponent(text: "Selesai", action: onBack)
+            ButtonComponent(title: "LATIHAN LAGI", systemImage: nil, size: .medium, kind: .secondaryBlue, action: onNext)
+            ButtonComponent(title: "SELESAI", systemImage: nil, size: .medium, kind: .primaryYellow, action: onBack)
         }
         .padding()
     }

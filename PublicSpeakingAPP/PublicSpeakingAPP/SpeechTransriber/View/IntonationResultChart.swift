@@ -16,106 +16,86 @@ struct PitchPoint: Identifiable, Hashable {
 
 struct IntonationResultChart: View {
     let pitchSeries: [PitchPoint]
-    let idealRange: ClosedRange<Double> = 120...180
+    // Same thresholds you use for grading:
+    private let bandLow: Double = 18.0
+    private let bandHigh: Double = 35.0
+    private let maxY: Double = 50.0  // cap for chart
 
-    // Normalize waktu agar mulai dari 0
-    private var normalizedSeries: [PitchPoint] {
-        guard let firstTime = pitchSeries.first?.time else { return pitchSeries }
-        return pitchSeries.map { p in
-            PitchPoint(time: p.time - firstTime, pitch: p.pitch)
+    // Window config
+    var windowSeconds: Double = 10.0     // match your analyzer window
+    var stepSeconds: Double = 1.0        // compute one point per second
+
+    // Normalize to start at 0s
+    private var normalized: [PitchPoint] {
+        guard let t0 = pitchSeries.first?.time else { return pitchSeries }
+        return pitchSeries.map { .init(time: $0.time - t0, pitch: $0.pitch) }
+    }
+
+    // Build rolling std series
+    private var rollingStd: [PitchPoint] {
+        guard let lastT = normalized.last?.time, lastT > 0 else { return [] }
+        var out: [PitchPoint] = []
+        var t = 0.0
+        while t <= lastT {
+            let windowStart = max(0.0, t - windowSeconds)
+            let window = normalized.filter { $0.time >= windowStart && $0.time <= t }.map { $0.pitch }
+            if window.count >= 2 {
+                let mean = window.reduce(0,+) / Double(window.count)
+                let varSum = window.reduce(0) { $0 + pow($1 - mean, 2) }
+                let std = sqrt(varSum / Double(window.count))
+                out.append(.init(time: t, pitch: std))
+            }
+            t += stepSeconds
         }
+        return out
     }
 
-    private var totalDuration: Double {
-        normalizedSeries.last?.time ?? 0
-    }
-
-    // Tentukan jarak tick axis X sesuai panjang durasi
-    private var tickInterval: Double {
-        switch totalDuration {
-        case 0..<30: return 5        // tiap 5 detik kalau durasi pendek
-        case 30..<90: return 15      // tiap 15 detik untuk durasi sedang
-        case 90..<180: return 30     // tiap 30 detik untuk durasi panjang
-        default: return 60           // kalau lebih dari 3 menit tiap 1 menit
+    // Optional: smooth with EMA for extra silky lines
+    private var smoothedRollingStd: [PitchPoint] {
+        let alpha = 0.3 // 0..1 (higher -> more reactive)
+        var ema: Double?
+        return rollingStd.map { p in
+            let v = (ema == nil) ? p.pitch : (alpha * p.pitch + (1 - alpha) * ema!)
+            ema = v
+            return .init(time: p.time, pitch: min(v, maxY))
         }
-    }
-
-    // Bikin list tick values
-    private var tickValues: [Double] {
-        stride(from: 0, through: totalDuration, by: tickInterval).map { $0 }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Pitch Intonation (Hz)")
+            Text("Pitch Variability (Std Dev over time)")
                 .font(.headline)
                 .padding(.leading, 8)
 
             Chart {
-                // Area ideal range
-                if totalDuration > 0 {
-                    RectangleMark(
-                        xStart: .value("Start", 0),
-                        xEnd: .value("End", totalDuration),
-                        yStart: .value("Ideal Min", idealRange.lowerBound),
-                        yEnd: .value("Ideal Max", idealRange.upperBound)
-                    )
-                    .foregroundStyle(Color.green.opacity(0.12))
+                // Bands for A/B/C thresholds
+                if let lastT = normalized.last?.time, lastT > 0 {
+                    // C (too flat): 0 .. <18
+                    RectangleMark(xStart: .value("s0", 0), xEnd: .value("s1", lastT),
+                                  yStart: .value("y0", 0), yEnd: .value("y1", bandLow))
+                        .foregroundStyle(.orange.opacity(0.10))
+                    // B (18..25)
+                    RectangleMark(xStart: .value("s0", 0), xEnd: .value("s1", lastT),
+                                  yStart: .value("y0", bandLow), yEnd: .value("y1", bandHigh))
+                        .foregroundStyle(.green.opacity(0.10))
+                    // A (25..35) — your top band; we cap display at maxY
+                    RectangleMark(xStart: .value("s0", 0), xEnd: .value("s1", lastT),
+                                  yStart: .value("y0", bandHigh), yEnd: .value("y1", maxY))
+                        .foregroundStyle(.yellow.opacity(0.10))
                 }
 
-                // Garis pitch
-                ForEach(normalizedSeries) { point in
+                ForEach(smoothedRollingStd) { p in
                     LineMark(
-                        x: .value("Time (s)", point.time),
-                        y: .value("Pitch (Hz)", point.pitch)
+                        x: .value("Time (s)", p.time),
+                        y: .value("Std Dev", p.pitch)
                     )
                     .interpolationMethod(.monotone)
-                    .foregroundStyle(.blue)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-                }
-
-                // Titik dalam ideal range
-                ForEach(normalizedSeries) { point in
-                    if idealRange.contains(point.pitch) {
-                        PointMark(
-                            x: .value("Time", point.time),
-                            y: .value("Pitch", point.pitch)
-                        )
-                        .foregroundStyle(.white)
-                        .annotation(position: .top) {
-                            Text("Just Right")
-                                .font(.caption2)
-                                .padding(4)
-                                .background(.ultraThinMaterial)
-                                .cornerRadius(4)
-                        }
-                    }
                 }
             }
-            .chartXScale(domain: 0...(max(totalDuration, tickInterval))) // tetap muat semua
-            .chartYScale(domain: 50...300)
-            .chartXAxis {
-                AxisMarks(values: tickValues) { value in
-                    AxisGridLine()
-                    AxisTick()
-                    if let seconds = value.as(Double.self) {
-                        AxisValueLabel(String(format: "%.0fs", seconds))
-                    }
-                }
-            }
-            .chartYAxis {
-                AxisMarks(position: .leading)
-            }
-            .frame(height: 180)
+            .chartXScale(domain: 0...(max(normalized.last?.time ?? 0, 1)))
+            .chartYScale(domain: 0...maxY)
+            .frame(height: 160)
             .padding(.horizontal, 12)
-            .animation(.easeInOut(duration: 0.4), value: normalizedSeries)
-
-            if totalDuration > 0 {
-                Text("Total Duration: \(String(format: "%.1f", totalDuration)) s")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.leading, 8)
-            }
         }
     }
 }

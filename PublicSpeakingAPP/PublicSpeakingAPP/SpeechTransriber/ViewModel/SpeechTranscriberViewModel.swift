@@ -48,7 +48,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var selectedTask: String = "transcribe"
     @Published var selectedLanguage: String = "indonesian"
     @Published var repoName: String = "argmaxinc/whisperkit-coreml"
-    @Published var enableTimestamps: Bool = false
+    @Published var enableTimestamps: Bool = true
     @Published var enablePromptPrefill: Bool = true
     @Published var enableCachePrefill: Bool = true
     @Published var enableSpecialCharacters: Bool = false
@@ -661,7 +661,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             usePrefillPrompt: enablePromptPrefill,
             usePrefillCache: enableCachePrefill,
             skipSpecialTokens: !enableSpecialCharacters,
-            withoutTimestamps: !enableTimestamps,
+            withoutTimestamps: false,
             wordTimestamps: true,
             clipTimestamps: seekClip,
             promptTokens: myPromptTokenIDs,

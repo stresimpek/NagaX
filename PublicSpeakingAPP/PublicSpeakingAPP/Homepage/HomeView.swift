@@ -13,7 +13,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack(path: $coordinator.path) {
             HomeContentView(
-                onStart: { coordinator.goToTips() }
+                onStart: { coordinator.goToSettings() }
             )
             .navigationDestination(for: Route.self) { route in
                 switch route {
@@ -61,6 +61,7 @@ struct HomeView: View {
                             coordinator.retrySimulation(from: passedSettings)
                         }
                     )
+                    .navigationBarBackButtonHidden(true)
                 }
             }
         }
