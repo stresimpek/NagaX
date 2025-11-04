@@ -103,6 +103,8 @@ final class SpeechTranscriberViewModel: ObservableObject {
     
     @Published var finalizedStyledTranscript: AttributedString = AttributedString("")
     
+    @Published var savedRecordingURL: URL? = nil
+    
     // MARK: - Analyzer Links
     weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     weak var intonationAnalyzerVM: IntonationAnalyzerViewModel?
@@ -172,6 +174,8 @@ final class SpeechTranscriberViewModel: ObservableObject {
         confirmedText = ""
         hypothesisWords = []
         hypothesisText = ""
+        
+        savedRecordingURL = nil
         
         analyzerLastSampleIndex = 0
         textAnalyzerVM?.clearResults()
@@ -421,6 +425,13 @@ final class SpeechTranscriberViewModel: ObservableObject {
         
         if let audioProcessor = whisperKit?.audioProcessor {
             audioProcessor.stopRecording()
+        }
+        
+        Task(priority: .background) {
+            let url = await saveAudioBufferAsWavFile()
+            await MainActor.run {
+                self.savedRecordingURL = url
+            }
         }
         
         if loop {
@@ -890,6 +901,44 @@ final class SpeechTranscriberViewModel: ObservableObject {
         return buffer
     }
     
+    private func saveAudioBufferAsWavFile() async -> URL? {
+        guard let whisperKit = whisperKit else { return nil }
+        
+        let samples = Array(whisperKit.audioProcessor.audioSamples)
+        
+        guard !samples.isEmpty else { return nil }
+        
+        let fileManager = FileManager.default
+        let docsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = docsDir.appendingPathComponent("full_recording.wav")
+        
+        try? fileManager.removeItem(at: fileURL)
+        
+        let settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatLinearPCM,
+            AVSampleRateKey: WhisperKit.sampleRate,
+            AVNumberOfChannelsKey: 1,
+            AVLinearPCMBitDepthKey: 32,
+            AVLinearPCMIsFloatKey: true,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsNonInterleaved: false
+        ]
+        
+        do {
+            let audioFile = try AVAudioFile(forWriting: fileURL, settings: settings)
+            
+            guard let buffer = makePCMBuffer(from: samples, sampleRate: Double(WhisperKit.sampleRate)) else {
+                print("Gagal membuat PCM buffer untuk disimpan")
+                return nil
+            }
+            try audioFile.write(from: buffer)
+            print("Audio berhasil disimpan di: \(fileURL)")
+            return fileURL
+        } catch {
+            print("Error menyimpan audio: \(error.localizedDescription)")
+            return nil
+        }
+    }
     
     func transcribeCurrentBuffer() async throws {
         guard let whisperKit = whisperKit else { return }

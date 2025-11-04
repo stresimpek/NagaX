@@ -16,40 +16,8 @@ struct FillerWordTranscriptView: View {
     let result: EvaluationModel
     let fullTranscript: String
     
-    private var fillerWordStyledTranscript: AttributedString {
-        let fillerSet = fillerWordVM.fillerWordsID
-        
-        let confirmedWords = whisperKitVM.confirmedWords
-        let prevWords = whisperKitVM.prevWords
-        let lastAgreedWords = whisperKitVM.lastAgreedWords
-        let hypothesisWords = whisperKitVM.hypothesisWords
-        
-        let finalHypothesisWords = lastAgreedWords + TranscriptionUtilities.findLongestDifferentSuffix(prevWords, hypothesisWords)
-        
-        var newAttributed = AttributedString("")
-        
-        for word in confirmedWords {
-            let cleanWord = word.word.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
-            
-            var str = AttributedString(word.word + " ")
-            str.foregroundColor = fillerSet.contains(cleanWord) ? .red : .primary
-            newAttributed.append(str)
-        }
-        
-        for word in finalHypothesisWords {
-            let cleanWord = word.word.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
-            
-            var str = AttributedString(word.word + " ")
-            str.foregroundColor = fillerSet.contains(cleanWord) ? .red : .primary
-            newAttributed.append(str)
-        }
-        
-        if newAttributed.description.isEmpty {
-            return AttributedString(fullTranscript)
-        }
-        
-        return newAttributed
-    }
+    @State private var pages: [TranscriptPage] = []
+    @State private var maps: TranscriptMaps = .empty
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -57,15 +25,35 @@ struct FillerWordTranscriptView: View {
                 .font(.headline)
                 .padding(.bottom, 5)
             
-            ScrollView {
-                Text(fillerWordStyledTranscript)
-                    .font(.system(.body, design: .serif))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
+            ReusableTranscriptCardView(
+                pages: pages,
+                maps: maps,
+                savedRecordingURL: whisperKitVM.savedRecordingURL,
+                emptyStateMessage: "No Filler"
+            )
+        }
+        .onAppear {
+            let confirmed = whisperKitVM.confirmedWords
+            let prev = whisperKitVM.prevWords
+            let lastAgreed = whisperKitVM.lastAgreedWords
+            let hypothesis = whisperKitVM.hypothesisWords
+            let finalHypo = lastAgreed + TranscriptionUtilities.findLongestDifferentSuffix(prev, hypothesis)
+            let allWords = confirmed + finalHypo
+            
+            let fillerSet = fillerWordVM.fillerWordsID
+            
+            let isFiller: (WordTiming) -> Bool = { word in
+                let cleanWord = word.word.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+                return fillerSet.contains(cleanWord)
             }
-            .frame(height: 350)
-            .background(Color(UIColor.secondarySystemBackground))
-            .cornerRadius(10)
+            
+            let (pages, maps) = TranscriptBuilder().buildPagesAndMaps(
+                allWords: allWords,
+                isProblematic: isFiller
+            )
+            
+            self.pages = pages
+            self.maps = maps
         }
     }
 }
