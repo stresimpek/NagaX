@@ -19,10 +19,13 @@ final class SpeechTranscriberViewModel: NSObject, ObservableObject {
     @Published var errorMessage: String?
     @Published var currentLocaleIdentifier: String = "id_ID"
     
-    
     @Published var generatedQuestions: [String] = []
     @Published var isGeneratingQuestions: Bool = false
     @Published var questionGenerationError: String?
+    
+    @Published var SentenceAnalysis: SentenceAnalysisResponse?
+    @Published var isAnalyzingSentence: Bool = false
+    @Published var SentenceAnalysisError: String?
 
     private let mistralService: MistralAIService
 
@@ -51,6 +54,31 @@ final class SpeechTranscriberViewModel: NSObject, ObservableObject {
         isGeneratingQuestions = false
     }
     
+    func analyzeTranscriptSentence() async {
+        guard !transcript.isEmpty else {
+            SentenceAnalysisError = "Transcript is empty. Record something first."
+            return
+        }
+        
+        isAnalyzingSentence = true
+        SentenceAnalysisError = nil
+        SentenceAnalysis = nil // Hapus hasil lama
+        
+        do {
+            let analysis = try await mistralService.analyzeSentence(from: transcript)
+            self.SentenceAnalysis = analysis
+        } catch {
+            SentenceAnalysisError = "Failed to analyze Sentence: \(error.localizedDescription)"
+        }
+        
+        isAnalyzingSentence = false
+    }
+   
+    func resetSentenceAnalysis() {
+        SentenceAnalysis = nil
+        SentenceAnalysisError = nil
+    }
+
     var canRecord: Bool {
         authorizationStatus == .authorized
     }

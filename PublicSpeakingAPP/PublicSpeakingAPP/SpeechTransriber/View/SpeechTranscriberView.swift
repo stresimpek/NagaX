@@ -16,6 +16,7 @@ struct SpeechTranscriberView: View {
     
     @StateObject var viewModel = SpeechTranscriberViewModel(mistralAPIKey: "DCzL0PebPbW8L4PMOXcipen5c8f5irFP")
     @State private var showQuestions = false
+    @State private var showSentenceAnalysis = false
     
     var body: some View {
         VStack(spacing: 16) {
@@ -70,29 +71,43 @@ struct SpeechTranscriberView: View {
             .padding(.horizontal)
             
             if !viewModel.transcript.isEmpty {
-                            Button(action: {
-                                showQuestions = true
-                            }) {
-                                Text("Generate Q&A")
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.blue)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(10)
-                            }
-                            .padding()
-                            .sheet(isPresented: $showQuestions) {
-                                QuestionListView(viewModel: viewModel)
-                            }
-                        }
-                    }
-                    .onAppear {
-                        viewModel.requestAuthorization()
+                Button(action: {
+                    showQuestions = true
+                }) {
+                    Text("Generate Q&A")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                 }
-        
-        .padding()
+                .padding()
+                .sheet(isPresented: $showQuestions) {
+                    QuestionListView(viewModel: viewModel)
+                }
+                
+                Button(action: {
+                    // Reset Sentence lama sebelum membuka
+                    viewModel.resetSentenceAnalysis()
+                    showSentenceAnalysis = true
+                }) {
+                    Label("Check Sentence", systemImage: "text.badge.checkmark")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent) // Buat ini jadi tombol utama
+                .tint(.green) // Ganti warna
+                .sheet(isPresented: $showSentenceAnalysis) {
+                    // Kita akan buat view ini di langkah berikutnya
+                    SentenceAnalysisView(viewModel: viewModel)
+                }
+            }
+        }
         .onAppear {
             viewModel.requestAuthorization()
+    }
+    .padding()
+    .onAppear {
+        viewModel.requestAuthorization()
         }
     }
 }
