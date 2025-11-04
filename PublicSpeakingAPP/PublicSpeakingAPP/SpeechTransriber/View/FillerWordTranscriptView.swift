@@ -4,7 +4,7 @@
 //
 //  Created by Jordan on 03/11/25.
 //
-//  Updated by Gemini on 04/11/25 with progress bar and layout fixes.
+//  Updated by Gemini on 04/11/25 with Jumper, Timestamps, and Layout Fixes.
 //
 
 import SwiftUI
@@ -12,12 +12,19 @@ import WhisperKit
 import NaturalLanguage
 import AVFoundation // Pastikan ini ada
 
-// Tipe data baru untuk menyimpan info halaman/card
+// Tipe data untuk menyimpan info halaman/card
 fileprivate struct TranscriptPage: Identifiable {
     let id = UUID()
     let attributedString: AttributedString
     let startTime: TimeInterval
     let endTime: TimeInterval
+}
+
+// Tipe data untuk menyimpan hasil pemetaan jumper
+fileprivate struct FillerMaps {
+    let totalCount: Int
+    let fillerIndexToPageIndex: [Int: Int] // [GlobalFWIndex: PageIndex]
+    let pageIndexToFillerIndices: [Int: [Int]] // [PageIndex: [GlobalFWIndex]]
 }
 
 struct FillerWordTranscriptView: View {
@@ -38,9 +45,14 @@ struct FillerWordTranscriptView: View {
     @State private var isPlayingPageID: UUID?
     @State private var player: AVPlayer?
     @State private var timeObserverToken: Any?
-    
-    // --- BARU: State untuk Progress Bar ---
     @State private var playbackProgress: Double = 0.0
+    
+    // --- BARU: State untuk Jumper ---
+    @State private var totalFillerWordCount: Int = 0
+    @State private var currentFillerWordIndex: Int = 1 // 1-based index
+    @State private var fillerIndexToPageIndex: [Int: Int] = [:]
+    @State private var pageIndexToFillerIndices: [Int: [Int]] = [:]
+
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -63,16 +75,48 @@ struct FillerWordTranscriptView: View {
                         
                         VStack(spacing: 0) {
                             
-                            // --- PERBAIKAN: Teks di atas ---
+                            // --- BARU: Header Card (Timestamp & Jumper) ---
+                            HStack {
+                                // Kiri Atas: Timestamp
+                                Text(formatTimestamp(page.startTime, page.endTime))
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundColor(.secondary)
+
+                                Spacer()
+
+                                // Kanan Atas: Jumper
+                                HStack(spacing: 8) {
+                                    Button(action: { jumpToFillerWord(globalIndex: currentFillerWordIndex - 1) }) {
+                                        Image(systemName: "chevron.left")
+                                    }
+                                    .disabled(currentFillerWordIndex <= 1)
+                                    
+                                    Text("\(currentFillerWordIndex) / \(totalFillerWordCount) kata")
+                                        .font(.caption.monospacedDigit().bold())
+                                    
+                                    Button(action: { jumpToFillerWord(globalIndex: currentFillerWordIndex + 1) }) {
+                                        Image(systemName: "chevron.right")
+                                    }
+                                    .disabled(currentFillerWordIndex >= totalFillerWordCount)
+                                }
+                                .foregroundColor(.blue)
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 12)
+                            .padding(.bottom, 8)
+                            // --- AKHIR HEADER ---
+                            
+                            // Teks Transkrip
                             Text(page.attributedString)
-                                .font(.system(.body, design: .serif)) // Pastikan font disetel
-                                .padding()
+                                .font(.system(.body, design: .serif))
+                                .padding(.horizontal)
+                                .padding(.bottom, 10)
                                 .fixedSize(horizontal: false, vertical: true) // <-- PERBAIKAN TEKS TERPOTONG
                                 .frame(maxWidth: .infinity, alignment: .topLeading)
                             
                             Spacer(minLength: 10) // Pendorong ke bawah
                             
-                            // --- PERBAIKAN: Kontrol di bawah ---
+                            // --- Kontrol Audio di Bawah ---
                             HStack(spacing: 12) {
                                 // Tombol Play
                                 Button(action: {
@@ -88,15 +132,9 @@ struct FillerWordTranscriptView: View {
                                         .frame(width: 44, height: 44)
                                 }
                                 
-                                // Progress Bar dan Teks Indikator
-                                VStack(alignment: .leading, spacing: 4) {
-                                    ProgressView(value: isPlayingPageID == page.id ? playbackProgress : 0.0)
-                                        .tint(.blue)
-                                    
-                                    Text(isPlayingPageID == page.id ? "Memutar audio..." : "Contoh \(index + 1) dari \(pages.count)")
-                                        .font(.caption.monospacedDigit())
-                                        .foregroundColor(.secondary)
-                                }
+                                // Progress Bar
+                                ProgressView(value: isPlayingPageID == page.id ? playbackProgress : 0.0)
+                                    .tint(.blue)
                             }
                             .padding(.horizontal)
                             .padding(.bottom, 10)
@@ -114,13 +152,32 @@ struct FillerWordTranscriptView: View {
                     .stroke(Color.gray.opacity(0.5), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+            
             // Hentikan audio saat user swipe
-            .onChange(of: currentPageIndex) { _ in
+            .onChange(of: currentPageIndex) { newPageIndex in
                  stopPlayback()
+                 
+                 // Update Jumper agar sesuai dengan halaman yang di-swipe
+                 if let fillerIndicesOnPage = pageIndexToFillerIndices[newPageIndex],
+                    let firstFillerIndex = fillerIndicesOnPage.first {
+                     self.currentFillerWordIndex = firstFillerIndex
+                 }
             }
         }
         .onAppear {
-            self.pages = buildPages()
+            // Bangun halaman dan peta jumper
+            let (pages, maps) = buildPagesAndMaps()
+            self.pages = pages
+            self.fillerIndexToPageIndex = maps.fillerIndexToPageIndex
+            self.pageIndexToFillerIndices = maps.pageIndexToFillerIndices
+            self.totalFillerWordCount = maps.totalCount
+            
+            // Set Jumper ke kata pertama di halaman pertama
+            if let firstIndices = maps.pageIndexToFillerIndices[0], let firstIndex = firstIndices.first {
+                self.currentFillerWordIndex = firstIndex
+            } else {
+                self.currentFillerWordIndex = (maps.totalCount > 0) ? 1 : 0
+            }
             
             // Set audio session agar bisa play di mode silent
             do {
@@ -136,6 +193,21 @@ struct FillerWordTranscriptView: View {
         }
     }
     
+    // MARK: - Jumper Logic
+    
+    private func jumpToFillerWord(globalIndex: Int) {
+        // 'globalIndex' adalah 1-based (misal 1/6)
+        guard globalIndex >= 1 && globalIndex <= totalFillerWordCount else { return }
+        
+        // Cari halaman target dari peta
+        if let targetPageIndex = fillerIndexToPageIndex[globalIndex] {
+            // Update state jumper
+            self.currentFillerWordIndex = globalIndex
+            // Lompat ke halaman (card)
+            self.currentPageIndex = targetPageIndex
+        }
+    }
+    
     // MARK: - Audio Playback Logic
     
     private func stopPlayback() {
@@ -145,7 +217,7 @@ struct FillerWordTranscriptView: View {
             timeObserverToken = nil
         }
         isPlayingPageID = nil
-        playbackProgress = 0.0 // <-- RESET PROGRESS
+        playbackProgress = 0.0
     }
     
     private func playSegment(url: URL, page: TranscriptPage) {
@@ -171,17 +243,15 @@ struct FillerWordTranscriptView: View {
             
             self.timeObserverToken = self.player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.05, preferredTimescale: 600), queue: .main) { time in
                 
-                // --- BARU: Hitung Progress Bar ---
+                // Hitung Progress Bar
                 let clipStartTime = page.startTime
                 let clipEndTime = page.endTime
                 let clipDuration = clipEndTime - clipStartTime
                 let currentTimeInClip = time.seconds - clipStartTime
                 
                 if clipDuration > 0 {
-                    // Pastikan progress antara 0.0 dan 1.0
                     self.playbackProgress = min(1.0, max(0.0, currentTimeInClip / clipDuration))
                 }
-                // --- AKHIR HITUNG PROGRESS ---
 
                 // Hentikan jika sudah melewati endTime
                 if time.seconds >= page.endTime {
@@ -195,47 +265,68 @@ struct FillerWordTranscriptView: View {
     }
     
 
-    // MARK: - Helper Functions untuk Paginasi (Tidak Berubah)
+    // MARK: - Helper Functions
+    
+    // Format "00:30 - 00:40"
+    private func formatTimestamp(_ startTime: TimeInterval, _ endTime: TimeInterval) -> String {
+        let startMinutes = Int(startTime) / 60
+        let startSeconds = Int(startTime) % 60
+        let endMinutes = Int(endTime) / 60
+        let endSeconds = Int(endTime) % 60
+        
+        return String(format: "%02d:%02d - %02d:%02d", startMinutes, startSeconds, endMinutes, endSeconds)
+    }
     
     /**
-     * FUNGSI LOGIKA PAGINASI (Logika Non-Overlap)
+     * FUNGSI LOGIKA PAGINASI (Logika Non-Overlap + Pemetaan Jumper)
      */
-    private func buildPages() -> [TranscriptPage] {
+    private func buildPagesAndMaps() -> (pages: [TranscriptPage], maps: FillerMaps) {
         let fillerSet = fillerWordVM.fillerWordsID
         
-        // 1. Dapatkan semua kata langsung dari view model
         let confirmedWords = whisperKitVM.confirmedWords
         let prevWords = whisperKitVM.prevWords
         let lastAgreedWords = whisperKitVM.lastAgreedWords
         let hypothesisWords = whisperKitVM.hypothesisWords
-        
         let finalHypothesisWords = lastAgreedWords + TranscriptionUtilities.findLongestDifferentSuffix(prevWords, hypothesisWords)
         let allWords = confirmedWords + finalHypothesisWords
         
-        guard !allWords.isEmpty else { return [] }
+        guard !allWords.isEmpty else {
+            return ([], FillerMaps(totalCount: 0, fillerIndexToPageIndex: [:], pageIndexToFillerIndices: [:]))
+        }
 
-        // 2. Siapkan variabel
         var pages: [TranscriptPage] = []
         let punctuationSet = CharacterSet(charactersIn: ".?!")
         var currentIndex = 0 // Kursor untuk mencegah overlap
+        
+        // --- Persiapan Jumper ---
+        var fillerIndexToPageIndex: [Int: Int] = [:]
+        var pageIndexToFillerIndices: [Int: [Int]] = [:]
+        var globalFillerCount = 0 // 0-based internal, akan jadi 1-based saat disimpan
+        
+        // 1. Temukan dulu SEMUA global index dari filler word
+        let allFillerWordGlobalIndices: [Int] = allWords.enumerated().compactMap { (index, word) -> Int? in
+            let cleanWord = word.word.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+            return fillerSet.contains(cleanWord) ? index : nil
+        }
+        let totalFillerWordCount = allFillerWordGlobalIndices.count
+        // --- Selesai Persiapan Jumper ---
+        
 
-        // 3. Loop melalui transkrip
         while currentIndex < allWords.count {
             
-            // 4. Cari filler word BERIKUTNYA dari posisi kursor
+            // 2. Cari filler word BERIKUTNYA dari posisi kursor
             let nextFillerWord = allWords[currentIndex...].enumerated().first { (index, word) -> Bool in
                 let cleanWord = word.word.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
                 return fillerSet.contains(cleanWord)
             }
             
-            // 5. Jika tidak ada lagi, berhenti
             guard let foundFiller = nextFillerWord else {
                 break
             }
             
             let wordIndex = currentIndex + foundFiller.offset
             
-            // 6. Tentukan Batasan Awal (start) dan Akhir (end) halaman
+            // 3. Tentukan Batasan Awal (start) dan Akhir (end) halaman
             let start: Int
             let end: Int
             
@@ -266,8 +357,10 @@ struct FillerWordTranscriptView: View {
                 end = min(allWords.count - 1, wordIndex + 10)
             }
             
-            // --- 7. Buat Halaman (Card) ---
+            // --- 4. Buat Halaman (Card) ---
             let pageWords = allWords[start...end]
+            let pageRange = start...end
+            let currentPageIndex = pages.count // Halaman saat ini (misal 0)
             
             guard let firstWord = pageWords.first, let lastWord = pageWords.last else {
                 currentIndex = end + 1
@@ -278,6 +371,9 @@ struct FillerWordTranscriptView: View {
             
             // Buat AttributedString
             var pageString = AttributedString("")
+            
+            // --- 5. Petakan Jumper ---
+            var fillerIndicesOnThisPage: [Int] = []
             for word in pageWords {
                 let cleanWord = word.word.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
                 var str = AttributedString(word.word + " ")
@@ -285,12 +381,33 @@ struct FillerWordTranscriptView: View {
                 if fillerSet.contains(cleanWord) {
                     str.foregroundColor = .red
                     str.font = .system(.body, design: .serif).bold()
+                    
+                    // Cek apakah ini adalah global filler word (untuk menghindari duplikat)
+                    let globalIndexForThisWord = allWords.firstIndex(of: word)
+                    if let globalIndex = globalIndexForThisWord, allFillerWordGlobalIndices.contains(globalIndex) {
+                        
+                        // Cari tahu ini filler word ke berapa (1-based)
+                        if let countIndex = allFillerWordGlobalIndices.firstIndex(of: globalIndex) {
+                            let oneBasedIndex = countIndex + 1
+                            
+                            // Jika belum dipetakan, petakan
+                            if fillerIndexToPageIndex[oneBasedIndex] == nil {
+                                fillerIndexToPageIndex[oneBasedIndex] = currentPageIndex
+                                fillerIndicesOnThisPage.append(oneBasedIndex)
+                            }
+                        }
+                    }
                 } else {
                     str.foregroundColor = .primary
                     str.font = .system(.body, design: .serif)
                 }
                 pageString.append(str)
             }
+            
+            if !fillerIndicesOnThisPage.isEmpty {
+                pageIndexToFillerIndices[currentPageIndex] = fillerIndicesOnThisPage
+            }
+            // --- Selesai Pemetaan ---
             
             let page = TranscriptPage(
                 attributedString: pageString,
@@ -299,10 +416,14 @@ struct FillerWordTranscriptView: View {
             )
             pages.append(page)
             
-            // --- 8. LOMPATKAN KURSOR (Kunci non-overlap) ---
+            // --- 6. LOMPATKAN KURSOR ---
             currentIndex = end + 1
         }
         
-        return pages
+        let maps = FillerMaps(totalCount: totalFillerWordCount,
+                              fillerIndexToPageIndex: fillerIndexToPageIndex,
+                              pageIndexToFillerIndices: pageIndexToFillerIndices)
+        
+        return (pages, maps)
     }
 }
