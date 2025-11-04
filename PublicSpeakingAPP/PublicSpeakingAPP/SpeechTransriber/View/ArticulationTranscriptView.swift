@@ -14,42 +14,8 @@ struct ArticulationTranscriptView: View {
     
     let fullTranscript: String
     
-    private var articulationStyledTranscript: AttributedString {
-        let confirmedWords = whisperKitVM.confirmedWords
-        let prevWords = whisperKitVM.prevWords
-        let lastAgreedWords = whisperKitVM.lastAgreedWords
-        let hypothesisWords = whisperKitVM.hypothesisWords
-        
-        let finalHypothesisWords = lastAgreedWords + TranscriptionUtilities.findLongestDifferentSuffix(prevWords, hypothesisWords)
-        
-        var newAttributed = AttributedString("")
-        
-        for word in confirmedWords {
-            var str = AttributedString(word.word + " ")
-            if word.probability < 0.8 {
-                str.foregroundColor = .red
-            } else {
-                str.foregroundColor = .primary
-            }
-            newAttributed.append(str)
-        }
-        
-        for word in finalHypothesisWords {
-            var str = AttributedString(word.word + " ")
-            if word.probability < 0.8 {
-                str.foregroundColor = .red
-            } else {
-                str.foregroundColor = .primary
-            }
-            newAttributed.append(str)
-        }
-        
-        if newAttributed.description.isEmpty {
-            return AttributedString(fullTranscript)
-        }
-        
-        return newAttributed
-    }
+    @State private var pages: [TranscriptPage] = []
+    @State private var maps: TranscriptMaps = .empty
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -57,15 +23,32 @@ struct ArticulationTranscriptView: View {
                 .font(.headline)
                 .padding(.bottom, 5)
             
-            ScrollView {
-                Text(articulationStyledTranscript)
-                    .font(.system(.body, design: .serif))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
+            ReusableTranscriptCardView(
+                pages: pages,
+                maps: maps,
+                savedRecordingURL: whisperKitVM.savedRecordingURL,
+                emptyStateMessage: "No artikulasi lemah"
+            )
+        }
+        .onAppear {
+            let confirmed = whisperKitVM.confirmedWords
+            let prev = whisperKitVM.prevWords
+            let lastAgreed = whisperKitVM.lastAgreedWords
+            let hypothesis = whisperKitVM.hypothesisWords
+            let finalHypo = lastAgreed + TranscriptionUtilities.findLongestDifferentSuffix(prev, hypothesis)
+            let allWords = confirmed + finalHypo
+            
+            let isWeakArticulation: (WordTiming) -> Bool = { word in
+                return word.probability < 0.8
             }
-            .frame(height: 350)
-            .background(Color(UIColor.secondarySystemBackground))
-            .cornerRadius(10)
+            
+            let (pages, maps) = TranscriptBuilder().buildPagesAndMaps(
+                allWords: allWords,
+                isProblematic: isWeakArticulation
+            )
+            
+            self.pages = pages
+            self.maps = maps
         }
     }
 }
