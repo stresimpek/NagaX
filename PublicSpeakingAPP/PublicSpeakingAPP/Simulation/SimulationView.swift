@@ -14,6 +14,7 @@ struct SimulationViewWrapper: View {
     @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
     @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
     @EnvironmentObject private var tempoVM: TempoViewModel
+    @EnvironmentObject private var fillerWordVM: FillerWordViewModel
     
     let settings: PracticeSettings
     let onBack: () -> Void
@@ -26,7 +27,8 @@ struct SimulationViewWrapper: View {
                 whisperKitVM: whisperKitVM,
                 textAnalyzerVM: textAnalyzerVM,
                 intonationAnalyzerVM: intonationAnalyzerVM,
-                tempoVM: tempoVM
+                tempoVM: tempoVM,
+                fillerWordVM: fillerWordVM
             ),
             onBack: onBack,
             onComplete: onComplete
@@ -37,7 +39,8 @@ struct SimulationViewWrapper: View {
 struct SimulationView: View {
     
     @StateObject private var viewModel: SimulationViewModel
-    
+    @StateObject private var micMonitor = MicMonitor()
+
     let onBack: () -> Void
     let onComplete: (EvaluationModel, String) -> Void
     
@@ -81,11 +84,22 @@ struct SimulationView: View {
                         AnimatedActorView(targetFrames: viewModel.studentMoods[8].animationFrames, isAnimating: viewModel.isRecording)
                     }
                     .frame(height: gridHeight * 0.40)
+                    if viewModel.isRecording {
+                                                AudioVisualizerView(micMonitor: micMonitor)
+                                                    .padding(.top, 8)
+                                            }
                 }
                 .frame(height: gridHeight)
                 .frame(width: geo.size.width * 0.9)
                 .position(x: geo.size.width / 2, y: geo.size.height * 0.6)
-
+                .onChange(of: viewModel.isRecording) { isRecording in
+                    if isRecording {
+                        micMonitor.startMonitoring()
+                    } else {
+                        micMonitor.stopMonitoring()
+                    }
+                }
+                
                 AnimatedActorView(targetFrames: viewModel.teacherMood.animationFrames, isAnimating: viewModel.isRecording)
                 .frame(height: geo.size.height * 0.65)
                 .position(x: geo.size.width / 2, y: geo.size.height * 0.7)
@@ -204,6 +218,7 @@ struct SimulationView: View {
                 viewModel.textAnalyzerVM.clearResults()
                 viewModel.intonationAnalyzerVM.clearResults()
                 viewModel.tempoVM.clearResults()
+                viewModel.fillerWordVM.clearResults()
             }
         }
     }
