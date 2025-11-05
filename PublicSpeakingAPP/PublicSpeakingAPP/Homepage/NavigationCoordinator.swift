@@ -10,6 +10,7 @@ import Combine
 
 enum Route: Hashable {
     case tips
+    case datePicker
     case settings
     case simulation(PracticeSettings)
     case evaluation(result: EvaluationModel, transcript: String, settings: PracticeSettings)
@@ -22,6 +23,10 @@ class NavigationCoordinator: ObservableObject {
     
     func goToTips() {
         path.append(.tips)
+    }
+    
+    func goToDatePicker() {
+        path.append(.datePicker)
     }
     
     func goToSettings() {
