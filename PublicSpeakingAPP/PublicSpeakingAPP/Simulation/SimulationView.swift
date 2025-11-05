@@ -63,43 +63,47 @@ struct SimulationView: View {
             ZStack {
                 let gridHeight = geo.size.height
                 
-                VStack(spacing: -gridHeight * 0.15) {
-                    HStack(spacing: 0) {
-                        AnimatedActorView(targetFrames: viewModel.studentMoods[0].animationFrames, isAnimating: viewModel.isRecording)
-                        AnimatedActorView(targetFrames: viewModel.studentMoods[1].animationFrames, isAnimating: viewModel.isRecording)
-                        AnimatedActorView(targetFrames: viewModel.studentMoods[2].animationFrames, isAnimating: viewModel.isRecording)
-                    }
-                    .frame(height: gridHeight * 0.30)
-                    
-                    HStack(spacing: 0) {
-                        AnimatedActorView(targetFrames: viewModel.studentMoods[3].animationFrames, isAnimating: viewModel.isRecording)
-                        AnimatedActorView(targetFrames: viewModel.studentMoods[4].animationFrames, isAnimating: viewModel.isRecording).hidden()
-                        AnimatedActorView(targetFrames: viewModel.studentMoods[5].animationFrames, isAnimating: viewModel.isRecording)
-                    }
-                    .frame(height: gridHeight * 0.35)
-                    
-                    HStack(spacing: 0) {
-                        AnimatedActorView(targetFrames: viewModel.studentMoods[6].animationFrames, isAnimating: viewModel.isRecording)
-                        AnimatedActorView(targetFrames: viewModel.studentMoods[7].animationFrames, isAnimating: viewModel.isRecording).hidden()
-                        AnimatedActorView(targetFrames: viewModel.studentMoods[8].animationFrames, isAnimating: viewModel.isRecording)
-                    }
-                    .frame(height: gridHeight * 0.40)
-                    if viewModel.isRecording {
-                        AudioVisualizerView(micMonitor: micMonitor)
-                            .padding(.top, 8)
-                    }
-                }
-                .frame(height: gridHeight)
-                .frame(width: geo.size.width * 0.9)
-                .position(x: geo.size.width / 2, y: geo.size.height * 0.6)
-                .onChange(of: viewModel.isRecording) { oldValue, newValue in
-                    if newValue {
-                        micMonitor.startMonitoring()
-                    } else {
-                        micMonitor.stopMonitoring()
-                    }
-                }
+                Image(.backgroundRuangKelas)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .edgesIgnoringSafeArea(.all)
                 
+                //                VStack(spacing: -gridHeight * 0.15) {
+                //                    HStack(spacing: 0) {
+                //                        AnimatedActorView(targetFrames: viewModel.studentMoods[0].animationFrames, isAnimating: viewModel.isRecording)
+                //                        AnimatedActorView(targetFrames: viewModel.studentMoods[1].animationFrames, isAnimating: viewModel.isRecording)
+                //                        AnimatedActorView(targetFrames: viewModel.studentMoods[2].animationFrames, isAnimating: viewModel.isRecording)
+                //                    }
+                //                    .frame(height: gridHeight * 0.30)
+                //
+                //                    HStack(spacing: 0) {
+                //                        AnimatedActorView(targetFrames: viewModel.studentMoods[3].animationFrames, isAnimating: viewModel.isRecording)
+                //                        AnimatedActorView(targetFrames: viewModel.studentMoods[4].animationFrames, isAnimating: viewModel.isRecording).hidden()
+                //                        AnimatedActorView(targetFrames: viewModel.studentMoods[5].animationFrames, isAnimating: viewModel.isRecording)
+                //                    }
+                //                    .frame(height: gridHeight * 0.35)
+                //
+                //                    HStack(spacing: 0) {
+                //                        AnimatedActorView(targetFrames: viewModel.studentMoods[6].animationFrames, isAnimating: viewModel.isRecording)
+                //                        AnimatedActorView(targetFrames: viewModel.studentMoods[7].animationFrames, isAnimating: viewModel.isRecording).hidden()
+                //                        AnimatedActorView(targetFrames: viewModel.studentMoods[8].animationFrames, isAnimating: viewModel.isRecording)
+                //                    }
+                //                    .frame(height: gridHeight * 0.40)
+                //                    if viewModel.isRecording {
+                //                                                AudioVisualizerView(micMonitor: micMonitor)
+                //                                                    .padding(.top, 8)
+                //                                            }
+                //                }
+                //                .frame(height: gridHeight)
+                //                .frame(width: geo.size.width * 0.9)
+                //                .position(x: geo.size.width / 2, y: geo.size.height * 0.6)
+                //                .onChange(of: viewModel.isRecording) { isRecording in
+                //                    if isRecording {
+                //                        micMonitor.startMonitoring()
+                //                    } else {
+                //                        micMonitor.stopMonitoring()
+                //                    }
+                //                }
                 AnimatedActorView(targetFrames: viewModel.teacherMood.animationFrames, isAnimating: viewModel.isRecording)
                     .frame(height: geo.size.height * 0.65)
                     .position(x: geo.size.width / 2, y: geo.size.height * 0.7)
@@ -243,4 +247,3 @@ struct SimulationView: View {
         }
     }
 }
-

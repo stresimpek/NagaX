@@ -78,7 +78,7 @@ private extension NewEvaluationView {
                     Button(action: { viewModel.selectTab(index) }) {
                         Text(title)
                             .font(.system(size: 13, weight: viewModel.selectedTab == index ? .bold : .regular))
-                            .foregroundColor(viewModel.selectedTab == index ? Color("TextDark") : Color("TextDark").opacity(0.3))
+                            .foregroundColor(viewModel.selectedTab == index ? Color("BaseColorBrown") : Color("BaseColorBrown").opacity(0.3))
                             .padding(.vertical, 10)
                             .padding(.horizontal, 14)
                             .background(
@@ -124,12 +124,32 @@ private extension NewEvaluationView {
         switch viewModel.selectedTab {
         case 0: // Struktur Kalimat
             Text("")
+        case 1: // Artikulasi
+            ArticulationTranscriptView(
+                fullTranscript: viewModel.fullTranscript
+            )
+        case 2: // Filler Words
+            FillerWordTranscriptView(
+                result: viewModel.result,
+                fullTranscript: viewModel.fullTranscript
+            )
         case 3: // Tempo
-            Text("")
-//            TempoGraphView(result: viewModel.result)
+            Text("Grafik Tempo (Avg: \(viewModel.result.tempoWPM, specifier: "%.0f") WPM)")
+                .frame(height: 350)
         case 4: // Intonasi
+            VStack(alignment: .leading, spacing: 8) {
+                ScrollView {
+                    Text("Grafik Intonasi (StdDev: \(viewModel.result.intonationStdDev, specifier: "%.2f"))")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    IntonationResultChart(pitchSeries: viewModel.result.pitchSeries)
+                        .frame(height: 220)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        case 5: // Kontak Mata
             Text("")
-//            IntonationGraphView(pitchSeries: viewModel.result.pitchSeries)
         default:
             Text("Data untuk tab ini sedang dalam pengembangan")
                 .font(.custom("SFProText-Regular", size: 16))
