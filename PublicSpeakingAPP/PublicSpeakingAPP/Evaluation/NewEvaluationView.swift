@@ -32,7 +32,7 @@ struct NewEvaluationView: View {
     
     var body: some View {
         ZStack {
-            Color("Blue")
+            Color("BaseColorBlue")
                 .ignoresSafeArea()
             
             ScrollView {
