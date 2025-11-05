@@ -20,6 +20,8 @@ struct PublicSpeakingAPPApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .modelContainer(for: PresentationDateModel.self)
+                .environment(\.timeZone, TimeZone(identifier: "Asia/Jakarta")!)
                 .environmentObject(whisperKitVM)
                 .environmentObject(textAnalyzerVM)
                 .environmentObject(intonationAnalyzerVM)

@@ -13,7 +13,8 @@ struct HomeView: View {
     var body: some View {
         NavigationStack(path: $coordinator.path) {
             HomeContentView(
-                onStart: { coordinator.goToSettings() }
+                onStart: { coordinator.goToSettings() },
+                onDatePicker: { coordinator.goToDatePicker() }
             )
             .navigationDestination(for: Route.self) { route in
                 switch route {
@@ -26,6 +27,14 @@ struct HomeView: View {
                             coordinator.goToSettings()
                         }
                     )
+                    
+                case .datePicker:
+                    DatePickerView(
+                        onBack: {
+                            coordinator.returnToHome()
+                        }
+                    )
+                    .navigationBarBackButtonHidden(true)
                     
                 case .settings:
                     SettingsView(

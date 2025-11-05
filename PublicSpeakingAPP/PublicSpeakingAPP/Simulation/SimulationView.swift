@@ -106,33 +106,29 @@ struct SimulationView: View {
                 
                 VStack {
                     ZStack {
-                        //                        HStack {
-                        //                            Button(action: onBack) {
-                        //                                Image(systemName: "xmark")
-                        //                                    .font(.system(size: 20, weight: .bold))
-                        //                                    .padding()
-                        //                                    .background(.black.opacity(0.1))
-                        //                                    .cornerRadius(10)
-                        //                                    .foregroundColor(.black)
-                        //                            }
-                        //                            Spacer()
-                        //                        }
-                        
                         Group {
                             if viewModel.isOvertime {
                                 Text(viewModel.isMoreThanOneMinute ? "LEWAT DURASI!" : "WAKTU HABIS!")
+                                    .padding()
+                                    .foregroundColor(.baseColorRed)
+                                    .frame(height: 42, alignment: .center)
+                                    .background(.coral)
+                                    .cornerRadius(24)
+                                    .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
                             } else {
-                                Text("Objective: Buat Mr. Beluga tersenyum!")
+                                Text("Objective: Lakukan presentasi terbaikmu dengan aspek yang sudah ditentukan!")
+                                    .padding()
+                                    .foregroundColor(.baseColorBrown)
+                                    .frame(height: 42, alignment: .center)
+                                    .background(.baseColorWhite)
+                                    .cornerRadius(24)
+                                    .shadow(color: .beige, radius: 0, x: 0, y: 4)
                             }
                         }
                         .font(.headline)
-                        .padding()
-                        .background(.black.opacity(0.1))
-                        .cornerRadius(10)
                         .animation(.easeInOut, value: viewModel.isOvertime)
                         .animation(.easeInOut, value: viewModel.isMoreThanOneMinute)
-                        
-                        
+                        .padding(.top, 16)
                     }
                     .padding(.top, 20)
                     .padding(.horizontal)
@@ -140,29 +136,43 @@ struct SimulationView: View {
                     Spacer()
                     
                     HStack {
-                        Text(viewModel.formattedTime)
-                            .font(.system(size: 40, weight: .bold, design: .monospaced))
-                            .foregroundColor(.black)
+                        if viewModel.isOvertime {
+                            HStack (alignment: .center) {
+                                Image(systemName: "alarm")
+                                Text(viewModel.formattedTime)
+                            }
+                            .font(.system(size: 32, weight: .bold, design: .monospaced))
                             .padding(8)
-                            .background(.black.opacity(0.1))
-                            .cornerRadius(10)
+                            .foregroundColor(.baseColorRed)
+                            .background(.coral)
+                            .cornerRadius(24)
+                            .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
+                        } else {
+                            HStack (alignment: .center) {
+                                Image(systemName: "alarm")
+                                Text(viewModel.formattedTime)
+                            }
+                            .font(.system(size: 32, weight: .bold, design: .monospaced))
+                            .padding(8)
+                            .foregroundColor(.baseColorBrown)
+                            .background(.baseColorWhite)
+                            .cornerRadius(24)
+                            .shadow(color: .beige, radius: 0, x: 0, y: 4)
+                        }
                         
                         Spacer()
                         
                         HStack(spacing: 5) {
-                            Button(action: viewModel.toggleRecording) {
-                                Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "record.circle")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(viewModel.isRecording ? .red : .black)
-                            }
+                            ButtonComponent(
+                                title: viewModel.isRecording ? "STOP REKAM" : "MULAI REKAM",
+                                systemImage: viewModel.isRecording ? "stop.circle.fill" : "record.circle",
+                                size: .large,
+                                kind: .primaryYellow,
+                                action: viewModel.toggleRecording
+                            )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing )
                             
                             VStack(alignment: .leading) {
-                                Text(viewModel.isRecording ? "STOP\nRECORD" : "START\nRECORD")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.black)
-                                    .lineLimit(2)
-                                
                                 if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
                                     Text(viewModel.whisperModelState.description)
                                         .font(.caption2)
@@ -170,10 +180,6 @@ struct SimulationView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 10)
-                        .background(.black.opacity(0.1))
-                        .cornerRadius(10)
                     }
                     .padding(.horizontal)
                     .padding(.bottom, geo.safeAreaInsets.bottom)
