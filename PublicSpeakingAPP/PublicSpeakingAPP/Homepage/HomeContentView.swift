@@ -7,6 +7,7 @@
 
 import SwiftUI
 import RiveRuntime
+import SwiftData
 
 struct SpeakerLevel {
     let title: String
@@ -22,18 +23,20 @@ struct HomeContentView: View {
     @State private var currentLevelIndex = 0
     
     let onStart: () -> Void
+    let onDatePicker: () -> Void
+    
+    @Query private var savedDates: [PresentationDateModel]
+    private var targetDate: Date? { savedDates.first?.date }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                HStack(spacing: 4) {
-                    Text("Presentasimu dimulai dalam: ")
-                    CountdownBox(text: "3")
-                    Text("hari ")
-                    CountdownBox(text: "20")
-                    Text("jam ")
-                    CountdownBox(text: "30")
-                    Text("menit")
+                ZStack(alignment: .trailing) {
+                    CountdownRow(targetDate: targetDate)
+                        .frame(maxWidth: .infinity)
+                    Button(action: onDatePicker) {
+                        Image(systemName: "calendar")
+                    }
                 }
                 .font(.system(size: 14))
                 .padding(.top, 16)
