@@ -19,7 +19,7 @@ struct SimulationViewWrapper: View {
     let settings: PracticeSettings
     let onBack: () -> Void
     let onComplete: (EvaluationModel, String) -> Void
-
+    
     var body: some View {
         SimulationView(
             viewModel: SimulationViewModel(
@@ -40,7 +40,7 @@ struct SimulationView: View {
     
     @StateObject private var viewModel: SimulationViewModel
     @StateObject private var micMonitor = MicMonitor()
-
+    
     let onBack: () -> Void
     let onComplete: (EvaluationModel, String) -> Void
     
@@ -62,7 +62,7 @@ struct SimulationView: View {
         GeometryReader { geo in
             ZStack {
                 let gridHeight = geo.size.height
-                    
+                
                 VStack(spacing: -gridHeight * 0.15) {
                     HStack(spacing: 0) {
                         AnimatedActorView(targetFrames: viewModel.studentMoods[0].animationFrames, isAnimating: viewModel.isRecording)
@@ -85,15 +85,15 @@ struct SimulationView: View {
                     }
                     .frame(height: gridHeight * 0.40)
                     if viewModel.isRecording {
-                                                AudioVisualizerView(micMonitor: micMonitor)
-                                                    .padding(.top, 8)
-                                            }
+                        AudioVisualizerView(micMonitor: micMonitor)
+                            .padding(.top, 8)
+                    }
                 }
                 .frame(height: gridHeight)
                 .frame(width: geo.size.width * 0.9)
                 .position(x: geo.size.width / 2, y: geo.size.height * 0.6)
-                .onChange(of: viewModel.isRecording) { isRecording in
-                    if isRecording {
+                .onChange(of: viewModel.isRecording) { oldValue, newValue in
+                    if newValue {
                         micMonitor.startMonitoring()
                     } else {
                         micMonitor.stopMonitoring()
@@ -101,22 +101,22 @@ struct SimulationView: View {
                 }
                 
                 AnimatedActorView(targetFrames: viewModel.teacherMood.animationFrames, isAnimating: viewModel.isRecording)
-                .frame(height: geo.size.height * 0.65)
-                .position(x: geo.size.width / 2, y: geo.size.height * 0.7)
+                    .frame(height: geo.size.height * 0.65)
+                    .position(x: geo.size.width / 2, y: geo.size.height * 0.7)
                 
                 VStack {
                     ZStack {
-//                        HStack {
-//                            Button(action: onBack) {
-//                                Image(systemName: "xmark")
-//                                    .font(.system(size: 20, weight: .bold))
-//                                    .padding()
-//                                    .background(.black.opacity(0.1))
-//                                    .cornerRadius(10)
-//                                    .foregroundColor(.black)
-//                            }
-//                            Spacer()
-//                        }
+                        //                        HStack {
+                        //                            Button(action: onBack) {
+                        //                                Image(systemName: "xmark")
+                        //                                    .font(.system(size: 20, weight: .bold))
+                        //                                    .padding()
+                        //                                    .background(.black.opacity(0.1))
+                        //                                    .cornerRadius(10)
+                        //                                    .foregroundColor(.black)
+                        //                            }
+                        //                            Spacer()
+                        //                        }
                         
                         Group {
                             if viewModel.isOvertime {
@@ -206,7 +206,6 @@ struct SimulationView: View {
                         onComplete(result, viewModel.finalTranscript)
                     } else {
                         print("Evaluation result is NIL. Calling onBack...")
-                      
                         onBack()
                     }
                 }
@@ -218,8 +217,24 @@ struct SimulationView: View {
                 viewModel.textAnalyzerVM.clearResults()
                 viewModel.intonationAnalyzerVM.clearResults()
                 viewModel.tempoVM.clearResults()
-                viewModel.fillerWordVM.clearResults()
             }
+            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+                Button("OK") { viewModel.errorMessage = nil }
+            } message: {
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                }
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .task {
+            print("[SimulationView.task] Mereset state VM...")
+            viewModel.whisperKitVM.resetState()
+            viewModel.textAnalyzerVM.clearResults()
+            viewModel.intonationAnalyzerVM.clearResults()
+            viewModel.tempoVM.clearResults()
+            viewModel.fillerWordVM.clearResults()
         }
     }
 }
+
