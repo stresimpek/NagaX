@@ -44,12 +44,16 @@ struct HomeContentView: View {
             
             HStack(alignment: .top) {
                 VStack {
+                    Spacer()
+                    
                     Image(.titleNoob)
                         .resizable()
                         .frame(width: 180, height: 34)
                     
                     RiveViewModel(fileName:"noob cako new").view()
                         .frame(width: 200, height: 120)
+                    
+                    Spacer()
                     
                     ButtonComponent(
                         title: "MULAI LATIHAN",
@@ -58,7 +62,7 @@ struct HomeContentView: View {
                         kind: .primaryYellow,
                         action: onStart
                     )
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 12)
                 }
                 Image(.bubbleChat)
                     .resizable()
