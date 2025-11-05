@@ -8,7 +8,7 @@ import SwiftUI
 
 struct SettingsView: View {
     
-    @State private var durationMinutes: Int = 0
+    @State private var durationMinutes: Int = 1
     @State private var distractionLevel: Double = 0.0
     @State private var enableQnA: Bool = false
     @State private var randomTopic: Bool = false
@@ -27,7 +27,6 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             SettingsHeader(
-                title: "Pilih tempat presentasimu",
                 onBack: onBack,
                 onNext: {
                     let settings = PracticeSettings(
@@ -52,48 +51,55 @@ struct SettingsView: View {
                         Text("Durasi")
                             .font(.headline)
                         Spacer()
-                        Picker("Tentukan durasi", selection: $durationMinutes) {
-                            Text("Tentukan durasi").tag(0)
+                       
+                        Picker("Durasi", selection: $durationMinutes) {
+                            Text("1 menit").tag(1)
+                            Text("2 menit").tag(2)
+                            Text("3 menit").tag(3)
                             Text("5 menit").tag(5)
                             Text("10 menit").tag(10)
-                            Text("15 menit").tag(15)
+        
                         }
+                        .tint(Color.white)
+                        .pickerStyle(.menu)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .background(Color.darkBlue)
+                        .cornerRadius(24)
+                        .shadow(color: Color.darkBlue2, radius: 0, x: 0, y: 4)
                     }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Distraksi").font(.headline)
-                            Spacer()
-                            VStack(spacing: 4) {
-                                Slider(value: $distractionLevel, in: 0...2, step: 1)
-                                    .tint(.blue)
-                                    .onChange(of: distractionLevel) { v, i in
-                                        distractionLevel = v.rounded()
-                                    }
-                                HStack {
-                                    Text("tidak ada")
-                                    Spacer()
-                                    Text("sedikit")
-                                    Spacer()
-                                    Text("banyak")
-                                }
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 4)
-
-
+                    
                     HStack(spacing: 24) {
                         Toggle("QnA", isOn: $enableQnA)
-                            .toggleStyle(.switch)
+                            .font(.headline)
+                            .toggleStyle(SwitchToggleStyle(tint: .darkBlue))
+                        Spacer()
                         Toggle("Random Topik", isOn: $randomTopic)
-                            .toggleStyle(.switch)
+                            .font(.headline)
+                            .toggleStyle(SwitchToggleStyle(tint: .darkBlue))
                     }
 
-                    Divider().padding(.vertical, 4)
-
+                    HStack(alignment: .center, spacing: 40) {
+                        Text("Distraksi").font(.headline)
+                        
+                        VStack(spacing: 4) {
+                            Slider(value: $distractionLevel, in: 0...2, step: 1)
+                                .tint(.darkBlue)
+                                .onChange(of: distractionLevel) { v, i in
+                                    distractionLevel = v.rounded()
+                                }
+                            HStack {
+                                Text("tidak ada")
+                                Spacer()
+                                Text("sedikit")
+                                Spacer()
+                                Text("banyak")
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                    
                     Text("Aspek yang dievaluasi")
                         .font(.headline)
 
@@ -121,16 +127,12 @@ struct SettingsView: View {
                         }
                         .padding(.vertical, 4)
                     }
-                    Spacer(minLength: 0)
                 }
-//                .padding(.trailing, 16)
             }
-//            .padding(.vertical, 12)
         }
-//        .ignoresSafeArea(edges: .horizontal)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.white)
+        .background(Color.baseColorBlue)
+        .foregroundStyle(Color.baseColorWhite)
         .navigationBarBackButtonHidden(true)
-        .padding(.top, 24)
     }
 }

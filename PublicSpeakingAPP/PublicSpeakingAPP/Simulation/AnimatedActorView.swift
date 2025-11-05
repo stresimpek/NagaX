@@ -68,10 +68,10 @@ struct AnimatedActorView: View {
         }
         let isHappyToAngry = oldFrames.first?.contains("teacher_happy") ?? false && newFrames.first?.contains("teacher_angry") ?? false
         let isAngryToHappy = oldFrames.first?.contains("teacher_angry") ?? false && newFrames.first?.contains("teacher_happy") ?? false
-        let isFocusToSleep = oldFrames.first?.contains("student_focus") ?? false && newFrames.first?.contains("student_sleep") ?? false
-        let isSleepToFocus = oldFrames.first?.contains("student_sleep") ?? false && newFrames.first?.contains("student_focus") ?? false
+//        let isFocusToSleep = oldFrames.first?.contains("student_focus") ?? false && newFrames.first?.contains("student_sleep") ?? false
+//        let isSleepToFocus = oldFrames.first?.contains("student_sleep") ?? false && newFrames.first?.contains("student_focus") ?? false
         
-        if (isAngryToHappy || isSleepToFocus) && !isAtRestingFrame {
+        if (isAngryToHappy) && !isAtRestingFrame {
             self.framesToPlay = oldFrames.reversed()
             self.currentFrameIndex = 0
             self.onAnimationComplete = {
@@ -80,7 +80,7 @@ struct AnimatedActorView: View {
                 self.startAnimation()
             }
             self.startAnimation()
-        } else if (isHappyToAngry || isFocusToSleep) && !isAtRestingFrame {
+        } else if (isHappyToAngry) && !isAtRestingFrame {
             self.framesToPlay = oldFrames.reversed()
             self.currentFrameIndex = 0
             self.onAnimationComplete = {

@@ -30,19 +30,19 @@ enum TeacherMood {
     }
 }
 
-enum StudentMood {
-    case idle
-    case sleep
-    case focus
-    
-    var animationFrames: [String] {
-        switch self {
-        case .idle:
-            return [generateFrameNames(prefix: "student_sleep", lastFrame: 21).first ?? "student_sleep_1"]
-        case .sleep:
-            return generateFrameNames(prefix: "student_sleep", lastFrame: 21)
-        case .focus:
-            return generateFrameNames(prefix: "student_focus", lastFrame: 12)
-        }
-    }
-}
+//enum StudentMood {
+//    case idle
+//    case sleep
+//    case focus
+//    
+//    var animationFrames: [String] {
+//        switch self {
+//        case .idle:
+//            return [generateFrameNames(prefix: "student_sleep", lastFrame: 21).first ?? "student_sleep_1"]
+//        case .sleep:
+//            return generateFrameNames(prefix: "student_sleep", lastFrame: 21)
+//        case .focus:
+//            return generateFrameNames(prefix: "student_focus", lastFrame: 12)
+//        }
+//    }
+//}

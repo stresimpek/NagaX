@@ -15,7 +15,7 @@ import AVFoundation
 class SimulationViewModel: ObservableObject {
     
     @Published var teacherMood: TeacherMood = .idle
-    @Published var studentMoods: [StudentMood] = Array(repeating: .idle, count: 9)
+//    @Published var studentMoods: [StudentMood] = Array(repeating: .idle, count: 9)
     @Published var timerSeconds: Int = 0
     @Published var isRecording: Bool = false
     @Published var errorMessage: String? = nil
@@ -108,7 +108,7 @@ class SimulationViewModel: ObservableObject {
     private func updateAggregateMood(intonationRating: Int, tempoRating: Int, fillerRating: Int) {
         guard isRecording else {
             setTeacherMood(.idle)
-            setStudentMoods(.idle)
+//            setStudentMoods(.idle)
             return
         }
         
@@ -392,22 +392,22 @@ class SimulationViewModel: ObservableObject {
             self.teacherMood = mood
         }
     }
-    
-    func setStudentMoods(_ mood: StudentMood) {
-        if self.studentMoods.first == mood && self.isRecording {
-            self.studentMoods = Array(repeating: .idle, count: 9)
-            DispatchQueue.main.async {
-                self.studentMoods = Array(repeating: mood, count: 9)
-            }
-        } else {
-            self.studentMoods = Array(repeating: mood, count: 9)
-        }
-    }
+//    
+//    func setStudentMoods(_ mood: StudentMood) {
+//        if self.studentMoods.first == mood && self.isRecording {
+//            self.studentMoods = Array(repeating: .idle, count: 9)
+//            DispatchQueue.main.async {
+//                self.studentMoods = Array(repeating: mood, count: 9)
+//            }
+//        } else {
+//            self.studentMoods = Array(repeating: mood, count: 9)
+//        }
+//    }
     
     private func startGame() {
         resetGame()
         self.teacherMood = .idle
-        self.studentMoods = Array(repeating: .idle, count: 9)
+//        self.studentMoods = Array(repeating: .idle, count: 9)
         
         self.isAnalysisComplete = false
         self.evaluationResult = nil
@@ -443,7 +443,7 @@ class SimulationViewModel: ObservableObject {
         }
         
         self.teacherMood = .idle
-        self.studentMoods = Array(repeating: .idle, count: 9)
+//        self.studentMoods = Array(repeating: .idle, count: 9)
         stopMoodTimer()
         
     }
@@ -477,14 +477,18 @@ class SimulationViewModel: ObservableObject {
     private func applySmoothedMoodToUI() {
         // Overtime rules dulu (prioritas)
         if isLockedOvertimeMood {
-            setTeacherMood(.angry); setStudentMoods(.sleep); return
+            setTeacherMood(.angry)
+//            setStudentMoods(.sleep)
+            return
         }
         if isOvertime {
             if isMoreThanOneMinute {
-                setTeacherMood(.angry); setStudentMoods(.sleep)
+                setTeacherMood(.angry)
+//                setStudentMoods(.sleep)
                 isLockedOvertimeMood = true
             } else {
-                setTeacherMood(.idle); setStudentMoods(.idle)
+                setTeacherMood(.idle)
+//                setStudentMoods(.idle)
             }
             return
         }
@@ -509,11 +513,14 @@ class SimulationViewModel: ObservableObject {
         // Apply perubahan
         switch targetMood {
         case .happy:
-            setTeacherMood(.happy); setStudentMoods(.focus)
+            setTeacherMood(.happy)
+//            setStudentMoods(.focus)
         case .angry:
-            setTeacherMood(.angry); setStudentMoods(.sleep)
+            setTeacherMood(.angry)
+//            setStudentMoods(.sleep)
         case .idle:
-            setTeacherMood(.idle); setStudentMoods(.idle)
+            setTeacherMood(.idle)
+//            setStudentMoods(.idle)
         }
 
         if targetMood != teacherMood {

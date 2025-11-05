@@ -50,38 +50,6 @@ struct HomeContentView: View {
                             .frame(width: 200, height: 120)
                     }
                     
-                    VStack (alignment: .leading) {
-                        Text("Kamu belum siap untuk presentasi")
-                            .font(.system(size: 14))
-                        HStack {
-                            ProgressView(value: 0)
-                                .progressViewStyle(LinearProgressViewStyle(tint: .black))
-                                .frame(height: 8)
-                                .clipShape(Capsule())
-                            Text("%")
-                        }
-                        HStack (spacing: 20) {
-                            VStack (spacing: 20) {
-                                StatBar(title: "Intonasi", value: 0)
-                                StatBar(title: "Filler Words", value: 0)
-                            }
-                            VStack (spacing: 20) {
-                                StatBar(title: "Tempo", value: 0)
-                                StatBar(title: "Kontak Mata", value: 0)
-                            }
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                Text("Yuk, mulai latihan presentasi untuk meningkatkan rank mu")
-                    .font(.system(size: 14))
-                    .multilineTextAlignment(.center)
-
-                HStack(alignment: .center, spacing: 12) {
-                    CardButton(title: "Penghargaan", systemIcon: "star")
-                    CardButton(title: "Riwayat Latihan", systemIcon: "doc.text")
                     ButtonComponent(
                         title: "MULAI LATIHAN",
                         systemImage: nil,
@@ -89,11 +57,18 @@ struct HomeContentView: View {
                         kind: .primaryYellow,
                         action: onStart
                     )
-                    .padding(.horizontal)
+                    .padding(.bottom, 12)
                 }
+                Image(.bubbleChat)
+                    .resizable()
+                    .frame(width: 208, height: 84)
             }
-            .toolbar(.hidden, for: .navigationBar)
+            .padding(.leading, 200)
+            .frame(alignment: .top)
         }
+        .ignoresSafeArea(edges: .horizontal)
+        .background(Color(.baseColorBlue))
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
@@ -101,9 +76,10 @@ struct CountdownBox: View {
     let text: String
     var body: some View {
         Text(text)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.black))
+            .frame(width: 28, height: 28)
+            .background(Color.white)
+            .cornerRadius(4)
+            .foregroundStyle(Color.black)
     }
 }
 

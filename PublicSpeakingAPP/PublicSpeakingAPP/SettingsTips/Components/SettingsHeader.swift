@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct SettingsHeader: View {
-    var title: String
     let onBack: () -> Void
     let onNext: () -> Void
     var isNextDisabled: Bool = false
@@ -20,8 +19,6 @@ struct SettingsHeader: View {
                     Text("Kembali")
                 }
             }
-            Spacer()
-            Header(title: title)
             Spacer()
             Button(action: onNext) {
                 HStack(spacing: 6) {
