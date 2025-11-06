@@ -20,9 +20,29 @@ final class FillerWordViewModel: ObservableObject {
     private var previousTotalFillerCount: Int = 0
     private var ratingResetTimer: Timer?
 
-    let fillerWordsID: Set<String> = [
-        "eh", "hm", "ah", "um", "uh", "anu", "hmm"
-    ]
+    private let fillerWordPatterns: [NSRegularExpression] = {
+        let patterns = [
+            "e+h+",      // eh, eeh, ehh, eeeh, ehhh
+            "h+m+",      // hm, hmm, hmmm
+            "a+h+",      // ah, aah, ahh, aaah
+            "u+m+",      // um, umm, ummm
+            "u+h+",      // uh, uhh, uhhh
+            "a+n+u+"     // anu, anuu, annuu
+        ]
+        
+        return patterns.compactMap {
+            try? NSRegularExpression(pattern: "^\\b\($0)\\b$", options: .caseInsensitive)
+        }
+    }()
+
+    func isFillerWord(_ word: String) -> Bool {
+        let cleanWord = word.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+        
+        return fillerWordPatterns.contains { regex in
+            let range = NSRange(cleanWord.startIndex..<cleanWord.endIndex, in: cleanWord)
+            return regex.firstMatch(in: cleanWord, range: range) != nil
+        }
+    }
 
     func analyze(text: String, duration: TimeInterval) {
         guard !text.isEmpty else {
@@ -31,23 +51,23 @@ final class FillerWordViewModel: ObservableObject {
         }
 
         let tokens = tokenize(text)
-        
+
         var counts: [String: Int] = [:]
         for token in tokens {
-            if fillerWordsID.contains(token) {
+            if isFillerWord(token) {
                 counts[token, default: 0] += 1
             }
         }
-        
+
         self.fillerWordCounts = counts
         
         let newTotalCount = counts.values.reduce(0, +)
         self.totalFillerCount = newTotalCount
-        
+
         if newTotalCount > self.previousTotalFillerCount {
             self.fillerRating = 1
             self.fillerWordLabel = "FillerAda"
-            
+
             ratingResetTimer?.invalidate()
             ratingResetTimer = Timer.scheduledTimer(
                 timeInterval: 3.0,
@@ -60,7 +80,7 @@ final class FillerWordViewModel: ObservableObject {
             self.fillerRating = 3
             self.fillerWordLabel = "NoFiller"
         }
-        
+
         self.previousTotalFillerCount = newTotalCount
     }
 
