@@ -39,12 +39,10 @@ struct FillerWordTranscriptView: View {
             let hypothesis = whisperKitVM.hypothesisWords
             let finalHypo = lastAgreed + TranscriptionUtilities.findLongestDifferentSuffix(prev, hypothesis)
             let allWords = confirmed + finalHypo
-            
-            let fillerSet = fillerWordVM.fillerWordsID
-            
+                        
             let isFiller: (WordTiming) -> Bool = { word in
                 let cleanWord = word.word.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
-                return fillerSet.contains(cleanWord)
+                return fillerWordVM.isFillerWord(cleanWord)
             }
             
             let (pages, maps) = TranscriptBuilder().buildPagesAndMaps(

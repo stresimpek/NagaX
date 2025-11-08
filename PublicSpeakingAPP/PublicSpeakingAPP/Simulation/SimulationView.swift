@@ -71,9 +71,14 @@ struct SimulationView: View {
                 TeacherRiveView(sim: viewModel)
                     .frame(height: geo.size.height * 0.65)
                     .position(x: geo.size.width / 2, y: geo.size.height * 0.7)
-
-
-
+                    .onChange(of: viewModel.isRecording) { oldValue, newValue in
+                                        if newValue {
+                                            micMonitor.startMonitoring()
+                                        } else {
+                                            micMonitor.stopMonitoring()
+                                        }
+                                    }
+                
                 
                 VStack {
                     ZStack {
@@ -130,7 +135,12 @@ struct SimulationView: View {
                             .cornerRadius(24)
                             .shadow(color: .beige, radius: 0, x: 0, y: 4)
                         }
+                        Spacer()
                         
+                        if viewModel.isRecording {
+                                AudioVisualizerView(micMonitor: micMonitor)
+                                    .padding(.top, 8)
+                            }
                         Spacer()
                         
                         HStack(spacing: 5) {
