@@ -25,19 +25,18 @@ struct ReusableTranscriptCardView: View {
             if pages.isEmpty {
                 Text(emptyStateMessage)
                     .font(.system(.body, design: .serif))
-                    .foregroundColor(.gray)
-                    .padding()
+                    .foregroundColor(.yellow2)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
             } else {
                 ForEach(pages.indices, id: \.self) { index in
                     let page = pages[index]
                     
-                    VStack(spacing: 0) {
+                    VStack(alignment: .leading ,spacing: 0) {
                         
                         HStack {
                             Text(formatTimestamp(page.startTime, page.endTime))
-                                .font(.caption.monospacedDigit())
-                                .foregroundColor(.secondary)
+                                .font(.caption.monospacedDigit().bold())
+                                .foregroundColor(.baseColorBrown)
                             Spacer()
                             HStack(spacing: 8) {
                                 Button(action: { jumpToWord(globalIndex: currentJumperIndex - 1) }) {
@@ -45,28 +44,22 @@ struct ReusableTranscriptCardView: View {
                                 }
                                 .disabled(currentJumperIndex <= 1)
                                 
-                                Text("\(currentJumperIndex) / \(maps.totalCount) kata")
-                                    .font(.caption.monospacedDigit().bold())
+                                Text("**\(currentJumperIndex)** / \(maps.totalCount) kata")
+                                    .font(.caption.monospacedDigit())
                                 
                                 Button(action: { jumpToWord(globalIndex: currentJumperIndex + 1) }) {
                                     Image(systemName: "chevron.right")
                                 }
                                 .disabled(currentJumperIndex >= maps.totalCount)
                             }
-                            .foregroundColor(.blue)
+                            .foregroundColor(.baseColorBrown)
                         }
-                        .padding(.horizontal)
-                        .padding(.top, 12)
-                        .padding(.bottom, 8)
+                        .padding(.bottom)
                         
                         Text(page.attributedString)
                             .font(.system(.body, design: .serif))
-                            .padding(.horizontal)
-                            .padding(.bottom, 10)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .topLeading)
-                        
-                        Spacer(minLength: 10)
                         
                         HStack(spacing: 12) {
                             Button(action: {
@@ -78,29 +71,21 @@ struct ReusableTranscriptCardView: View {
                             }) {
                                 Image(systemName: audioPlayerVM.isPlayingPageID == page.id ? "stop.circle.fill" : "play.circle.fill")
                                     .font(.title2)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.baseColorBrown)
                                     .frame(width: 44, height: 44)
                             }
                             
                             ProgressView(value: audioPlayerVM.isPlayingPageID == page.id ? audioPlayerVM.playbackProgress : 0.0)
-                                .tint(.blue)
+                                .tint(.baseColorBrown)
                         }
-                        .padding(.horizontal)
-                        .padding(.bottom, 10)
+                        .padding(.top)
                     }
                     .tag(index)
                 }
             }
         }
-        .frame(minHeight: 150)
+//        .frame(maxHeight: .infinity)
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .background(Color(UIColor.systemBackground))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
         .onChange(of: currentPageIndex) {
              audioPlayerVM.stopPlayback()
         }
