@@ -29,26 +29,37 @@ struct HomeContentView: View {
     private var targetDate: Date? { savedDates.first?.date }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                ZStack(alignment: .trailing) {
-                    CountdownRow(targetDate: targetDate)
-                        .frame(maxWidth: .infinity)
-                    Button(action: onDatePicker) {
-                        Image(systemName: "calendar")
-                    }
-                }
-                .font(.system(size: 14))
-                .padding(.top, 16)
-                
+        VStack(spacing: 16) {
+            HStack {
                 Spacer()
-                
-                HStack (spacing: 52) {
-                    VStack {
-                        Text("Noob Speaker")
-                        RiveViewModel(fileName:"noob cako new").view()
-                            .frame(width: 200, height: 120)
-                    }
+                CountdownRow(targetDate: targetDate)
+                    .font(.system(size: 16))
+                Spacer()
+                Button(action: onDatePicker) {
+                    Image(systemName: "calendar")
+                }
+                .padding(.horizontal, 20)
+                .font(.system(size: 20))
+            }
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(Color.darkBlue)
+            .foregroundStyle(Color.white)
+            
+            Spacer()
+            
+            HStack(alignment: .top) {
+                VStack {
+                    Spacer()
+                    
+                    Image(.titleNoob)
+                        .resizable()
+                        .frame(width: 180, height: 34)
+                    
+                    RiveViewModel(fileName:"noob cako new").view()
+                        .frame(width: 200, height: 120)
+                    
+                    Spacer()
                     
                     ButtonComponent(
                         title: "MULAI LATIHAN",
@@ -59,6 +70,7 @@ struct HomeContentView: View {
                     )
                     .padding(.bottom, 12)
                 }
+                
                 Image(.bubbleChat)
                     .resizable()
                     .frame(width: 208, height: 84)
