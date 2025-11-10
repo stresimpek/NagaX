@@ -128,26 +128,22 @@ private extension NewEvaluationView {
             ArticulationTranscriptView(
                 fullTranscript: viewModel.fullTranscript
             )
+            .padding()
         case 2: // Filler Words
             FillerWordTranscriptView(
                 result: viewModel.result,
                 fullTranscript: viewModel.fullTranscript
-            )
+            ).padding()
         case 3: // Tempo
             Text("Grafik Tempo (Avg: \(viewModel.result.tempoWPM, specifier: "%.0f") WPM)")
                 .frame(height: 350)
         case 4: // Intonasi
-            VStack(alignment: .leading, spacing: 8) {
-                ScrollView {
-                    Text("Grafik Intonasi (StdDev: \(viewModel.result.intonationStdDev, specifier: "%.2f"))")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    IntonationResultChart(pitchSeries: viewModel.result.pitchSeries)
+            VStack() {
+                IntonationResultChart(pitchSeries: viewModel.result.pitchSeries)
                         .frame(height: 220)
-                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity)
+            .padding()
         case 5: // Kontak Mata
             Text("")
         default:
@@ -160,24 +156,20 @@ private extension NewEvaluationView {
     
     var bottomButtons: some View {
         HStack(spacing: 16) {
-            Button("LATIHAN LAGI") {
-                onNext(viewModel.settings)
-            }
-            .padding(.vertical, 11)
-            .padding(.horizontal, 16)
-            .background(Color.darkBlue2)
-            .foregroundColor(.white)
-            .cornerRadius(24)
-            
-            Button("SELESAI") {
-                onBack()
-            }
-            .padding(.vertical, 11)
-            .padding(.horizontal, 16)
-            .background(Color.baseColorYellow)
-            .foregroundColor(Color.baseColorBrown)
-            .fontWeight(.bold)
-            .cornerRadius(24)
+            ButtonComponent(
+                title: "SELESAI",
+                systemImage: nil,
+                size: .medium,
+                kind: .secondaryBlue,
+                action: onBack
+            )
+            ButtonComponent(
+                title: "LATIHAN LAGI",
+                systemImage: nil,
+                size: .medium,
+                kind: .primaryYellow,
+                action: { onNext(viewModel.settings) }
+            )
         }
         .padding(.top, 16)
         .padding(.bottom, 60)
@@ -297,8 +289,7 @@ struct EvaluationSectionView<Content: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             content
         }
-        
-        .frame(maxWidth: .infinity, minHeight: 240, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: 240, alignment: .leading)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)

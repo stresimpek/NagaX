@@ -13,12 +13,11 @@ import AVFoundation
 
 @MainActor
 class SimulationViewModel: ObservableObject {
-    
-    @Published var teacherMood: TeacherMood = .idle
-//    @Published var studentMoods: [StudentMood] = Array(repeating: .idle, count: 9)
+    @Published private(set) var presentationScore: Double = 0.0
     @Published var timerSeconds: Int = 0
     @Published var isRecording: Bool = false
     @Published var errorMessage: String? = nil
+    
     
     let whisperKitVM: SpeechTranscriberViewModel
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
@@ -106,11 +105,6 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func updateAggregateMood(intonationRating: Int, tempoRating: Int, fillerRating: Int) {
-        guard isRecording else {
-            setTeacherMood(.idle)
-//            setStudentMoods(.idle)
-            return
-        }
         
         if isLockedOvertimeMood { return }
     
@@ -381,34 +375,11 @@ class SimulationViewModel: ObservableObject {
         print("Evaluasi selesai, navigasi ke hasil")
     }
 
-    
-    func setTeacherMood(_ mood: TeacherMood) {
-        if self.teacherMood == mood && self.isRecording {
-            self.teacherMood = .idle
-            DispatchQueue.main.async {
-                self.teacherMood = mood
-            }
-        } else {
-            self.teacherMood = mood
-        }
-    }
-//    
-//    func setStudentMoods(_ mood: StudentMood) {
-//        if self.studentMoods.first == mood && self.isRecording {
-//            self.studentMoods = Array(repeating: .idle, count: 9)
-//            DispatchQueue.main.async {
-//                self.studentMoods = Array(repeating: mood, count: 9)
-//            }
-//        } else {
-//            self.studentMoods = Array(repeating: mood, count: 9)
-//        }
-//    }
+
     
     private func startGame() {
         resetGame()
-        self.teacherMood = .idle
-//        self.studentMoods = Array(repeating: .idle, count: 9)
-        
+
         self.isAnalysisComplete = false
         self.evaluationResult = nil
         self.finalTranscript = ""
@@ -442,8 +413,6 @@ class SimulationViewModel: ObservableObject {
             }
         }
         
-        self.teacherMood = .idle
-//        self.studentMoods = Array(repeating: .idle, count: 9)
         stopMoodTimer()
         
     }
@@ -471,62 +440,32 @@ class SimulationViewModel: ObservableObject {
     func cleanup() {
         gameTimer?.invalidate()
         gameTimer = nil
+        timerSeconds = 0
+        presentationScore = 0.0
         stopMoodTimer()
     }
     
     private func applySmoothedMoodToUI() {
-        // Overtime rules dulu (prioritas)
+        // — overtime rules (tetap) —
         if isLockedOvertimeMood {
-            setTeacherMood(.angry)
-//            setStudentMoods(.sleep)
+            presentationScore = -1.0   // paksa angry di Rive
             return
         }
         if isOvertime {
             if isMoreThanOneMinute {
-                setTeacherMood(.angry)
-//                setStudentMoods(.sleep)
+                presentationScore = -1.0
                 isLockedOvertimeMood = true
             } else {
-                setTeacherMood(.idle)
-//                setStudentMoods(.idle)
+                presentationScore = 0.0
             }
             return
         }
 
-        // Diskretisasi dari moodScoreEMA → target mood
-        let targetMood: TeacherMood
-        if moodScoreEMA > 0.25 {
-            targetMood = .happy
-        } else if moodScoreEMA < -0.35 {
-            targetMood = .angry
-        } else {
-            targetMood = .idle
-        }
-
-        // Minimum dwell: jangan gonta-ganti terlalu cepat
-        let now = Date()
-        let previous = teacherMood
-        let elapsed = now.timeIntervalSince(lastMoodChangeAt)
-        if targetMood != previous && elapsed < minDwellTime {
-            return
-        }
-        // Apply perubahan
-        switch targetMood {
-        case .happy:
-            setTeacherMood(.happy)
-//            setStudentMoods(.focus)
-        case .angry:
-            setTeacherMood(.angry)
-//            setStudentMoods(.sleep)
-        case .idle:
-            setTeacherMood(.idle)
-//            setStudentMoods(.idle)
-        }
-
-        if targetMood != teacherMood {
-            lastMoodChangeAt = now
-        }
+        // ⬅️ Baris kunci untuk Rive:
+        let clamped = max(-1.0, min(1.0, moodScoreEMA))
+        presentationScore = clamped
     }
+
 
 }
 

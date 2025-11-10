@@ -19,15 +19,11 @@ struct ArticulationTranscriptView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Transkrip Artikulasi")
-                .font(.headline)
-                .padding(.bottom, 5)
-            
             ReusableTranscriptCardView(
                 pages: pages,
                 maps: maps,
                 savedRecordingURL: whisperKitVM.savedRecordingURL,
-                emptyStateMessage: "No artikulasi lemah"
+                emptyStateMessage: "Tidak ada artikulasi lemah"
             )
         }
         .onAppear {
