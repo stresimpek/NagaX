@@ -132,13 +132,16 @@ private extension NewEvaluationView {
             FillerWordTranscriptView(
                 result: viewModel.result,
                 fullTranscript: viewModel.fullTranscript
-            )
+            ).padding()
+        case 3: // Tempo
+            VStack() {
+                TempoResultChart(tempoSeries: viewModel.result.tempoSeries)
+                        .frame(height: 220)
+            }
+            .frame(maxWidth: .infinity)
             .padding()
-        case .tempo:
-            Text("Grafik Tempo (Avg: \(viewModel.result.tempoWPM, specifier: "%.0f") WPM)")
-                .frame(height: 350)
-        case .intonasi:
-            VStack {
+        case 4: // Intonasi
+            VStack() {
                 IntonationResultChart(pitchSeries: viewModel.result.pitchSeries)
                     .frame(height: 220)
             }
@@ -298,7 +301,7 @@ struct StrukturKalimatFullScreenView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(transcript.isEmpty ? "Tidak ada transkrip yang terekam." : transcript)
                             .font(.custom("Nunito-Regular", size: 17))
-                            .foregroundColor(Color("TextDark"))
+                            .foregroundColor(Color("BaseColorBrown"))
                             .padding()
                     }
                     .padding(.top, 10)

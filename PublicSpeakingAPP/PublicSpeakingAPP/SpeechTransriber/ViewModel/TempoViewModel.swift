@@ -9,50 +9,29 @@ import Foundation
 import WhisperKit
 import Combine
 
+struct TempoPoint: Identifiable, Hashable {
+    let id = UUID()
+    let time: Double
+    let wpm: Double
+}
+
 @MainActor
 final class TempoViewModel: ObservableObject {
     
     @Published var wpm: Double = 0.0
     @Published var tempoLabel: String = "..."
     @Published var tempoRating: Int = 0
+    @Published var wpmHistory: [(timestamp: TimeInterval, wpm: Double)] = []
 
-    private let wpmIdealMin: Double = 90.0
-    private let wpmIdealMax: Double = 150.0
-    private let wpmCukupMin: Double = 75.0
-    private let wpmCukupMax: Double = 170.0
+    private let wpmIdealMin: Double = 110.0
+    private let wpmIdealMax: Double = 140.0
+    private let wpmCukupMin: Double = 90.0
+    private let wpmCukupMax: Double = 160.0
     
     private var wordHistory: [(endTime: TimeInterval, duration: TimeInterval)] = []
     private let windowSize: TimeInterval = 10.0
     private let smoothingFactor: Double = 0.3
 
-//    func updateTempo(text: String, duration: TimeInterval) {
-//        // Guard clause untuk mencegah pembagian dengan nol
-//        guard duration > 1.0 else {
-//            self.wpm = 0.0
-//            self.tempoLabel = "..."
-//            return
-//        }
-//        
-//        let wordCount = text.split { $0.isWhitespace || $0.isNewline }.count
-//        guard wordCount > 0 else {
-//            self.wpm = 0.0
-//            self.tempoLabel = "0"
-//            return
-//        }
-//
-//        let calculatedWPM = (Double(wordCount) / duration) * 60.0
-//        
-//        self.wpm = calculatedWPM
-//        
-//        if calculatedWPM < wpmLambat {
-//            self.tempoLabel = "Tempo Lambat"
-//        } else if calculatedWPM > wpmCepat {
-//            self.tempoLabel = "Tempo Cepat"
-//        } else {
-//            self.tempoLabel = "Tempo Ideal"
-//        }
-//    }
-    
     func updateTempo(from allWords: [WordTiming], totalDuration: TimeInterval) {
         for word in allWords {
             if !wordHistory.contains(where: { $0.endTime == TimeInterval(word.end) }) {
@@ -75,21 +54,12 @@ final class TempoViewModel: ObservableObject {
         if totalWordsInWindow > 0 && totalSpeechDurationInWindow > 0.1 {
             calculatedWPM = (Double(totalWordsInWindow) / totalSpeechDurationInWindow) * 60.0
         }
-        
-//        if totalWordsInWindow > 0 {
-//            if totalSpeechDurationInWindow > 0.1 {
-//                // pakai total durasi vokal (tanpa jeda)
-//                calculatedWPM = (Double(totalWordsInWindow) / totalSpeechDurationInWindow) * 60.0
-//            } else if let first = wordHistory.first?.endTime,
-//                      let last  = wordHistory.last?.endTime,
-//                      last > first {
-//                // Fallback: pakai rentang waktu (termasuk jeda)
-//                let span = last - first
-//                calculatedWPM = (Double(totalWordsInWindow) / span) * 60.0
-//            }
-//        }
 
         self.wpm = (self.wpm * (1.0 - smoothingFactor)) + (calculatedWPM * smoothingFactor)
+        
+        if self.wpm > 0 {
+            self.wpmHistory.append((timestamp: totalDuration, wpm: self.wpm))
+        }
         
         let roundedWPM = self.wpm.rounded()
         print("Rounded wpm : \(roundedWPM)")
@@ -114,5 +84,6 @@ final class TempoViewModel: ObservableObject {
         self.tempoLabel = "..."
         self.wordHistory = []
         self.tempoRating = 0
+        self.wpmHistory.removeAll()
     }
 }
