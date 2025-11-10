@@ -52,7 +52,7 @@ struct TranscriptBuilder {
             })
             
             if punctuationFoundInWindow {
-                let searchRangeBefore = currentIndex...wordIndex
+                let searchRangeBefore = currentIndex..<wordIndex
                 let nearestPuncBefore = allWords[searchRangeBefore].lastIndex {
                     $0.word.rangeOfCharacter(from: punctuationSet) != nil
                 }
