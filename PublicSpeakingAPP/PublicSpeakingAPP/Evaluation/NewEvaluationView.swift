@@ -5,7 +5,6 @@
 //  Created by Elisabeth Levana on 05/11/25.
 //
 
-
 import SwiftUI
 
 struct NewEvaluationView: View {
@@ -74,11 +73,11 @@ private extension NewEvaluationView {
     func tabsView(width: CGFloat) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
-                ForEach(Array(viewModel.tabs.enumerated()), id: \.offset) { index, title in
+                ForEach(Array(viewModel.availableTabs.enumerated()), id: \.offset) { index, tab in
                     Button(action: { viewModel.selectTab(index) }) {
-                        Text(title)
-                            .font(.system(size: 13, weight: viewModel.selectedTab == index ? .bold : .regular))
-                            .foregroundColor(viewModel.selectedTab == index ? Color("BaseColorBrown") : Color("BaseColorBrown").opacity(0.3))
+                        Text(viewModel.tabTitle(for: tab))
+                            .font(.system(size: 13, weight: viewModel.selectedTabIndex == index ? .bold : .regular))
+                            .foregroundColor(viewModel.selectedTabIndex == index ? Color("BaseColorBrown") : Color("BaseColorBrown").opacity(0.3))
                             .padding(.vertical, 10)
                             .padding(.horizontal, 14)
                             .background(
@@ -88,7 +87,7 @@ private extension NewEvaluationView {
                                     bottomTrailingRadius: 0,
                                     topTrailingRadius: 8
                                 )
-                                .fill(viewModel.selectedTab == index ? Color("BaseColorWhite") : Color("Beige"))
+                                .fill(viewModel.selectedTabIndex == index ? Color("BaseColorWhite") : Color("Beige"))
                             )
                     }
                 }
@@ -110,10 +109,10 @@ private extension NewEvaluationView {
     @ViewBuilder
     private var tabContent: some View {
         EvaluationSectionView(
-            evaluatorNote: viewModel.getEvaluatorNote(for: viewModel.selectedTab),
-            sectionTitle: viewModel.getSectionTitle(for: viewModel.selectedTab),
+            evaluatorNote: viewModel.currentEvaluatorNote,
+            sectionTitle: viewModel.currentSectionTitle,
             showFullScreen: $viewModel.showFullScreen,
-            hasScrollableContent: viewModel.hasScrollableContent(for: viewModel.selectedTab)
+            hasScrollableContent: viewModel.currentHasScrollableContent
         ) {
             contentForCurrentTab
         }
@@ -121,15 +120,15 @@ private extension NewEvaluationView {
     
     @ViewBuilder
     private var contentForCurrentTab: some View {
-        switch viewModel.selectedTab {
-        case 0: // Struktur Kalimat
+        switch viewModel.currentTab {
+        case .strukturKalimat:
             Text("")
-        case 1: // Artikulasi
+        case .artikulasi:
             ArticulationTranscriptView(
                 fullTranscript: viewModel.fullTranscript
             )
             .padding()
-        case 2: // Filler Words
+        case .fillerWords:
             FillerWordTranscriptView(
                 result: viewModel.result,
                 fullTranscript: viewModel.fullTranscript
@@ -144,17 +143,12 @@ private extension NewEvaluationView {
         case 4: // Intonasi
             VStack() {
                 IntonationResultChart(pitchSeries: viewModel.result.pitchSeries)
-                        .frame(height: 220)
+                    .frame(height: 220)
             }
             .frame(maxWidth: .infinity)
             .padding()
-        case 5: // Kontak Mata
+        case .kontakMata:
             Text("")
-        default:
-            Text("Data untuk tab ini sedang dalam pengembangan")
-                .font(.custom("SFProText-Regular", size: 16))
-                .foregroundColor(.baseColorBrown)
-                .padding()
         }
     }
     
@@ -180,9 +174,6 @@ private extension NewEvaluationView {
     }
 }
 
-//
-// MARK: - Reusable Section Component
-//
 struct EvaluationSectionView<Content: View>: View {
     let evaluatorNote: String
     let sectionTitle: String
@@ -221,7 +212,6 @@ struct EvaluationSectionView<Content: View>: View {
                 .fontWeight(.semibold)
                 .foregroundColor(Color.baseColorBrown)
             
-            // If hasScrollableContent = true → scroll + gradient + button
             if hasScrollableContent {
                 scrollableContentWithGradient
             } else {
@@ -231,7 +221,6 @@ struct EvaluationSectionView<Content: View>: View {
         .padding()
     }
     
-    // MARK: Scrollable version (with gradient + button)
     private var scrollableContentWithGradient: some View {
         ZStack(alignment: .bottomTrailing) {
             ScrollView {
@@ -248,7 +237,6 @@ struct EvaluationSectionView<Content: View>: View {
                 .padding()
             }
             
-            // Fade-out gradient
             LinearGradient(
                 gradient: Gradient(colors: [
                     Color.white.opacity(0),
@@ -262,7 +250,6 @@ struct EvaluationSectionView<Content: View>: View {
             .cornerRadius(10)
             .allowsHitTesting(false)
             
-            // Button
             Button {
                 showFullScreen = true
             } label: {
@@ -288,12 +275,11 @@ struct EvaluationSectionView<Content: View>: View {
         )
     }
     
-    // MARK: Static placeholder version (no gradient)
     private var staticContent: some View {
         VStack(alignment: .leading, spacing: 6) {
             content
         }
-        .frame(maxWidth: .infinity, maxHeight: 240, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 240, alignment: .leading)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
@@ -301,6 +287,7 @@ struct EvaluationSectionView<Content: View>: View {
         )
     }
 }
+
 struct StrukturKalimatFullScreenView: View {
     @Binding var showFullScreen: Bool
     let transcript: String
