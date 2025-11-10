@@ -46,9 +46,22 @@
 		D0956CE89974888098C971A5 /* Pods-PublicSpeakingAPP.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		173D68B72EC1CB1000B56BF1 /* Exceptions for "PublicSpeakingAPP" folder in "PublicSpeakingAPP" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 12BCF36A2E8BACB400FD1CF8 /* PublicSpeakingAPP */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		12BCF36D2E8BACB400FD1CF8 /* PublicSpeakingAPP */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				173D68B72EC1CB1000B56BF1 /* Exceptions for "PublicSpeakingAPP" folder in "PublicSpeakingAPP" target */,
+			);
 			path = PublicSpeakingAPP;
 			sourceTree = "<group>";
 		};
@@ -615,9 +628,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PublicSpeakingAPP/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -652,9 +666,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PublicSpeakingAPP/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

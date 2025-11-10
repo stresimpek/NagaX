@@ -387,16 +387,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
         self.recordingStatus = .starting
         
         Task(priority: .userInitiated) {
-            guard await AudioProcessor.requestRecordPermission() else {
-                print("Microphone access was not granted.")
-                self.publishedError = "Izin mikrofon ditolak. Mohon aktifkan di Pengaturan."
-                await MainActor.run {
-                    self.isRecording = false
-                    self.recordingStatus = .stopped
-                }
-                return
-            }
-
             var deviceId: DeviceID?
 
             try? whisperKit.audioProcessor.startRecordingLive(inputDeviceID: deviceId) { _ in
@@ -404,7 +394,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     self.bufferEnergy = whisperKit.audioProcessor.relativeEnergy
                     self.bufferSeconds = Double(whisperKit.audioProcessor.audioSamples.count) / Double(WhisperKit.sampleRate)
                 }
-            } 
+            }
 
             await MainActor.run {
                 isRecording = true
@@ -415,8 +405,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             if loop {
                 realtimeLoop()
             }
-        } 
-        
+        }
     }
 
     func stopRecording(_ loop: Bool) {

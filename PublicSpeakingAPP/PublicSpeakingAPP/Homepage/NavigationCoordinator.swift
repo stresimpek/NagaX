@@ -14,6 +14,7 @@ enum Route: Hashable {
     case settings
     case simulation(PracticeSettings)
     case newEvaluation(EvaluationModel, String, PracticeSettings)
+    case modal(PracticeSettings)
 }
 
 @MainActor
@@ -31,6 +32,10 @@ class NavigationCoordinator: ObservableObject {
     
     func goToSettings() {
         path.append(.settings)
+    }
+    
+    func goToModal(_ settings: PracticeSettings) {
+        path.append(Route.modal(settings))
     }
     
     func goToSimulation(_ settings: PracticeSettings) {
