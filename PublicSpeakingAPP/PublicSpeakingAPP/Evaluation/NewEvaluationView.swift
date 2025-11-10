@@ -133,14 +133,14 @@ private extension NewEvaluationView {
                 result: viewModel.result,
                 fullTranscript: viewModel.fullTranscript
             ).padding()
-        case 3: // Tempo
+        case .tempo: // Tempo
             VStack() {
                 TempoResultChart(tempoSeries: viewModel.result.tempoSeries)
                         .frame(height: 220)
             }
             .frame(maxWidth: .infinity)
             .padding()
-        case 4: // Intonasi
+        case .intonasi: // Intonasi
             VStack() {
                 IntonationResultChart(pitchSeries: viewModel.result.pitchSeries)
                     .frame(height: 220)
