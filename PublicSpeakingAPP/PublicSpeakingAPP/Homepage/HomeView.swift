@@ -42,6 +42,13 @@ struct HomeView: View {
                             coordinator.goBack()
                         },
                         onNext: { settings in
+                            coordinator.goToModal(settings)
+                        }
+                    )
+                
+                case .modal(let settings):
+                    ModalView(
+                        onStart: {
                             coordinator.goToSimulation(settings)
                         }
                     )

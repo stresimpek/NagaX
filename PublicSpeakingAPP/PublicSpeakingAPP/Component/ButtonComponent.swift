@@ -124,10 +124,10 @@ struct AppButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(size.font)
-            .foregroundStyle(kind.foreground.opacity(isEnabled ? 1 : 0.5))
+            .foregroundStyle(kind.foreground)
             .padding(.horizontal, size.horizontalPadding)
             .padding(.vertical, size.verticalPadding)
-            .background(kind.background.opacity(isEnabled ? 1 : 0.6))
+            .background(kind.background)
             .clipShape(RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous))
             .shadow(color: kind.shadow, radius: 0, x: 0, y: configuration.isPressed ? 1 : 3)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
