@@ -12,7 +12,6 @@ struct EvaluationViewModel {
     
     static func process(
         tempoVM: TempoViewModel,
-//        textAnalyzerVM: TextFrequencyAnalyzerViewModel,
         intonationVM: IntonationAnalyzerViewModel,
         fillerWordVM: FillerWordViewModel,
         duration: TimeInterval
@@ -29,6 +28,10 @@ struct EvaluationViewModel {
         
         let pitchSeries: [PitchPoint] = intonationVM.allPitchHistory
             .map { PitchPoint(time: $0.timestamp, pitch: $0.pitch) }
+            .sorted { $0.time < $1.time }
+        
+        let tempoSeries: [TempoPoint] = tempoVM.wpmHistory
+            .map { TempoPoint(time: $0.timestamp, wpm: $0.wpm) }
             .sorted { $0.time < $1.time }
         
         // Dummy Data
@@ -60,6 +63,7 @@ struct EvaluationViewModel {
             intonationGrade: intonationGrade,
             intonationFeedback: intonationFeedback,
             pitchSeries: pitchSeries,
+            tempoSeries: tempoSeries,
             eyeContactScore: eyeContactScore * 100,
             eyeContactGrade: eyeContactGrade,
             eyeContactFeedback: eyeContactFeedback
@@ -72,7 +76,7 @@ struct EvaluationViewModel {
         if roundedWPM >= 100.0 && roundedWPM <= 150.0 {
             return ("A", "Tempo Ideal", 1.0)
         } else if (roundedWPM >= 80.0 && roundedWPM < 100.0) ||
-                  (roundedWPM > 150.0 && roundedWPM <= 170.0) { 
+                  (roundedWPM > 150.0 && roundedWPM <= 170.0) {
              let feedback = (roundedWPM < 100.0) ? "Tempo Agak Lambat" : "Tempo Agak Cepat"
             return ("B", feedback, 0.75)
         } else {

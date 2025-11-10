@@ -68,18 +68,20 @@ struct SimulationView: View {
                                         .aspectRatio(contentMode: .fill)
                                         .edgesIgnoringSafeArea(.all)
                 
-                TeacherRiveView(sim: viewModel)
-                    .frame(height: geo.size.height * 0.65)
-                    .position(x: geo.size.width / 2, y: geo.size.height * 0.7)
-                    .onChange(of: viewModel.isRecording) { oldValue, newValue in
-                                        if newValue {
-                                            micMonitor.startMonitoring()
-                                        } else {
-                                            micMonitor.stopMonitoring()
-                                        }
-                                    }
-                
-                
+                VStack {
+                    Spacer()
+                    TeacherRiveView(sim: viewModel)
+                        .frame(height: geo.size.height * 0.85)
+                        .onChange(of: viewModel.isRecording) { oldValue, newValue in
+                            if newValue {
+                                micMonitor.startMonitoring()
+                            } else {
+                                micMonitor.stopMonitoring()
+                            }
+                        }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+
                 VStack {
                     ZStack {
                         Group {
