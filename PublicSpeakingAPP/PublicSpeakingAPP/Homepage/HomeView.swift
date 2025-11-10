@@ -58,20 +58,6 @@ struct HomeView: View {
                     )
                     .navigationBarBackButtonHidden(true)
                     
-                case .evaluation(let result, let transcript, let settings):
-                    EvaluationView(
-                        result: result,
-                        fullTranscript: transcript,
-                        settings: settings,
-                        onBack: {
-                            coordinator.returnToHome()
-                        },
-                        onNext: { passedSettings in
-                            coordinator.retrySimulation(from: passedSettings)
-                        }
-                    )
-                    .navigationBarBackButtonHidden(true)
-                    
                 case .newEvaluation(let result, let transcript, let settings):
                     NewEvaluationView(
                         result: result,

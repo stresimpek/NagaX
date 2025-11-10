@@ -35,7 +35,6 @@ struct CountdownRow: View {
             Text("jam")
             CountdownBox(text: "\(r.m)")
             Text("menit")
-            Spacer()
         }
         .onReceive(timer) { _ in now = Date() }
         .opacity(r.done ? 0.6 : 1)
