@@ -7,14 +7,8 @@
 
 import SwiftUI
 
-enum AnalysisType: String, CaseIterable {
-    case transcript = "Hasil Transkrip"
-    case correction = "Hasil Koreksi"
-}
-
 struct SentenceAnalysisView: View {
     @ObservedObject var viewModel: SpeechTranscriberViewModel
-    @State private var selectedTab: AnalysisType = .transcript
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -41,32 +35,13 @@ struct SentenceAnalysisView: View {
                     .foregroundColor(.red)
                     .padding()
                 
-            } else if let analysis = viewModel.SentenceAnalysis {
-                // Tampilan hasil (UI seperti gambar Anda)
-                
-                // Pesan ringkasan
-                Text("Hmm... ketahuan nih 🧐 Ada **\(analysis.totalErrors) penggunaan kata yang tidak memebuhi kaidah Kehematan.** Tapi good job! Kamu sudah latihan.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-
-                // TAB: "Hasil Transkrip" / "Hasil Koreksi"
-                Picker("Pilih Tampilan", selection: $selectedTab) {
-                    ForEach(AnalysisType.allCases, id: \.self) {
-                        Text($0.rawValue).tag($0)
-                    }
-                }
-                .pickerStyle(.segmented)
-                
-                // KONTEN TEKS (Merah/Biru)
+            } else if !viewModel.sentenceAnalysisResult.isEmpty {
+                // Tampilan hasil (Teks Biasa)
                 ScrollView {
-                    // Menggunakan reduce untuk menggabungkan Text view
-                    // Ini adalah cara untuk memiliki teks dengan warna berbeda dalam satu paragraf
-                    analysis.segments.reduce(Text(""), { combinedText, segment in
-                        combinedText + Text(formattedText(for: segment)) + Text(" ")
-                    })
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .font(.body)
-                    .lineSpacing(5)
+                    Text(viewModel.sentenceAnalysisResult)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .font(.body)
+                        .lineSpacing(5)
                 }
                 .padding()
                 .background(Color(UIColor.systemGray6))
@@ -89,7 +64,7 @@ struct SentenceAnalysisView: View {
                     await viewModel.analyzeTranscriptSentence()
                 }
             }) {
-                Text(viewModel.SentenceAnalysis == nil ? "Mulai Analisis" : "Analisis Ulang")
+                Text(viewModel.sentenceAnalysisResult.isEmpty ? "Mulai Analisis" : "Analisis Ulang")
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.green) // Cocokkan dengan tombol di view sebelumnya
@@ -99,34 +74,12 @@ struct SentenceAnalysisView: View {
             .disabled(viewModel.isAnalyzingSentence || viewModel.transcript.isEmpty)
         }
         .padding()
-    }
-    
-    private func formattedText(for segment: SentenceSegment) -> AttributedString {
-        var attributes = AttributeContainer()
-        var textToUse: String
-        
-        switch selectedTab {
-        case .transcript:
-            // Tampilan Transkrip: Merah jika salah, hitam jika benar
-            textToUse = segment.original
-            if segment.isCorrected {
-                attributes.foregroundColor = .red
-                attributes.strikethroughStyle = .single // Tambahkan coretan
-            } else {
-                attributes.foregroundColor = .primary
-            }
-            
-        case .correction:
-            // Tampilan Koreksi: Biru jika dikoreksi, hitam jika tetap
-            textToUse = segment.correction ?? segment.original
-            if segment.isCorrected {
-                attributes.foregroundColor = .blue // Gunakan biru untuk koreksi
-                attributes.font = .body.bold() // Buat tebal
-            } else {
-                attributes.foregroundColor = .primary
-            }
-        }
-        
-        return AttributedString(textToUse, attributes: attributes)
+        .onAppear {
+             if viewModel.sentenceAnalysisResult.isEmpty {
+                 Task {
+                     await viewModel.analyzeTranscriptSentence()
+                 }
+             }
+         }
     }
 }

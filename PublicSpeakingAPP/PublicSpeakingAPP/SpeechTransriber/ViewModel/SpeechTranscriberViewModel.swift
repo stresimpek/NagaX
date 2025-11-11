@@ -23,7 +23,7 @@ final class SpeechTranscriberViewModel: NSObject, ObservableObject {
     @Published var isGeneratingQuestions: Bool = false
     @Published var questionGenerationError: String?
     
-    @Published var SentenceAnalysis: SentenceAnalysisResponse?
+    @Published var sentenceAnalysisResult: String = ""
     @Published var isAnalyzingSentence: Bool = false
     @Published var SentenceAnalysisError: String?
 
@@ -62,11 +62,12 @@ final class SpeechTranscriberViewModel: NSObject, ObservableObject {
         
         isAnalyzingSentence = true
         SentenceAnalysisError = nil
-        SentenceAnalysis = nil // Hapus hasil lama
+        sentenceAnalysisResult = "" // Hapus hasil lama
         
         do {
+            // Sekarang 'analysis' adalah String
             let analysis = try await mistralService.analyzeSentence(from: transcript)
-            self.SentenceAnalysis = analysis
+            self.sentenceAnalysisResult = analysis
         } catch {
             SentenceAnalysisError = "Failed to analyze Sentence: \(error.localizedDescription)"
         }
@@ -75,10 +76,10 @@ final class SpeechTranscriberViewModel: NSObject, ObservableObject {
     }
    
     func resetSentenceAnalysis() {
-        SentenceAnalysis = nil
+        sentenceAnalysisResult = ""
         SentenceAnalysisError = nil
     }
-
+    
     var canRecord: Bool {
         authorizationStatus == .authorized
     }
