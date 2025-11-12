@@ -39,7 +39,7 @@ struct SimulationViewWrapper: View {
 struct SimulationView: View {
     
     @StateObject private var viewModel: SimulationViewModel
-    @StateObject private var micMonitor = MicMonitor()
+    @StateObject private var micMonitor = MicMonitorModal()
     
     let onBack: () -> Void
     let onComplete: (EvaluationModel, String) -> Void
@@ -140,8 +140,19 @@ struct SimulationView: View {
                         Spacer()
                         
                         if viewModel.isRecording {
-                                AudioVisualizerView(micMonitor: micMonitor)
-                                    .padding(.top, 8)
+                            ZStack(alignment: .leading) {
+                                AudioVisualizerModalView(micMonitor: micMonitor)
+                                    .padding(.leading, 30)
+                                    .padding(.trailing, 0)
+                                    .frame(width: 280, height: 50)
+                                    .frame(alignment: .leading)
+                                    .background(Color.black.opacity(0.27))
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                                    .offset(x: 20)
+                                   
+                                MicIconButton(showMicWarning: false)
+                            }
+                            
                             }
                         Spacer()
                         
@@ -158,7 +169,7 @@ struct SimulationView: View {
                             VStack(alignment: .leading) {
                                 if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
                                     Text(viewModel.whisperModelState.description)
-                                        .font(.caption2)
+                                        .font(.caption)
                                         .foregroundColor(.gray)
                                 }
                             }

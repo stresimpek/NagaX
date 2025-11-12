@@ -23,7 +23,7 @@ struct AspectOption: Identifiable, Hashable {
 struct PracticeSettings: Hashable {
     let durationMinutes: Int
     let distractionLevel: Double
-    let enableQnA: Bool
-    let randomTopic: Bool
+//    let enableQnA: Bool
+//    let randomTopic: Bool
     let selectedAspects: Set<AspectOption>
 }

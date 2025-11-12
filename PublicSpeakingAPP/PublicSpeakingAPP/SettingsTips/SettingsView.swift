@@ -39,8 +39,8 @@ struct SettingsView: View {
                         let settings = PracticeSettings(
                             durationMinutes: durationMinutes,
                             distractionLevel: distractionLevel,
-                            enableQnA: enableQnA,
-                            randomTopic: randomTopic,
+//                            enableQnA: enableQnA,
+//                            randomTopic: randomTopic,
                             selectedAspects: selectedAspects
                         )
                         onNext(settings)
@@ -76,15 +76,15 @@ struct SettingsView: View {
                             .shadow(color: Color.darkBlue2, radius: 0, x: 0, y: 4)
                         }
                         
-                        HStack(spacing: 24) {
-                            Toggle("QnA", isOn: $enableQnA)
-                                .font(.headline)
-                                .toggleStyle(SwitchToggleStyle(tint: .darkBlue))
-                            Spacer()
-                            Toggle("Random Topik", isOn: $randomTopic)
-                                .font(.headline)
-                                .toggleStyle(SwitchToggleStyle(tint: .darkBlue))
-                        }
+//                        HStack(spacing: 24) {
+//                            Toggle("QnA", isOn: $enableQnA)
+//                                .font(.headline)
+//                                .toggleStyle(SwitchToggleStyle(tint: .darkBlue))
+//                            Spacer()
+//                            Toggle("Random Topik", isOn: $randomTopic)
+//                                .font(.headline)
+//                                .toggleStyle(SwitchToggleStyle(tint: .darkBlue))
+//                        }
 
                         HStack(alignment: .center, spacing: 40) {
                             Text("Distraksi").font(.headline)
