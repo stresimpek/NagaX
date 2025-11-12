@@ -23,7 +23,7 @@ class MicMonitorModal: ObservableObject {
     
     func startMonitoring() {
         guard let inputNode else { return }
-        stopMonitoring() // avoid duplicate taps
+        stopMonitoring()
         
         let format = inputNode.inputFormat(forBus: bus)
         inputNode.installTap(onBus: bus, bufferSize: 1024, format: format) { [weak self] buffer, _ in
@@ -48,7 +48,7 @@ class MicMonitorModal: ObservableObject {
         guard let channelData = buffer.floatChannelData?[0] else { return }
         let frameLength = Int(buffer.frameLength)
         let rms = sqrt((0..<frameLength).reduce(0) { $0 + pow(channelData[$1], 2) } / Float(frameLength))
-        let normalized = max(0.05, min(1.0, CGFloat(rms) * 10)) // smoother normalization
+        let normalized = max(0.05, min(1.0, CGFloat(rms) * 10))
         
         DispatchQueue.main.async {
             self.levels.removeFirst()
