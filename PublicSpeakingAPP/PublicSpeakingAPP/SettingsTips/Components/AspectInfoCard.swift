@@ -32,7 +32,7 @@ struct AspectInfoCard: View {
                     .foregroundColor(Color("BaseColorBrown"))
                 
                 Text(item.description)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(Color("BaseColorBrown"))
                     .lineSpacing(4)
             }

@@ -10,14 +10,14 @@ import SwiftUI
 struct AspectCheckTile: View {
     let option: AspectOption
     @Binding var isSelected: Bool
-
+    
     var body: some View {
         ZStack(alignment: .topTrailing) {
             VStack(spacing: 8) {
                 Image(systemName: option.systemImage)
-                    .font(.system(size: 24, weight: .semibold))
+                //                    .font(.system(size: 24, weight: .semibold))
                 Text(option.title)
-                    .font(.subheadline)
+                    .font(.footnote)
                     .multilineTextAlignment(.center)
             }
             .padding(.vertical, 16)
