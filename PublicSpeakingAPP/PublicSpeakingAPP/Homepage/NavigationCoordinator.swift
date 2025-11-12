@@ -15,6 +15,7 @@ enum Route: Hashable {
     case simulation(PracticeSettings)
     case newEvaluation(EvaluationModel, String, String, PracticeSettings)
     case modal(PracticeSettings)
+    case notificationPrompt(Date)
 }
 
 @MainActor
@@ -44,6 +45,10 @@ class NavigationCoordinator: ObservableObject {
     
     func goToNewEvaluation(result: EvaluationModel, transcript: String, sentenceAnalysisResult: String, settings: PracticeSettings) {
         path.append(.newEvaluation(result, transcript, sentenceAnalysisResult, settings))
+    }
+    
+    func goToNotificationPrompt(date: Date) {
+        path.append(.notificationPrompt(date))
     }
     
     func goBack() {
