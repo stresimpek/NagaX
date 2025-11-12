@@ -29,12 +29,16 @@ struct CountdownRow: View {
         
         HStack(spacing: 4) {
             Text("Presentasimu dimulai dalam:")
+                .font(.body)
             CountdownBox(text: "\(r.d)")
             Text("hari")
+                .font(.body)
             CountdownBox(text: "\(r.h)")
             Text("jam")
+                .font(.body)
             CountdownBox(text: "\(r.m)")
             Text("menit")
+                .font(.body)
         }
         .onReceive(timer) { _ in now = Date() }
         .opacity(r.done ? 0.6 : 1)

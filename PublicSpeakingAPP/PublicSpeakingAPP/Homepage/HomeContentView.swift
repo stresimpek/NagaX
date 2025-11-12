@@ -19,7 +19,7 @@ struct HomeContentView: View {
         SpeakerLevel(title: "Noob Speaker", imageName: "blobFish"),
         SpeakerLevel(title: "Professional Speaker", imageName: "beluga")
     ]
-
+    
     @State private var currentLevelIndex = 0
     
     let onStart: () -> Void
@@ -27,7 +27,7 @@ struct HomeContentView: View {
     
     @Query private var savedDates: [PresentationDateModel]
     private var targetDate: Date? { savedDates.first?.date }
-
+    
     var body: some View {
         VStack(spacing: 16) {
             HStack {
@@ -52,9 +52,9 @@ struct HomeContentView: View {
                 VStack {
                     Spacer()
                     
-                    Image(.titleNoob)
-                        .resizable()
-                        .frame(width: 180, height: 34)
+                    NameBanner(name: "Si Cupu (Kamu)")
+                    
+                    
                     
                     RiveViewModel(fileName:"noob cako new").view()
                         .frame(width: 200, height: 120)
@@ -71,9 +71,9 @@ struct HomeContentView: View {
                     .padding(.bottom, 12)
                 }
                 
-                Image(.bubbleChat)
-                    .resizable()
-                    .frame(width: 208, height: 84)
+                SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
+                
+                
             }
             .padding(.leading, 200)
             .frame(alignment: .top)
@@ -84,21 +84,88 @@ struct HomeContentView: View {
     }
 }
 
+struct SpeechBubble: View {
+    var text: String
+    
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            // Main bubble background + text
+            Text(text)
+                .font(.footnoteBold)
+                .foregroundColor(Color(.baseColorBrown))
+                .frame(width: 198, height: 86, alignment: .center)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.baseColorWhite))
+                )
+            
+            Image("Vector 92")
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 15, height: 20.4)
+                .offset(x: -4, y: 2)
+        }
+        .frame(width: 207, height: 86)
+    }
+}
+
+struct TriangleTail: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        // Triangle pointing right (rotated later)
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+struct NameBanner: View {
+    var name: String
+    
+    var body: some View {
+        ZStack {
+            Image("Rectangle 10")
+                .resizable()
+                .frame(width: 34.44737, height: 27)
+                .offset(x: -74, y:4)
+            
+            Image("Rectangle 11")
+                .resizable()
+                .frame(width: 34.44737, height: 27)
+                .offset(x: 74, y:4)
+            
+            Text(name)
+                .font(.footnoteBold)
+                .foregroundStyle(Color.darkBlue2)
+                .frame(width: 136.80527, height: 26)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(.lightBlue))
+                )
+        }
+        .frame(height: 27)
+    }
+}
+
 struct CountdownBox: View {
     let text: String
     var body: some View {
         Text(text)
+            .font(.body)
             .frame(width: 28, height: 28)
             .background(Color.white)
             .cornerRadius(4)
             .foregroundStyle(Color.black)
     }
 }
-
 struct StatBar: View {
     let title: String
     let value: Double
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
@@ -114,7 +181,7 @@ struct StatBar: View {
 struct CardButton: View {
     let title: String
     let systemIcon: String
-
+    
     var body: some View {
         Button(action: {}) {
             VStack(spacing: 6) {
