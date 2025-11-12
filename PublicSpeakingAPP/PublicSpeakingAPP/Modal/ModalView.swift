@@ -32,15 +32,35 @@ struct ModalView: View {
                         
                         Spacer().frame(height: geometry.size.height * 0.01)
                         
-                        MicSetupView(
-                            micMonitor: viewModel.micMonitor,
-                            showMicWarning: viewModel.showMicWarning
-                        )
+                        VStack {
+                            switch viewModel.currentStep {
+                            case .quietRoom:
+                                Image(viewModel.mainImageName)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 100)
+                                
+                            case .micCheck:
+                                MicSetupView(
+                                    micMonitor: viewModel.micMonitor,
+                                    showMicWarning: viewModel.showMicWarning,
+                                    imageName: viewModel.mainImageName
+                                )
+                                
+                            case .cameraPosition:
+                                Image(viewModel.mainImageName)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 100)
+                            }
+                        }
+                        .frame(height: 150)
+                        .animation(.easeInOut, value: viewModel.currentStep)
                         
                         Spacer().frame(height: geometry.size.height * 0.01)
                         
                         InstructionTextView(
-                            message: viewModel.instructionMessage,
+                            message: viewModel.instructionText,
                             geometry: geometry
                         )
                         
@@ -56,12 +76,13 @@ struct ModalView: View {
                     .zIndex(0)
 
                     StartButtonView(
+                        title: viewModel.buttonTitle,
                         isEnabled: viewModel.isButtonEnabled,
                         action: {
-                            if viewModel.permissionStatus == .granted {
+                            if viewModel.currentStep == .cameraPosition {
                                 onStart()
                             } else {
-                                viewModel.showPermissionAlert = true
+                                viewModel.nextStep()
                             }
                         }
                     )
@@ -70,15 +91,10 @@ struct ModalView: View {
                     .zIndex(1)
                        
                     Spacer().frame(height: geometry.size.height * 0)
-
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                   
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .onAppear {
-            viewModel.checkAndRequestMicPermission()
         }
         .onDisappear {
             viewModel.stopMonitoring()
