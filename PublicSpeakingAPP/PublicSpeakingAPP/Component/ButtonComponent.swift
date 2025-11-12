@@ -164,10 +164,12 @@ struct ButtonComponent: View {
             HStack(spacing: 8) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .font(.system(size: size.iconSize, weight: .semibold))
+                        .font(.title1)
+                    //                        .font(.system(size: size.iconSize, weight: .semibold))
                 }
                 if let title {
                     Text(title)
+                        .font(.title1)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
