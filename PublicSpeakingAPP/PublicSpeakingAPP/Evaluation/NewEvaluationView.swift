@@ -209,11 +209,11 @@ struct EvaluationSectionView<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Catatan Evaluator:")
-                .font(.headline)
+                .font(.footnoteBold)
                 .foregroundColor(.baseColorBrown)
             
             Text(evaluatorNote)
-                .font(.custom("BradleyHandITCTT-Bold", size: 22))
+                .font(.title3)
                 .foregroundColor(.darkBlue2)
                 .italic()
                 .underline(true, color: Color.baseColorBrown)

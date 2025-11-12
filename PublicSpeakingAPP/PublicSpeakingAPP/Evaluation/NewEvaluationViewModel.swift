@@ -103,7 +103,7 @@ class NewEvaluationViewModel: ObservableObject {
     @Published var showFullScreen: Bool = false
     
     var availableTabs: [EvaluationTab] {
-        var tabs: [EvaluationTab] = [.strukturKalimat, .artikulasi]
+        var tabs: [EvaluationTab] = []
         
         if settings.selectedAspects.contains(.intonasi) {
             tabs.append(.intonasi)
@@ -118,6 +118,8 @@ class NewEvaluationViewModel: ObservableObject {
             tabs.append(.kontakMata)
         }
         
+        tabs.append(.artikulasi)
+        tabs.append(.strukturKalimat)
         return tabs
     }
     
@@ -138,10 +140,10 @@ class NewEvaluationViewModel: ObservableObject {
     
     func tabTitle(for tab: EvaluationTab) -> String {
         switch tab {
-        case .strukturKalimat: return "STRUKTUR KALIMAT"
+        case .strukturKalimat: return "PEMBOROSAN KATA"
         case .artikulasi: return "ARTIKULASI"
         case .intonasi: return "INTONASI"
-        case .fillerWords: return "FILLER WORDS"
+        case .fillerWords: return "KATA JEDA"
         case .tempo: return "TEMPO"
         case .kontakMata: return "KONTAK MATA"
         }
