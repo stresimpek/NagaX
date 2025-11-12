@@ -59,16 +59,22 @@ struct HomeView: View {
                         onBack: {
                             coordinator.goBack()
                         },
-                        onComplete: { result, transcript in
-                            coordinator.goToNewEvaluation(result: result, transcript: transcript, settings: settings)
+                        onComplete: { result, transcript, analysisResult in
+                            coordinator.goToNewEvaluation(
+                                result: result,
+                                transcript: transcript,
+                                sentenceAnalysisResult: analysisResult,
+                                settings: settings
+                            )
                         }
                     )
                     .navigationBarBackButtonHidden(true)
                     
-                case .newEvaluation(let result, let transcript, let settings):
+                case .newEvaluation(let result, let transcript, let sentenceAnalysisResult, let settings):
                     NewEvaluationView(
                         result: result,
                         fullTranscript: transcript,
+                        sentenceAnalysisResult: sentenceAnalysisResult,
                         settings: settings,
                         onBack: {
                             coordinator.returnToHome()
