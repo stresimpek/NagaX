@@ -17,10 +17,87 @@ enum EvaluationTab {
     case kontakMata
 }
 
+enum DiffType {
+    case same
+    case deleted
+    case added
+}
+
+struct DiffComponent: Identifiable, Hashable {
+    let id = UUID()
+    let text: String
+    var type: DiffType
+    
+    static func generate(original: String, new: String) -> [DiffComponent] {
+        let words1 = original.splitByWord()
+        let newSpace = " " + new
+        let words2 = newSpace.splitByWord()
+        let diff = words2.difference(from: words1)
+        
+        var components: [DiffComponent] = []
+        var currentComponents = words1.map { DiffComponent(text: $0, type: .same) }
+
+        for change in diff.removals.reversed() {
+            switch change {
+            case .remove(let offset, _, _):
+                if currentComponents.indices.contains(offset) {
+                    currentComponents[offset].type = .deleted
+                }
+            case .insert:
+                break
+            }
+        }
+        
+        for change in diff.insertions.reversed() {
+            switch change {
+            case .insert(let offset, let element, _):
+                let newComponent = DiffComponent(text: element, type: .added)
+              
+                var targetInsertionIndex = 0
+                var postRemovalCounter = 0
+                var found = false
+                
+                for (index, component) in currentComponents.enumerated() {
+                    if postRemovalCounter == offset {
+                        targetInsertionIndex = index
+                        found = true
+                        break
+                    }
+                    if component.type != .deleted {
+                        postRemovalCounter += 1
+                    }
+                }
+                if !found {
+                    targetInsertionIndex = currentComponents.count
+                }
+                currentComponents.insert(newComponent, at: targetInsertionIndex)
+                
+            case .remove:
+                break
+            }
+        }
+        
+        if components.isEmpty {
+            for component in currentComponents {
+                if let last = components.last, last.type == component.type {
+                    let mergedComponent = DiffComponent(text: last.text + component.text, type: last.type)
+                    components[components.count - 1] = mergedComponent
+                } else {
+                    components.append(component)
+                }
+            }
+        }
+        
+        return components
+    }
+}
+
 class NewEvaluationViewModel: ObservableObject {
     let result: EvaluationModel
     let fullTranscript: String
     let settings: PracticeSettings
+    
+    let sentenceAnalysisResult: String
     
     @Published var selectedTabIndex: Int = 0
     @Published var showFullScreen: Bool = false
@@ -48,9 +125,10 @@ class NewEvaluationViewModel: ObservableObject {
         availableTabs[selectedTabIndex]
     }
     
-    init(result: EvaluationModel, fullTranscript: String, settings: PracticeSettings) {
+    init(result: EvaluationModel, fullTranscript: String, sentenceAnalysisResult: String, settings: PracticeSettings) {
         self.result = result
         self.fullTranscript = fullTranscript
+        self.sentenceAnalysisResult = sentenceAnalysisResult
         self.settings = settings
     }
     
@@ -105,5 +183,16 @@ class NewEvaluationViewModel: ObservableObject {
     
     func toggleFullScreen() {
         showFullScreen.toggle()
+    }
+}
+
+extension String {
+    func splitByWord() -> [String] {
+        let regex = try? NSRegularExpression(pattern: "\\s+|\\S+")
+        let range = NSRange(location: 0, length: self.utf16.count)
+        
+        return (regex?.matches(in: self, options: [], range: range).map {
+            (self as NSString).substring(with: $0.range)
+        })!
     }
 }

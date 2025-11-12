@@ -18,7 +18,7 @@ struct SimulationViewWrapper: View {
     
     let settings: PracticeSettings
     let onBack: () -> Void
-    let onComplete: (EvaluationModel, String) -> Void
+    let onComplete: (EvaluationModel, String, String) -> Void
     
     var body: some View {
         SimulationView(
@@ -42,7 +42,7 @@ struct SimulationView: View {
     @StateObject private var micMonitor = MicMonitor()
     
     let onBack: () -> Void
-    let onComplete: (EvaluationModel, String) -> Void
+    let onComplete: (EvaluationModel, String, String) -> Void
     
     private var isProcessing: Bool {
         return !viewModel.isRecording && viewModel.whisperKitVM.isTranscribing
@@ -51,7 +51,7 @@ struct SimulationView: View {
     init(
         viewModel: SimulationViewModel,
         onBack: @escaping () -> Void,
-        onComplete: @escaping (EvaluationModel, String) -> Void
+        onComplete: @escaping (EvaluationModel, String, String) -> Void
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBack = onBack
@@ -192,7 +192,11 @@ struct SimulationView: View {
                 if isComplete {
                     if let result = viewModel.evaluationResult {
                         print("Evaluation result FOUND. Calling onComplete...")
-                        onComplete(result, viewModel.finalTranscript)
+                        onComplete(
+                            result,
+                            viewModel.finalTranscript,
+                            viewModel.whisperKitVM.sentenceAnalysisResult
+                        )
                     } else {
                         print("Evaluation result is NIL. Calling onBack...")
                         onBack()

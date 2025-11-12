@@ -13,7 +13,7 @@ enum Route: Hashable {
     case datePicker
     case settings
     case simulation(PracticeSettings)
-    case newEvaluation(EvaluationModel, String, PracticeSettings)
+    case newEvaluation(EvaluationModel, String, String, PracticeSettings)
     case modal(PracticeSettings)
 }
 
@@ -42,8 +42,8 @@ class NavigationCoordinator: ObservableObject {
         path.append(.simulation(settings))
     }
     
-    func goToNewEvaluation(result: EvaluationModel, transcript: String, settings: PracticeSettings) {
-        path.append(.newEvaluation(result, transcript, settings))
+    func goToNewEvaluation(result: EvaluationModel, transcript: String, sentenceAnalysisResult: String, settings: PracticeSettings) {
+        path.append(.newEvaluation(result, transcript, sentenceAnalysisResult, settings))
     }
     
     func goBack() {
