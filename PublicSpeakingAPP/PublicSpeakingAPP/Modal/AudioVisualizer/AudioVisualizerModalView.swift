@@ -5,7 +5,6 @@
 //  Created by Elisabeth Levana on 02/11/25.
 //
 
-
 import SwiftUI
 
 struct AudioVisualizerModalView: View {
