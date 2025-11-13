@@ -136,14 +136,14 @@ private extension NewEvaluationView {
         case .tempo: // Tempo
             VStack() {
                 TempoResultChart(tempoSeries: viewModel.result.tempoSeries)
-                        .frame(height: 220)
+                    .frame(maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity)
             .padding()
         case .intonasi: // Intonasi
             VStack() {
                 IntonationResultChart(pitchSeries: viewModel.result.pitchSeries)
-                    .frame(height: 220)
+                    .frame(maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity)
             .padding()
@@ -279,7 +279,7 @@ struct EvaluationSectionView<Content: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             content
         }
-        .frame(maxWidth: .infinity, minHeight: 240, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
