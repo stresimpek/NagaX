@@ -9,6 +9,22 @@
 /* Begin PBXBuildFile section */
 		17BA4F042E9F94990030B293 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F032E9F94990030B293 /* WhisperKit */; };
 		17BA4F062E9F94990030B293 /* whisperkit-cli in Frameworks */ = {isa = PBXBuildFile; productRef = 17BA4F052E9F94990030B293 /* whisperkit-cli */; };
+		311E69282EC4415500AF901E /* Nunito-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69192EC4415500AF901E /* Nunito-Bold.ttf */; };
+		311E69292EC4415500AF901E /* Nunito-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69222EC4415500AF901E /* Nunito-Medium.ttf */; };
+		311E692A2EC4415500AF901E /* Nunito-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E691D2EC4415500AF901E /* Nunito-ExtraLight.ttf */; };
+		311E692B2EC4415500AF901E /* Nunito-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69202EC4415500AF901E /* Nunito-Light.ttf */; };
+		311E692C2EC4415500AF901E /* Nunito-BlackItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69182EC4415500AF901E /* Nunito-BlackItalic.ttf */; };
+		311E692D2EC4415500AF901E /* Nunito-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69252EC4415500AF901E /* Nunito-SemiBold.ttf */; };
+		311E692E2EC4415500AF901E /* Nunito-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E691A2EC4415500AF901E /* Nunito-BoldItalic.ttf */; };
+		311E692F2EC4415500AF901E /* Nunito-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69212EC4415500AF901E /* Nunito-LightItalic.ttf */; };
+		311E69302EC4415500AF901E /* Nunito-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69172EC4415500AF901E /* Nunito-Black.ttf */; };
+		311E69312EC4415500AF901E /* Nunito-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69242EC4415500AF901E /* Nunito-Regular.ttf */; };
+		311E69322EC4415500AF901E /* Nunito-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E691B2EC4415500AF901E /* Nunito-ExtraBold.ttf */; };
+		311E69332EC4415500AF901E /* Nunito-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E691F2EC4415500AF901E /* Nunito-Italic.ttf */; };
+		311E69342EC4415500AF901E /* Nunito-ExtraBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E691C2EC4415500AF901E /* Nunito-ExtraBoldItalic.ttf */; };
+		311E69352EC4415500AF901E /* Nunito-ExtraLightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E691E2EC4415500AF901E /* Nunito-ExtraLightItalic.ttf */; };
+		311E69362EC4415500AF901E /* Nunito-SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69262EC4415500AF901E /* Nunito-SemiBoldItalic.ttf */; };
+		311E69372EC4415500AF901E /* Nunito-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 311E69232EC4415500AF901E /* Nunito-MediumItalic.ttf */; };
 		5F504208A36F0D6DD7EAF200 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BDBBDEA89D59FB584042F4A9 /* Pods_PublicSpeakingAPP_PublicSpeakingAPPUITests.framework */; };
 		7CE851DA155C463A766ECDF8 /* Pods_PublicSpeakingAPPTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3FB7F432C78D629616FA649B /* Pods_PublicSpeakingAPPTests.framework */; };
 		DD24F122C7CC08C3B9C52EBE /* Pods_PublicSpeakingAPP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61E6E345EB8465F6CC18B06C /* Pods_PublicSpeakingAPP.framework */; };
@@ -38,6 +54,22 @@
 		12BCF37A2E8BACB500FD1CF8 /* PublicSpeakingAPPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PublicSpeakingAPPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		12BCF3842E8BACB500FD1CF8 /* PublicSpeakingAPPUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PublicSpeakingAPPUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B5CCB8D1661E906DE9DC6C3 /* Pods-PublicSpeakingAPP.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.debug.xcconfig"; sourceTree = "<group>"; };
+		311E69172EC4415500AF901E /* Nunito-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-Black.ttf"; sourceTree = "<group>"; };
+		311E69182EC4415500AF901E /* Nunito-BlackItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-BlackItalic.ttf"; sourceTree = "<group>"; };
+		311E69192EC4415500AF901E /* Nunito-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-Bold.ttf"; sourceTree = "<group>"; };
+		311E691A2EC4415500AF901E /* Nunito-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-BoldItalic.ttf"; sourceTree = "<group>"; };
+		311E691B2EC4415500AF901E /* Nunito-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-ExtraBold.ttf"; sourceTree = "<group>"; };
+		311E691C2EC4415500AF901E /* Nunito-ExtraBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-ExtraBoldItalic.ttf"; sourceTree = "<group>"; };
+		311E691D2EC4415500AF901E /* Nunito-ExtraLight.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-ExtraLight.ttf"; sourceTree = "<group>"; };
+		311E691E2EC4415500AF901E /* Nunito-ExtraLightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-ExtraLightItalic.ttf"; sourceTree = "<group>"; };
+		311E691F2EC4415500AF901E /* Nunito-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-Italic.ttf"; sourceTree = "<group>"; };
+		311E69202EC4415500AF901E /* Nunito-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-Light.ttf"; sourceTree = "<group>"; };
+		311E69212EC4415500AF901E /* Nunito-LightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-LightItalic.ttf"; sourceTree = "<group>"; };
+		311E69222EC4415500AF901E /* Nunito-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-Medium.ttf"; sourceTree = "<group>"; };
+		311E69232EC4415500AF901E /* Nunito-MediumItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-MediumItalic.ttf"; sourceTree = "<group>"; };
+		311E69242EC4415500AF901E /* Nunito-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-Regular.ttf"; sourceTree = "<group>"; };
+		311E69252EC4415500AF901E /* Nunito-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-SemiBold.ttf"; sourceTree = "<group>"; };
+		311E69262EC4415500AF901E /* Nunito-SemiBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Nunito-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
 		3FB7F432C78D629616FA649B /* Pods_PublicSpeakingAPPTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPPTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		61E6E345EB8465F6CC18B06C /* Pods_PublicSpeakingAPP.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PublicSpeakingAPP.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		67E79AA2EC4971F34195DCF3 /* Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -46,9 +78,22 @@
 		D0956CE89974888098C971A5 /* Pods-PublicSpeakingAPP.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PublicSpeakingAPP.release.xcconfig"; path = "Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		173D68B72EC1CB1000B56BF1 /* Exceptions for "PublicSpeakingAPP" folder in "PublicSpeakingAPP" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 12BCF36A2E8BACB400FD1CF8 /* PublicSpeakingAPP */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		12BCF36D2E8BACB400FD1CF8 /* PublicSpeakingAPP */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				173D68B72EC1CB1000B56BF1 /* Exceptions for "PublicSpeakingAPP" folder in "PublicSpeakingAPP" target */,
+			);
 			path = PublicSpeakingAPP;
 			sourceTree = "<group>";
 		};
@@ -97,6 +142,7 @@
 		12BCF3622E8BACB400FD1CF8 = {
 			isa = PBXGroup;
 			children = (
+				311E69272EC4415500AF901E /* font */,
 				12BCF36D2E8BACB400FD1CF8 /* PublicSpeakingAPP */,
 				12BCF37D2E8BACB500FD1CF8 /* PublicSpeakingAPPTests */,
 				12BCF3872E8BACB500FD1CF8 /* PublicSpeakingAPPUITests */,
@@ -114,6 +160,29 @@
 				12BCF3842E8BACB500FD1CF8 /* PublicSpeakingAPPUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		311E69272EC4415500AF901E /* font */ = {
+			isa = PBXGroup;
+			children = (
+				311E69172EC4415500AF901E /* Nunito-Black.ttf */,
+				311E69182EC4415500AF901E /* Nunito-BlackItalic.ttf */,
+				311E69192EC4415500AF901E /* Nunito-Bold.ttf */,
+				311E691A2EC4415500AF901E /* Nunito-BoldItalic.ttf */,
+				311E691B2EC4415500AF901E /* Nunito-ExtraBold.ttf */,
+				311E691C2EC4415500AF901E /* Nunito-ExtraBoldItalic.ttf */,
+				311E691D2EC4415500AF901E /* Nunito-ExtraLight.ttf */,
+				311E691E2EC4415500AF901E /* Nunito-ExtraLightItalic.ttf */,
+				311E691F2EC4415500AF901E /* Nunito-Italic.ttf */,
+				311E69202EC4415500AF901E /* Nunito-Light.ttf */,
+				311E69212EC4415500AF901E /* Nunito-LightItalic.ttf */,
+				311E69222EC4415500AF901E /* Nunito-Medium.ttf */,
+				311E69232EC4415500AF901E /* Nunito-MediumItalic.ttf */,
+				311E69242EC4415500AF901E /* Nunito-Regular.ttf */,
+				311E69252EC4415500AF901E /* Nunito-SemiBold.ttf */,
+				311E69262EC4415500AF901E /* Nunito-SemiBoldItalic.ttf */,
+			);
+			path = font;
 			sourceTree = "<group>";
 		};
 		C7365DD0208C7E68DE4D88ED /* Frameworks */ = {
@@ -268,6 +337,22 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				311E69282EC4415500AF901E /* Nunito-Bold.ttf in Resources */,
+				311E69292EC4415500AF901E /* Nunito-Medium.ttf in Resources */,
+				311E692A2EC4415500AF901E /* Nunito-ExtraLight.ttf in Resources */,
+				311E692B2EC4415500AF901E /* Nunito-Light.ttf in Resources */,
+				311E692C2EC4415500AF901E /* Nunito-BlackItalic.ttf in Resources */,
+				311E692D2EC4415500AF901E /* Nunito-SemiBold.ttf in Resources */,
+				311E692E2EC4415500AF901E /* Nunito-BoldItalic.ttf in Resources */,
+				311E692F2EC4415500AF901E /* Nunito-LightItalic.ttf in Resources */,
+				311E69302EC4415500AF901E /* Nunito-Black.ttf in Resources */,
+				311E69312EC4415500AF901E /* Nunito-Regular.ttf in Resources */,
+				311E69322EC4415500AF901E /* Nunito-ExtraBold.ttf in Resources */,
+				311E69332EC4415500AF901E /* Nunito-Italic.ttf in Resources */,
+				311E69342EC4415500AF901E /* Nunito-ExtraBoldItalic.ttf in Resources */,
+				311E69352EC4415500AF901E /* Nunito-ExtraLightItalic.ttf in Resources */,
+				311E69362EC4415500AF901E /* Nunito-SemiBoldItalic.ttf in Resources */,
+				311E69372EC4415500AF901E /* Nunito-MediumItalic.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -362,13 +447,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -383,13 +464,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -404,13 +481,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -425,13 +498,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -615,9 +684,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PublicSpeakingAPP/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -652,9 +722,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NX68XL6H25;
+				DEVELOPMENT_TEAM = RUK94DS7MJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PublicSpeakingAPP/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

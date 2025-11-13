@@ -18,7 +18,7 @@ struct SimulationViewWrapper: View {
     
     let settings: PracticeSettings
     let onBack: () -> Void
-    let onComplete: (EvaluationModel, String) -> Void
+    let onComplete: (EvaluationModel, String, String) -> Void
     
     var body: some View {
         SimulationView(
@@ -39,10 +39,10 @@ struct SimulationViewWrapper: View {
 struct SimulationView: View {
     
     @StateObject private var viewModel: SimulationViewModel
-    @StateObject private var micMonitor = MicMonitor()
+    @StateObject private var micMonitor = MicMonitorModal()
     
     let onBack: () -> Void
-    let onComplete: (EvaluationModel, String) -> Void
+    let onComplete: (EvaluationModel, String, String) -> Void
     
     private var isProcessing: Bool {
         return !viewModel.isRecording && viewModel.whisperKitVM.isTranscribing
@@ -51,7 +51,7 @@ struct SimulationView: View {
     init(
         viewModel: SimulationViewModel,
         onBack: @escaping () -> Void,
-        onComplete: @escaping (EvaluationModel, String) -> Void
+        onComplete: @escaping (EvaluationModel, String, String) -> Void
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBack = onBack
@@ -95,6 +95,7 @@ struct SimulationView: View {
                                     .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
                             } else {
                                 Text("Objective: Lakukan presentasi terbaikmu dengan aspek yang sudah ditentukan!")
+                                    .font(.title3)
                                     .padding()
                                     .foregroundColor(.baseColorBrown)
                                     .frame(height: 42, alignment: .center)
@@ -140,8 +141,19 @@ struct SimulationView: View {
                         Spacer()
                         
                         if viewModel.isRecording {
-                                AudioVisualizerView(micMonitor: micMonitor)
-                                    .padding(.top, 8)
+                            ZStack(alignment: .leading) {
+                                AudioVisualizerModalView(micMonitor: micMonitor)
+                                    .padding(.leading, 30)
+                                    .padding(.trailing, 0)
+                                    .frame(width: 280, height: 50)
+                                    .frame(alignment: .leading)
+                                    .background(Color.black.opacity(0.27))
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                                    .offset(x: 20)
+                                   
+                                MicIconButton(showMicWarning: false)
+                            }
+                            
                             }
                         Spacer()
                         
@@ -158,7 +170,7 @@ struct SimulationView: View {
                             VStack(alignment: .leading) {
                                 if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
                                     Text(viewModel.whisperModelState.description)
-                                        .font(.caption2)
+                                        .font(.caption)
                                         .foregroundColor(.gray)
                                 }
                             }
@@ -192,7 +204,11 @@ struct SimulationView: View {
                 if isComplete {
                     if let result = viewModel.evaluationResult {
                         print("Evaluation result FOUND. Calling onComplete...")
-                        onComplete(result, viewModel.finalTranscript)
+                        onComplete(
+                            result,
+                            viewModel.finalTranscript,
+                            viewModel.whisperKitVM.sentenceAnalysisResult
+                        )
                     } else {
                         print("Evaluation result is NIL. Calling onBack...")
                         onBack()

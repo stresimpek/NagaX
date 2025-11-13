@@ -11,15 +11,21 @@ import SwiftData
 struct DatePickerView: View {
     @Environment(\.modelContext) private var context
     let onBack: () -> Void
+    let onComplete: (Date) -> Void
+    
     @Query(sort: [SortDescriptor(\PresentationDateModel.date)]) private var savedDates: [PresentationDateModel]
 
     @State private var pickedDate: Date = .init()
 
     var body: some View {
         ZStack(alignment: .topLeading) {
+            Color(.baseColorBlue)
+                .ignoresSafeArea()
+            
             VStack(spacing: 20) {
                 Text("Tanggal dan jam berapakah kamu akan presentasi?")
-                    .font(.headline)
+                    .font(.title)
+                    .foregroundStyle(Color.white)
 
                 DatePicker(
                     "",
@@ -27,6 +33,7 @@ struct DatePickerView: View {
                     in: Date()...,
                     displayedComponents: [.date, .hourAndMinute]
                 )
+                .foregroundStyle(Color.white)
                 .datePickerStyle(.wheel)
                 .labelsHidden()
 
@@ -37,6 +44,7 @@ struct DatePickerView: View {
                     kind: .primaryYellow
                 ) {
                     saveOrUpdate(date: pickedDate)
+                    onComplete(pickedDate)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

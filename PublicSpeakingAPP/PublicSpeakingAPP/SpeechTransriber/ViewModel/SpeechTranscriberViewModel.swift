@@ -23,6 +23,14 @@ enum RecordingStatus {
 
 @MainActor
 final class SpeechTranscriberViewModel: ObservableObject {
+    // MARK: - Sentence Analysis (LLM)
+    @Published var sentenceAnalysisResult: String = ""
+    @Published var isAnalyzingSentence: Bool = false
+    @Published var sentenceAnalysisError: String? = nil
+
+    // LLM service for sentence analysis
+    private let mistralService: MistralAIService
+
     // MARK: - Core Properties
     @Published var whisperKit: WhisperKit?
     @Published var isRecording: Bool = false
@@ -114,6 +122,11 @@ final class SpeechTranscriberViewModel: ObservableObject {
     private var analyzerLastSampleIndex: Int = 0
     
     @Published var publishedError: String? = nil
+    
+    // MARK: - Init
+    init(mistralAPIKey: String = "rvxmDdHNzkeGxHrJ9hhrZhDJTvjYCV3i") {
+        self.mistralService = MistralAIService(apiKey: mistralAPIKey)
+    }
     
     func binding<T>(_ keyPath: ReferenceWritableKeyPath<SpeechTranscriberViewModel, T>) -> Binding<T> {
         Binding(get: { self[keyPath: keyPath] },
@@ -387,16 +400,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
         self.recordingStatus = .starting
         
         Task(priority: .userInitiated) {
-            guard await AudioProcessor.requestRecordPermission() else {
-                print("Microphone access was not granted.")
-                self.publishedError = "Izin mikrofon ditolak. Mohon aktifkan di Pengaturan."
-                await MainActor.run {
-                    self.isRecording = false
-                    self.recordingStatus = .stopped
-                }
-                return
-            }
-
             var deviceId: DeviceID?
 
             try? whisperKit.audioProcessor.startRecordingLive(inputDeviceID: deviceId) { _ in
@@ -404,7 +407,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     self.bufferEnergy = whisperKit.audioProcessor.relativeEnergy
                     self.bufferSeconds = Double(whisperKit.audioProcessor.audioSamples.count) / Double(WhisperKit.sampleRate)
                 }
-            } 
+            }
 
             await MainActor.run {
                 isRecording = true
@@ -415,8 +418,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             if loop {
                 realtimeLoop()
             }
-        } 
-        
+        }
     }
 
     func stopRecording(_ loop: Bool) {
@@ -437,6 +439,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         if loop {
             stopRealtimeTranscription()
             finalizeText()
+            Task { await self.analyzeTranscriptSentence() }
         } else {
             transcriptionTask?.cancel()
             
@@ -449,6 +452,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     print("Error pada transkripsi akhir: \(error.localizedDescription)")
                 }
                 finalizeText()
+                await self.analyzeTranscriptSentence()
 
                 await MainActor.run {
                     isTranscribing = false
@@ -483,6 +487,32 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 self.updateFinalizedStyledTranscript()
             }
         }
+    }
+    
+    // MARK: - LLM Sentence Analysis
+    func analyzeTranscriptSentence() async {
+        // Use the finalized confirmedText as transcript after finalizeText()
+        let transcript = self.confirmedText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !transcript.isEmpty else {
+            await MainActor.run { self.sentenceAnalysisError = "Transcript is empty. Record something first." }
+            return
+        }
+
+        await MainActor.run {
+            self.isAnalyzingSentence = true
+            self.sentenceAnalysisError = nil
+            self.sentenceAnalysisResult = ""
+        }
+
+        do {
+            let analysis = try await mistralService.analyzeSentence(from: transcript)
+            await MainActor.run { self.sentenceAnalysisResult = analysis }
+        } catch {
+            await MainActor.run { self.sentenceAnalysisError = "Failed to analyze sentence: \(error.localizedDescription)" }
+        }
+
+        await MainActor.run { self.isAnalyzingSentence = false }
     }
     
     @MainActor
@@ -988,3 +1018,4 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
     }
 }
+

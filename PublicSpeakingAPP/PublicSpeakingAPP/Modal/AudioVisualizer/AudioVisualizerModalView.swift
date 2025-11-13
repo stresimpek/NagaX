@@ -5,17 +5,16 @@
 //  Created by Elisabeth Levana on 02/11/25.
 //
 
-
 import SwiftUI
 
-struct AudioVisualizerView: View {
-    @ObservedObject var micMonitor: MicMonitor
+struct AudioVisualizerModalView: View {
+    @ObservedObject var micMonitor: MicMonitorModal
     
     var body: some View {
         HStack(spacing: 3) {
             ForEach(micMonitor.levels.indices, id: \.self) { i in
                 Capsule()
-                    .fill(Color.black.opacity(0.7))
+                    .fill(Color.white.opacity(0.7))
                     .frame(width: 3, height: micMonitor.levels[i])
             }
         }

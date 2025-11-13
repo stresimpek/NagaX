@@ -9,13 +9,14 @@ import SwiftUI
 
 /// Design tokens untuk ukuran
 enum AppButtonSize {
-    case large, medium, small
+    case large, medium, small, largeIconCircle
     
     var cornerRadius: CGFloat {
         switch self {
         case .large: 20
         case .medium: 16
         case .small: 14
+        case .largeIconCircle: 25
         }
     }
     var horizontalPadding: CGFloat {
@@ -23,6 +24,7 @@ enum AppButtonSize {
         case .large: 20
         case .medium: 16
         case .small: 12
+        case .largeIconCircle: 14
         }
     }
     var verticalPadding: CGFloat {
@@ -30,6 +32,7 @@ enum AppButtonSize {
         case .large: 14
         case .medium: 10
         case .small: 8
+        case .largeIconCircle: 14
         }
     }
     var font: Font {
@@ -37,6 +40,7 @@ enum AppButtonSize {
         case .large: .system(size: 20, weight: .semibold)
         case .medium: .system(size: 16, weight: .semibold)
         case .small: .system(size: 14, weight: .semibold)
+        case .largeIconCircle: .system(size: 20, weight: .semibold)
         }
     }
     var iconSize: CGFloat {
@@ -44,6 +48,7 @@ enum AppButtonSize {
         case .large: 22
         case .medium: 18
         case .small: 16
+        case .largeIconCircle: 22
         }
     }
 }
@@ -124,10 +129,10 @@ struct AppButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(size.font)
-            .foregroundStyle(kind.foreground.opacity(isEnabled ? 1 : 0.5))
+            .foregroundStyle(kind.foreground)
             .padding(.horizontal, size.horizontalPadding)
             .padding(.vertical, size.verticalPadding)
-            .background(kind.background.opacity(isEnabled ? 1 : 0.6))
+            .background(kind.background)
             .clipShape(RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous))
             .shadow(color: kind.shadow, radius: 0, x: 0, y: configuration.isPressed ? 1 : 3)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
@@ -159,10 +164,12 @@ struct ButtonComponent: View {
             HStack(spacing: 8) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .font(.system(size: size.iconSize, weight: .semibold))
+                        .font(.title1)
+                    //                        .font(.system(size: size.iconSize, weight: .semibold))
                 }
                 if let title {
                     Text(title)
+                        .font(.title1)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
