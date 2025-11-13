@@ -120,7 +120,11 @@ private extension NewEvaluationView {
     private var contentForCurrentTab: some View {
         switch viewModel.currentTab {
         case .strukturKalimat:
-            EmptyView()
+            
+            Spacer()
+                    .frame(maxWidth: .infinity)
+                    .padding()
+            
         case .artikulasi:
             ArticulationTranscriptView(
                 fullTranscript: viewModel.fullTranscript,
@@ -178,34 +182,37 @@ private extension NewEvaluationView {
         .padding(.bottom, 60)
     }
 }
+
 struct GuidanceView: View {
-    let items: [String]
-    
+    let items: [AttributedString]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Guidance:")
-                .font(.footnoteBold)
-                .foregroundColor(.baseColorBrown)
-            
+        HStack(alignment: .top, spacing: 8) {
+            Image(.lightbulb)
+                .foregroundColor(.yellow)
+                .frame(width: 24, height: 24)
+
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "lightbulb.fill")
-                            .foregroundColor(.yellow)
-                        
-                        Text("\(index + 1). \(item)")
-                            .font(.body)
-                            .foregroundColor(.darkBlue2)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    Text("\(index + 1). \(item)")
+                        .font(.body)
+                        .foregroundColor(.baseColorBrown)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding()
-            .background(Color.baseColorWhite.opacity(0.5))
-            .cornerRadius(12)
         }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(Color.baseColorWhite.opacity(0.5))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.brown.opacity(0.5), lineWidth: 1)
+        )
     }
 }
+
 struct EvaluationSectionView<Content: View>: View {
     let evaluatorNote: AttributedString
     let sectionTitle: String
@@ -214,7 +221,7 @@ struct EvaluationSectionView<Content: View>: View {
     let content: Content
     let analysisText: String
     let transcript: String
-    let guidance: [String]  // Add this
+    let guidance: [AttributedString]  // Add this
     @State private var diffComponents: [DiffComponent] = []
     
     init(
@@ -224,7 +231,7 @@ struct EvaluationSectionView<Content: View>: View {
         hasScrollableContent: Bool,
         analysisText: String = "",
         transcript: String,
-        guidance: [String] = [],
+        guidance: [AttributedString] = [],
         @ViewBuilder content: () -> Content
     ) {
         self.evaluatorNote = evaluatorNote
@@ -257,6 +264,10 @@ struct EvaluationSectionView<Content: View>: View {
             } else {
                 staticContent
             }
+            
+            Text("Guidance:")
+                .font(.footnoteBold)
+                .foregroundColor(.baseColorBrown)
             
             if !guidance.isEmpty {
                 GuidanceView(items: guidance)

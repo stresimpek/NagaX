@@ -284,43 +284,42 @@ class NewEvaluationViewModel: ObservableObject {
         }
     }
     
-    var currentGuidance: [String] {
+    var currentGuidance: [AttributedString] {
         switch currentTab {
         case .strukturKalimat:
             return [
-                "Gunakan kata kunci, poin utama, & pertanyaan.",
-                "Gunakan turun di kalimat akhir, jadi terdengar tegas & selesai.",
-                "Konten antusias = naikkan energi suara. Reflektif = turunkan nada jadi tenang."
+                try! AttributedString(markdown: "**Jika ada dua kata yang punya makna sama**, tandai dan coba hapus salah satu kata dan lihat apakah maknanya berubah."),
+                try! AttributedString(markdown: "Saat menyusun kalimat, coba pikir kembali: “**Apakah ide ini udah ada di kalimat sebelumnya?**“")
             ]
         case .artikulasi:
             return [
-                "Latih pengucapan kata-kata yang sering salah.",
-                "Bicara lebih pelan untuk artikulasi yang lebih jelas.",
-                "Fokus pada konsonan di akhir kata."
+                try! AttributedString(markdown: "Ucapkan kata dengan **ritme tenang dan stabil**."),
+                try! AttributedString(markdown: "Latihan baca lantang & gerakkan mulut jelas, rekam untuk evaluasi."),
+                try! AttributedString(markdown: "Hindari bicara tanpa jeda untuk bernafas.")
             ]
         case .fillerWords:
             return [
-                "Berhenti sejenak daripada mengisi dengan 'um' atau 'eh'.",
-                "Latih kesadaran diri saat berbicara.",
-                "Rekam diri sendiri dan dengarkan kembali."
+                try! AttributedString(markdown: "Setiap ingin bilang kata pengisi, cobalah **ganti dengan micro-pause**."),
+                try! AttributedString(markdown: "Buat **daftar kata kunci/frasa transisi** yang bisa dipakai untuk menyambung ide."),
+                try! AttributedString(markdown: "Latihan **menjelaskan ide dalam diam dulu** sebelum ngomong.")
             ]
         case .tempo:
             return [
-                "Tempo ideal: 110-140 kata per menit.",
-                "Variasikan kecepatan untuk penekanan.",
-                "Berhenti sesaat di poin penting."
+                try! AttributedString(markdown: "Tempo **tenang**, cocok untuk **menekankan poin penting/pesan emosional**."),
+                try! AttributedString(markdown: "Tempo **energik**, cocok untuk **menunjukkan antusiasme**."),
+                try! AttributedString(markdown: "Tempo rentang **cepat/lambat** bisa membuat penyampaian **kurang jelas**.")
             ]
         case .intonasi:
             return [
-                "Variasikan nada suara untuk ekspresivitas.",
-                "Naikkan intonasi untuk pertanyaan.",
-                "Turunkan intonasi untuk pernyataan tegas."
+                try! AttributedString(markdown: "Gunakan **nada naik** saat menyebut **kata kunci, poin utama, & pertanyaan**."),
+                try! AttributedString(markdown: "Gunakan **nada turun** di **kalimat akhir**, jadi terdengar tegas & selesai."),
+                try! AttributedString(markdown: "Konten antusias = naikkan energi suara. Reflektif = turunkan nada jadi tenang.")
             ]
         case .kontakMata:
             return [
-                "Tatap audiens 3-5 detik per orang.",
-                "Jangan fokus pada satu area saja.",
-                "Libatkan seluruh ruangan secara merata."
+                try! AttributedString(markdown: "Mata sering menatap ke **langit, lantai, dan catatan** memberi **kesan ragu**."),
+                try! AttributedString(markdown: "Jika gugup, coba **pilih titik fokus** lain seperti **dahi**."),
+                try! AttributedString(markdown: "**Bagi audiens jadi tiga zona** (kiri, tengah, kanan) **tatap bergantian**, agar seluruh audiens merasa dilibatkan. Idealnya, menatap seseorang = **3-5 detik**.")
             ]
         }
     }
