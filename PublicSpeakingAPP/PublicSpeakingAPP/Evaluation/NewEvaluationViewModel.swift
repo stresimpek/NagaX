@@ -102,6 +102,11 @@ class NewEvaluationViewModel: ObservableObject {
     @Published var selectedTabIndex: Int = 0
     @Published var showFullScreen: Bool = false
     
+    @Published var articulationCount: Int = 0
+    @Published var articulationTotal: Int = 0  // Add total
+
+    @Published var fillerWordCount: Int = 0
+    
     var availableTabs: [EvaluationTab] {
         var tabs: [EvaluationTab] = []
         
@@ -149,20 +154,120 @@ class NewEvaluationViewModel: ObservableObject {
         }
     }
     
-    var currentEvaluatorNote: String {
-        switch currentTab {
-        case .strukturKalimat:
-            return "Kamu ada 11 kalimat yang ga efektif dari 5 menit presentasimu, kayak lagi ngejar jumlah kata skripsi. Potong kata-kata yang gak perlu!"
-        case .artikulasi:
-            return "Selamat, 97 dari 100 kata kamu akhirnya terdengar jelas. Hasil yang lumayan, jangan sampai nilainya turun berikutnya. Pertahankan!"
-        case .fillerWords:
-            return "Bagus. Latihanmu ternyata ada hasilnya. Hanya \(result.fillerWordTotalCount) kata pengisi dalam 1 menit. Pertahankan!"
-        case .tempo:
-            return "OK! Kecepatan bicaramu masuk zona aman \(Int(result.tempoWPM)) wpm. Pertahankan ritme ini, jangan tiba-tiba berubah jadi komentator sepak bola."
-        case .intonasi:
-            return result.intonationFeedback
-        case .kontakMata:
-            return result.eyeContactFeedback
+    var currentEvaluatorNote: AttributedString {
+            switch currentTab {
+            case .strukturKalimat:
+                return strukturKalimatEvaluatorNote
+            case .artikulasi:
+                return articulationEvaluatorNote
+            case .fillerWords:
+                return fillerWordEvaluatorNote
+            case .tempo:
+                return tempoEvaluatorNote
+            case .intonasi:
+                return intonationEvaluatorNote
+            case .kontakMata:
+                return try! AttributedString(markdown: result.eyeContactFeedback)
+            }
+        }
+    
+    private var ineffectiveSentenceCount: Int {
+        let components = DiffComponent.generate(
+            original: fullTranscript,
+            new: sentenceAnalysisResult
+        )
+        // Count deleted/changed components as ineffective parts
+        return components.filter { $0.type == .deleted }.count
+    }
+    
+    private var strukturKalimatEvaluatorNote: AttributedString {
+        let count = ineffectiveSentenceCount
+        let duration = settings.durationMinutes
+
+        if count == 0 {
+            return try! AttributedString(markdown: "Sempurna! Tidak ada pemborosan kata dalam presentasimu. Kamu sudah efisien!")
+        } else if count <= 3 {
+            return try! AttributedString(markdown: "Bagus! Hanya **\(count)** bagian yang kurang efektif dari **\(duration)** menit presentasimu. Terus pertahankan!")
+        } else {
+            return try! AttributedString(markdown: "Kamu ada **\(count)** bagian yang ga efektif dari **\(duration)** menit presentasimu, kayak lagi ngejar jumlah kata skripsi. Potong kata-kata yang gak perlu!")
+        }
+    }
+    
+    private var articulationEvaluatorNote: AttributedString {
+        let count = articulationCount
+        let total = articulationTotal > 0 ? articulationTotal : 100
+        let clearWords = total - count
+        let percentage = total > 0 ? Int((Double(clearWords) / Double(total)) * 100) : 0
+
+        if count == 0 {
+            return try! AttributedString(markdown: "Sempurna! Semua kata terdengar jelas (**\(clearWords)** dari **\(total)**). Artikulasimu sudah sangat baik!")
+        }
+
+        if percentage >= 95 {
+            return try! AttributedString(markdown: "Selamat, **\(clearWords)** dari **\(total)** kata kamu terdengar jelas. Hasil yang lumayan, jangan sampai nilainya turun berikutnya. Pertahankan!")
+        } else if percentage >= 85 {
+            return try! AttributedString(markdown: "Lumayan! **\(count)** kata masih kurang jelas dari **\(total)** kata. Fokus pada artikulasi yang lebih tajam!")
+        } else {
+            return try! AttributedString(markdown: "Perlu perbaikan! **\(count)** kata tidak terdengar jelas dari **\(total)** kata. Latih artikulasi agar audiens lebih mudah memahami.")
+        }
+    }
+    
+    private var fillerWordEvaluatorNote: AttributedString {
+        let count = fillerWordCount
+
+        switch result.fillerWordGrade {
+        case "A":
+            return try! AttributedString(markdown: "Luar biasa! Hanya **\(count)** kata pengisi dalam presentasimu. Kamu sudah bicara seperti profesional. Pertahankan!")
+        case "B":
+            return try! AttributedString(markdown: "Bagus! Latihanmu ada hasilnya. **\(count)** kata pengisi masih dalam batas wajar. Terus tingkatkan!")
+        case "C":
+            return try! AttributedString(markdown: "Hati-hati! Kamu terlalu sering pakai kata pengisi. Dengan **\(count)** kata pengisi, ini bisa mengganggu audiens. Latih kesadaran diri saat berbicara!")
+        default:
+            return try! AttributedString(markdown: "Kamu ada **\(count)** kata pengisi dalam presentasimu.")
+        }
+    }
+
+    private var tempoEvaluatorNote: AttributedString {
+        let wpm = Int(result.tempoWPM)
+
+        switch result.tempoGrade {
+        case "A":
+            return try! AttributedString(markdown: "Sempurna! Kecepatan bicaramu **\(wpm) wpm**—zona ideal untuk dipahami audiens. Pertahankan ritme ini!")
+        case "B":
+            return try! AttributedString(markdown: "OK! Kecepatan bicaramu **\(wpm) wpm** masuk zona aman. Pertahankan ritme ini, jangan tiba-tiba berubah jadi komentator sepak bola.")
+        case "C":
+            if wpm < 120 {
+                return try! AttributedString(markdown: "Terlalu lambat! **\(wpm) wpm** bisa bikin audiens ngantuk. Naikkan sedikit tempomu agar lebih energik!")
+            } else {
+                return try! AttributedString(markdown: "Kebut banget! **\(wpm) wpm** terlalu cepat, audiens kesulitan mengikuti. Pelan-pelan saja, ini bukan lomba ngomong tercepat.")
+            }
+        default:
+            return try! AttributedString(markdown: "Kecepatan bicaramu **\(wpm) wpm**. Pertahankan ritme yang nyaman untuk audiens.")
+        }
+    }
+
+    private var averagePitchHz: Double {
+        guard !result.pitchSeries.isEmpty else { return 0 }
+        let sum = result.pitchSeries.reduce(0.0) { $0 + $1.pitch }
+        return sum / Double(result.pitchSeries.count)
+    }
+    
+    private var intonationEvaluatorNote: AttributedString {
+        let avgHz = Int(averagePitchHz)
+
+        switch result.intonationGrade {
+        case "A":
+            return try! AttributedString(markdown: "Bagus! Intonasimu bervariasi dan ekspresif (rata-rata **\(avgHz) Hz**). Audiens pasti terbantu memahami penekanan penting dalam presentasimu!")
+        case "B":
+            return try! AttributedString(markdown: "\(result.intonationFeedback) (rata-rata **\(avgHz) Hz**)")
+        case "C":
+            return try! AttributedString(markdown: "Intonasimu terlalu datar (rata-rata **\(avgHz) Hz**). Coba variasikan nada suaramu agar presentasi tidak terdengar monoton dan membosankan.")
+        default:
+            if avgHz > 0 {
+                return try! AttributedString(markdown: "\(result.intonationFeedback) (rata-rata **\(avgHz) Hz**)")
+            } else {
+                return try! AttributedString(markdown: result.intonationFeedback)
+            }
         }
     }
     
@@ -187,7 +292,6 @@ class NewEvaluationViewModel: ObservableObject {
         showFullScreen.toggle()
     }
 }
-
 extension String {
     func splitByWord() -> [String] {
         let regex = try? NSRegularExpression(pattern: "\\s+|\\S+")
