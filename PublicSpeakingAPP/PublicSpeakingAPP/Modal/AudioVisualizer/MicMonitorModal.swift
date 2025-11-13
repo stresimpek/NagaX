@@ -15,6 +15,9 @@ class MicMonitorModal: ObservableObject {
     private var inputNode: AVAudioInputNode?
     private let bus: AVAudioNodeBus = 0
     
+    private var retryAttempts = 0
+    private let maxRetryAttempts = 5
+    
     @Published var levels: [CGFloat] = Array(repeating: 5, count: 33)
     
     init() {
@@ -41,6 +44,7 @@ class MicMonitorModal: ObservableObject {
             return
         }
         
+        retryAttempts = 0 // Reset counter
         stopMonitoring() // avoid duplicate taps
         
         // Ensure engine is prepared
@@ -56,7 +60,7 @@ class MicMonitorModal: ObservableObject {
             // Try to fix by reactivating audio session
             setupAudioSession()
             
-            // Retry once
+            // Retry with increasing delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
                 self?.retryStartMonitoring()
             }
@@ -75,26 +79,54 @@ class MicMonitorModal: ObservableObject {
             print("AudioEngine failed to start: \(error)")
         }
     }
-    
+
     private func retryStartMonitoring() {
         guard let inputNode else { return }
+        
+        retryAttempts += 1
         
         let format = inputNode.inputFormat(forBus: bus)
         
         guard format.sampleRate > 0, format.channelCount > 0 else {
-            print("Still invalid after retry - microphone unavailable")
+            if retryAttempts >= maxRetryAttempts {
+                print("Failed after \(maxRetryAttempts) attempts - giving up")
+                return
+            }
+            
+            print("Retry \(retryAttempts)/\(maxRetryAttempts) - still invalid, trying again...")
+            
+            // Re-setup audio session
+            setupAudioSession()
+            
+            // Exponential backoff: 0.3s, 0.6s, 1.2s, etc.
+            let delay = 0.3 * Double(retryAttempts)
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.retryStartMonitoring()
+            }
             return
         }
         
+        // Format is valid - install tap
         inputNode.installTap(onBus: bus, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             self?.processAudioBuffer(buffer)
         }
         
         do {
             try audioEngine.start()
-            print("Mic monitoring started after retry")
+            print("Mic monitoring started after \(retryAttempts) retries")
         } catch {
-            print("Failed after retry: \(error)")
+            if retryAttempts >= maxRetryAttempts {
+                print("Failed to start engine after \(maxRetryAttempts) attempts")
+                return
+            }
+            
+            print("Engine start failed, retrying...")
+            setupAudioSession()
+            
+            let delay = 0.3 * Double(retryAttempts)
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.retryStartMonitoring()
+            }
         }
     }
     
