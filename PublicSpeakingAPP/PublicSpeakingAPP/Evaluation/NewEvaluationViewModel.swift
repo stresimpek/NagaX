@@ -284,6 +284,47 @@ class NewEvaluationViewModel: ObservableObject {
         }
     }
     
+    var currentGuidance: [String] {
+        switch currentTab {
+        case .strukturKalimat:
+            return [
+                "Gunakan kata kunci, poin utama, & pertanyaan.",
+                "Gunakan turun di kalimat akhir, jadi terdengar tegas & selesai.",
+                "Konten antusias = naikkan energi suara. Reflektif = turunkan nada jadi tenang."
+            ]
+        case .artikulasi:
+            return [
+                "Latih pengucapan kata-kata yang sering salah.",
+                "Bicara lebih pelan untuk artikulasi yang lebih jelas.",
+                "Fokus pada konsonan di akhir kata."
+            ]
+        case .fillerWords:
+            return [
+                "Berhenti sejenak daripada mengisi dengan 'um' atau 'eh'.",
+                "Latih kesadaran diri saat berbicara.",
+                "Rekam diri sendiri dan dengarkan kembali."
+            ]
+        case .tempo:
+            return [
+                "Tempo ideal: 110-140 kata per menit.",
+                "Variasikan kecepatan untuk penekanan.",
+                "Berhenti sesaat di poin penting."
+            ]
+        case .intonasi:
+            return [
+                "Variasikan nada suara untuk ekspresivitas.",
+                "Naikkan intonasi untuk pertanyaan.",
+                "Turunkan intonasi untuk pernyataan tegas."
+            ]
+        case .kontakMata:
+            return [
+                "Tatap audiens 3-5 detik per orang.",
+                "Jangan fokus pada satu area saja.",
+                "Libatkan seluruh ruangan secara merata."
+            ]
+        }
+    }
+    
     var currentHasScrollableContent: Bool {
         return currentTab == .strukturKalimat
     }

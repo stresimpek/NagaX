@@ -36,12 +36,14 @@ struct NewEvaluationView: View {
             Color("BaseColorBlue")
                 .ignoresSafeArea()
             
-            ScrollView {
-                VStack(spacing: 0) {
-                    tabsAndPaperSection
-                    bottomButtons
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        tabsAndPaperSection
+                        bottomButtons
+                    }
+                    .padding(.horizontal, 16)
                 }
-                .padding(.horizontal, 16)
             }
         }
         .fullScreenCover(isPresented: $viewModel.showFullScreen) {
@@ -56,23 +58,16 @@ struct NewEvaluationView: View {
 
 private extension NewEvaluationView {
     var tabsAndPaperSection: some View {
-        GeometryReader { geometry in
-            let paperWidth = geometry.size.width - 25
+        VStack(spacing: 0) {
+            tabsView
+                .padding(.bottom, -4)
             
-            VStack(spacing: 0) {
-                tabsView(width: paperWidth)
-                    .padding(.bottom, -4)
-                
-                paperContent(width: paperWidth)
-            }
-            .frame(width: paperWidth)
-            .padding(.top, 16)
-            .padding(.bottom, 16)
+            paperContent
         }
-        .frame(height: 480)
+        .padding(.top, 16)
     }
     
-    func tabsView(width: CGFloat) -> some View {
+    var tabsView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
                 ForEach(Array(viewModel.availableTabs.enumerated()), id: \.offset) { index, tab in
@@ -94,20 +89,18 @@ private extension NewEvaluationView {
                     }
                 }
             }
-            .frame(width: width, alignment: .leading)
         }
     }
     
-    func paperContent(width: CGFloat) -> some View {
+    var paperContent: some View {
         VStack(spacing: 0) {
             Divider()
             tabContent
         }
-        .frame(width: width)
         .background(Color("BaseColorWhite"))
         .shadow(color: .gray.opacity(0.3), radius: 4, x: 0, y: 3)
     }
-
+    
     @ViewBuilder
     private var tabContent: some View {
         EvaluationSectionView(
@@ -116,7 +109,8 @@ private extension NewEvaluationView {
             showFullScreen: $viewModel.showFullScreen,
             hasScrollableContent: viewModel.currentHasScrollableContent,
             analysisText: viewModel.sentenceAnalysisResult,
-            transcript: viewModel.fullTranscript
+            transcript: viewModel.fullTranscript,
+            guidance: viewModel.currentGuidance
         ) {
             contentForCurrentTab
         }
@@ -126,14 +120,14 @@ private extension NewEvaluationView {
     private var contentForCurrentTab: some View {
         switch viewModel.currentTab {
         case .strukturKalimat:
-            Text("")
+            EmptyView()
         case .artikulasi:
             ArticulationTranscriptView(
                 fullTranscript: viewModel.fullTranscript,
                 onMapsCalculated: { maps, total in
-                            viewModel.articulationCount = maps.totalCount
-                            viewModel.articulationTotal = total
-                        }
+                    viewModel.articulationCount = maps.totalCount
+                    viewModel.articulationTotal = total
+                }
             )
             .padding()
         case .fillerWords:
@@ -141,13 +135,13 @@ private extension NewEvaluationView {
                 result: viewModel.result,
                 fullTranscript: viewModel.fullTranscript,
                 onMapsCalculated: { maps in
-                            viewModel.fillerWordCount = maps.totalCount
-                        }
+                    viewModel.fillerWordCount = maps.totalCount
+                }
             ).padding()
         case .tempo: // Tempo
             VStack() {
                 TempoResultChart(tempoSeries: viewModel.result.tempoSeries)
-                        .frame(height: 220)
+                    .frame(height: 220)
             }
             .frame(maxWidth: .infinity)
             .padding()
@@ -184,7 +178,34 @@ private extension NewEvaluationView {
         .padding(.bottom, 60)
     }
 }
-
+struct GuidanceView: View {
+    let items: [String]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Guidance:")
+                .font(.footnoteBold)
+                .foregroundColor(.baseColorBrown)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "lightbulb.fill")
+                            .foregroundColor(.yellow)
+                        
+                        Text("\(index + 1). \(item)")
+                            .font(.body)
+                            .foregroundColor(.darkBlue2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .padding()
+            .background(Color.baseColorWhite.opacity(0.5))
+            .cornerRadius(12)
+        }
+    }
+}
 struct EvaluationSectionView<Content: View>: View {
     let evaluatorNote: AttributedString
     let sectionTitle: String
@@ -193,6 +214,7 @@ struct EvaluationSectionView<Content: View>: View {
     let content: Content
     let analysisText: String
     let transcript: String
+    let guidance: [String]  // Add this
     @State private var diffComponents: [DiffComponent] = []
     
     init(
@@ -202,6 +224,7 @@ struct EvaluationSectionView<Content: View>: View {
         hasScrollableContent: Bool,
         analysisText: String = "",
         transcript: String,
+        guidance: [String] = [],
         @ViewBuilder content: () -> Content
     ) {
         self.evaluatorNote = evaluatorNote
@@ -210,6 +233,7 @@ struct EvaluationSectionView<Content: View>: View {
         self.hasScrollableContent = hasScrollableContent
         self.analysisText = analysisText
         self.transcript = transcript
+        self.guidance = guidance
         self.content = content()
     }
     
@@ -233,6 +257,10 @@ struct EvaluationSectionView<Content: View>: View {
             } else {
                 staticContent
             }
+            
+            if !guidance.isEmpty {
+                GuidanceView(items: guidance)
+            }
         }
         .padding()
     }
@@ -243,48 +271,48 @@ struct EvaluationSectionView<Content: View>: View {
                 if transcript.isEmpty {
                     Text("Tidak ada transkrip yang terekam.")
                         .font(.body)
-                    .foregroundColor(.baseColorBrown)
-                    .padding()
+                        .foregroundColor(.baseColorBrown)
+                        .padding()
                     
                 } else {
                     if !diffComponents.isEmpty {
                         DiffRenderView(components: diffComponents)
                     }
                 }
-                   
+                
             }
             .padding(.bottom, 60)
             .frame(maxWidth: .infinity, alignment: .leading)
             
-//            LinearGradient(
-//                gradient: Gradient(colors: [
-//                    Color.white.opacity(0),
-//                    Color.white.opacity(0.7),
-//                    Color.white.opacity(0.95)
-//                ]),
-//                startPoint: .top,
-//                endPoint: .bottom
-//            )
-//            .frame(height: 80)
-//            .cornerRadius(10)
-//            .allowsHitTesting(false)
+            //            LinearGradient(
+            //                gradient: Gradient(colors: [
+            //                    Color.white.opacity(0),
+            //                    Color.white.opacity(0.7),
+            //                    Color.white.opacity(0.95)
+            //                ]),
+            //                startPoint: .top,
+            //                endPoint: .bottom
+            //            )
+            //            .frame(height: 80)
+            //            .cornerRadius(10)
+            //            .allowsHitTesting(false)
             
-//            Button {
-//                showFullScreen = true
-//            } label: {
-//                HStack {
-//                    Image("Fullscreen")
-//                    Text("Lihat Selengkapnya")
-//                        .fontWeight(.semibold)
-//                }
-//                .padding(.vertical, 10)
-//                .padding(.horizontal, 16)
-//                .foregroundStyle(Color.baseColorBrown)
-//                .background(Color.baseColorYellow)
-//                .cornerRadius(24)
-//                .shadow(radius: 2)
-//                .padding(8)
-//            }
+            //            Button {
+            //                showFullScreen = true
+            //            } label: {
+            //                HStack {
+            //                    Image("Fullscreen")
+            //                    Text("Lihat Selengkapnya")
+            //                        .fontWeight(.semibold)
+            //                }
+            //                .padding(.vertical, 10)
+            //                .padding(.horizontal, 16)
+            //                .foregroundStyle(Color.baseColorBrown)
+            //                .background(Color.baseColorYellow)
+            //                .cornerRadius(24)
+            //                .shadow(radius: 2)
+            //                .padding(8)
+            //            }
         }
         .frame(maxWidth: .infinity, minHeight: 240)
         .cornerRadius(10)
@@ -347,7 +375,7 @@ struct DiffRenderView: View {
     let addedColor = Color.blue
     
     var body: some View {
-        VStack {
+        VStack(alignment: .leading, spacing: 0) {
             components.reduce(Text("")) { (result, component) in
                 let styledText = Text(component.text)
                     .font(.body)
@@ -366,10 +394,9 @@ struct DiffRenderView: View {
                     + Text(" ")
                 }
             }
+            .fixedSize(horizontal: false, vertical: true)
         }
-        .padding()
         .font(.body)
         .lineSpacing(8)
-        .cornerRadius(10)
     }
 }
