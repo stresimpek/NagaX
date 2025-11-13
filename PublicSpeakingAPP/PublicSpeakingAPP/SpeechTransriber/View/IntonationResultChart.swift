@@ -7,6 +7,8 @@
 
 import SwiftUI
 import Charts
+import Combine
+import AVFoundation
 
 struct PitchPoint: Identifiable, Hashable {
     let id = UUID()
@@ -15,87 +17,271 @@ struct PitchPoint: Identifiable, Hashable {
 }
 
 struct IntonationResultChart: View {
+
     let pitchSeries: [PitchPoint]
-    // Same thresholds you use for grading:
+    let fixedDuration: Double
+    
+    @EnvironmentObject var whisperKitVM: SpeechTranscriberViewModel
+    @StateObject private var audioPlayerVM = AudioPlayerService()
+    
+    @State private var cursorTime: Double = 0.0
+    @State private var isDragging: Bool = false
+    @State private var processedSeries: [PitchPoint] = []
+
     private let bandLow: Double = 18.0
     private let bandHigh: Double = 35.0
-    private let maxY: Double = 50.0  // cap for chart
-
-    // Window config
-    var windowSeconds: Double = 10.0     // match your analyzer window
-    var stepSeconds: Double = 1.0        // compute one point per second
-
-    // Normalize to start at 0s
-    private var normalized: [PitchPoint] {
-        guard let t0 = pitchSeries.first?.time else { return pitchSeries }
-        return pitchSeries.map { .init(time: $0.time - t0, pitch: $0.pitch) }
+    private let maxY: Double = 50.0
+    private let windowSeconds: Double = 10.0
+    
+    init(pitchSeries: [PitchPoint], fixedDuration: Double = 0) {
+        self.pitchSeries = pitchSeries
+        self.fixedDuration = fixedDuration
     }
 
-    // Build rolling std series
-    private var rollingStd: [PitchPoint] {
-        guard let lastT = normalized.last?.time, lastT > 0 else { return [] }
-        var out: [PitchPoint] = []
-        var t = 0.0
-        while t <= lastT {
-            let windowStart = max(0.0, t - windowSeconds)
-            let window = normalized.filter { $0.time >= windowStart && $0.time <= t }.map { $0.pitch }
-            if window.count >= 2 {
-                let mean = window.reduce(0,+) / Double(window.count)
-                let varSum = window.reduce(0) { $0 + pow($1 - mean, 2) }
-                let std = sqrt(varSum / Double(window.count))
-                out.append(.init(time: t, pitch: std))
-            }
-            t += stepSeconds
-        }
-        return out
-    }
+    private var xDomain: ClosedRange<Double> { 0...max(0.001, fixedDuration) }
 
-    // Optional: smooth with EMA for extra silky lines
-    private var smoothedRollingStd: [PitchPoint] {
-        let alpha = 0.3 // 0..1 (higher -> more reactive)
-        var ema: Double?
-        return rollingStd.map { p in
-            let v = (ema == nil) ? p.pitch : (alpha * p.pitch + (1 - alpha) * ema!)
-            ema = v
-            return .init(time: p.time, pitch: min(v, maxY))
-        }
+    private func xAxisLabel(_ value: Double) -> String {
+        let v = max(0, value)
+        let minutes = Int(v) / 60
+        let seconds = Int(v) % 60
+        return fixedDuration < 60 ? "\(seconds)s" : String(format: "%d:%02d", minutes, seconds)
+    }
+    
+    private func formatMMSS(_ seconds: Double) -> String {
+        guard seconds.isFinite && seconds >= 0 else { return "0:00" }
+        let s = Int(seconds.rounded())
+        let m = s / 60
+        let r = s % 60
+        return String(format: "%d:%02d", m, r)
+    }
+    
+    private func clampToDomain(_ x: Double) -> Double {
+        min(max(0, x), fixedDuration)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Pitch Variability (Std Dev over time)")
-                .font(.headline)
-                .padding(.leading, 8)
-
             Chart {
-                // Bands for A/B/C thresholds
-                if let lastT = normalized.last?.time, lastT > 0 {
-                    // C (too flat): 0 .. <18
-                    RectangleMark(xStart: .value("s0", 0), xEnd: .value("s1", lastT),
-                                  yStart: .value("y0", 0), yEnd: .value("y1", bandLow))
-                        .foregroundStyle(.orange.opacity(0.10))
-                    // B (18..25)
-                    RectangleMark(xStart: .value("s0", 0), xEnd: .value("s1", lastT),
-                                  yStart: .value("y0", bandLow), yEnd: .value("y1", bandHigh))
-                        .foregroundStyle(.green.opacity(0.10))
-                    // A (25..35) — your top band; we cap display at maxY
-                    RectangleMark(xStart: .value("s0", 0), xEnd: .value("s1", lastT),
-                                  yStart: .value("y0", bandHigh), yEnd: .value("y1", maxY))
-                        .foregroundStyle(.yellow.opacity(0.10))
-                }
+                if fixedDuration > 0 {
+                    RectangleMark(
+                        xStart: .value("s0", 0),
+                        xEnd: .value("s1", fixedDuration),
+                        yStart: .value("y0", 0),
+                        yEnd: .value("y1", bandLow)
+                    )
+                    .foregroundStyle(.shadowDisabled.opacity(0.1))
+                    .annotation(position: .overlay, alignment: .center) {
+                        Text("TERLALU BERLEBIHAN")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.textGrey.opacity(0.9))
+                    }
 
-                ForEach(smoothedRollingStd) { p in
+                    RectangleMark(
+                        xStart: .value("s0", 0),
+                        xEnd: .value("s1", fixedDuration),
+                        yStart: .value("y0", bandLow),
+                        yEnd: .value("y1", bandHigh)
+                    )
+                    .foregroundStyle(.lightTurqoise.opacity(0.3))
+                    .annotation(position: .overlay, alignment: .center) {
+                        Text("BERDINAMIKA")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.turqoise.opacity(0.9))
+                    }
+
+                    RectangleMark(
+                        xStart: .value("s0", 0),
+                        xEnd: .value("s1", fixedDuration),
+                        yStart: .value("y0", bandHigh),
+                        yEnd: .value("y1", maxY)
+                    )
+                    .foregroundStyle(.shadowDisabled.opacity(0.1))
+                    .annotation(position: .overlay, alignment: .center) {
+                        Text("MONOTON")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.textGrey.opacity(0.9))
+                    }
+                }
+                
+                ForEach(processedSeries) { p in
                     LineMark(
-                        x: .value("Time (s)", p.time),
+                        x: .value("Time", p.time),
                         y: .value("Std Dev", p.pitch)
                     )
                     .interpolationMethod(.monotone)
                 }
+                
+                RuleMark(x: .value("Cursor", cursorTime))
+                    .foregroundStyle(isDragging ? .red : .red.opacity(0.8))
+                    .lineStyle(.init(lineWidth: 2))
+                    .annotation(position: .top) {
+                        Text(formatMMSS(cursorTime))
+                            .font(.caption2).padding(4)
+                            .background(.white, in: Capsule())
+                            .shadow(radius: 1)
+                    }
             }
-            .chartXScale(domain: 0...(max(normalized.last?.time ?? 0, 1)))
+            .transaction { $0.animation = nil }
+            .chartYAxis {
+                AxisMarks(position: .leading) {
+                    AxisGridLine()
+                }
+            }
+            .chartYAxis { AxisMarks(position: .leading) }
+            .chartXScale(domain: xDomain)
             .chartYScale(domain: 0...maxY)
-            .frame(height: 160)
+            .frame(height: 180)
             .padding(.horizontal, 12)
+            .chartOverlay { proxy in
+                GeometryReader { geo in
+                    let plotFrame = geo[proxy.plotAreaFrame]
+                    Rectangle()
+                        .fill(.clear)
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    isDragging = true
+                                    let xInPlot = value.location.x - plotFrame.origin.x
+                                    if let t: Double = proxy.value(atX: xInPlot) {
+                                        cursorTime = clampToDomain(t)
+                                    }
+                                }
+                                .onEnded { value in
+                                    isDragging = false
+                                    let xInPlot = value.location.x - plotFrame.origin.x
+                                    if let t: Double = proxy.value(atX: xInPlot) {
+                                        let finalTime = clampToDomain(t)
+                                        cursorTime = finalTime
+                                        if let url = whisperKitVM.savedRecordingURL {
+                                            audioPlayerVM.play(from: url, startAt: finalTime)
+                                            if !audioPlayerVM.isPlaying { audioPlayerVM.pause() }
+                                        }
+                                    }
+                                }
+                        )
+                }
+            }
+            .padding(.vertical, 24)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Rekaman Audio")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 12) {
+                    Button {
+                        if let url = whisperKitVM.savedRecordingURL {
+                            if audioPlayerVM.isPlaying {
+                                audioPlayerVM.pause()
+                            } else {
+                                audioPlayerVM.play(from: url, startAt: cursorTime)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: audioPlayerVM.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .padding(10)
+                            .background(Color.primary.opacity(0.08), in: Circle())
+                    }
+
+                    GeometryReader { geo in
+                        let width = geo.size.width
+                        let safeDuration = max(fixedDuration, 0.001)
+                        let progress = CGFloat(cursorTime / safeDuration)
+                        let clampedProgress = max(0, min(progress, 1.0))
+                        
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.secondary.opacity(0.25))
+                                .frame(height: 6)
+                            
+                            Capsule()
+                                .fill(Color.brown)
+                                .frame(width: width * clampedProgress, height: 6)
+                        }
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    isDragging = true
+                                    
+                                    let percentage = value.location.x / width
+                                    let newTime = Double(percentage) * safeDuration
+                                    
+                                    cursorTime = clampToDomain(newTime)
+                                }
+                                .onEnded { value in
+                                    isDragging = false
+                                    
+                                    let percentage = value.location.x / width
+                                    let finalTime = clampToDomain(Double(percentage) * safeDuration)
+                                    cursorTime = finalTime
+                                    
+                                    if let url = whisperKitVM.savedRecordingURL {
+                                        audioPlayerVM.play(from: url, startAt: finalTime)
+                                        if !audioPlayerVM.isPlaying { audioPlayerVM.pause() }
+                                    }
+                                }
+                        )
+                    }
+                    .frame(height: 20)
+                }
+            }
+            .padding(.horizontal, 16)
+       }
+        .onAppear {
+            calculateRollingStd()
+            cursorTime = 0
         }
+        .onReceive(audioPlayerVM.$currentTime) { t in
+            if audioPlayerVM.isPlaying && !isDragging {
+                withAnimation(.linear(duration: 0.1)) {
+                    cursorTime = clampToDomain(t)
+                }
+            }
+        }
+        .onDisappear {
+            audioPlayerVM.pause()
+        }
+    }
+    
+    private func calculateRollingStd() {
+        guard !pitchSeries.isEmpty, fixedDuration > 0 else {
+            self.processedSeries = []
+            return
+        }
+        
+        let t0 = pitchSeries.first?.time ?? 0
+        let normalized = pitchSeries.map { PitchPoint(time: $0.time - t0, pitch: $0.pitch) }
+        
+        var out: [PitchPoint] = []
+        let step = 0.5
+        var t = 0.0
+        
+        while t <= fixedDuration {
+            let windowStart = max(0.0, t - windowSeconds)
+            let window = normalized.filter { $0.time >= windowStart && $0.time <= t }.map(\.pitch)
+
+            if window.count >= 2 {
+                let mean = window.reduce(0,+) / Double(window.count)
+                let varSum = window.reduce(0) { $0 + pow($1 - mean, 2) }
+                let std = sqrt(varSum / Double(window.count))
+                
+                let prev = out.last?.pitch ?? std
+                let smoothed = (prev * 0.7) + (std * 0.3)
+                
+                out.append(PitchPoint(time: t, pitch: min(smoothed, maxY)))
+            } else if let last = out.last {
+                out.append(PitchPoint(time: t, pitch: last.pitch))
+            } else {
+                out.append(PitchPoint(time: t, pitch: 0))
+            }
+            t += step
+        }
+        self.processedSeries = out
     }
 }

@@ -23,10 +23,6 @@ struct FillerWordTranscriptView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-//            Text("Transkrip Kata Pengisi (Total: \(result.fillerWordTotalCount))")
-//                .font(.headline)
-//                .padding(.bottom, 5)
-            
             ReusableTranscriptCardView(
                 pages: pages,
                 maps: maps,
