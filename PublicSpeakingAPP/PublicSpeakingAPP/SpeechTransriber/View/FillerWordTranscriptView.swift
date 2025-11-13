@@ -15,15 +15,17 @@ struct FillerWordTranscriptView: View {
     
     let result: EvaluationModel
     let fullTranscript: String
+        
+    let onMapsCalculated: (TranscriptMaps) -> Void
     
     @State private var pages: [TranscriptPage] = []
     @State private var maps: TranscriptMaps = .empty
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Transkrip Kata Pengisi (Total: \(result.fillerWordTotalCount))")
-                .font(.headline)
-                .padding(.bottom, 5)
+//            Text("Transkrip Kata Pengisi (Total: \(result.fillerWordTotalCount))")
+//                .font(.headline)
+//                .padding(.bottom, 5)
             
             ReusableTranscriptCardView(
                 pages: pages,
@@ -52,6 +54,7 @@ struct FillerWordTranscriptView: View {
             
             self.pages = pages
             self.maps = maps
+            onMapsCalculated(maps) 
         }
     }
 }

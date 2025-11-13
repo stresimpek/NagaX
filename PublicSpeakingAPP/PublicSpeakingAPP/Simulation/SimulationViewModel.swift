@@ -136,42 +136,36 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func setupRecordingObserver() {
-            var previousRecState: Bool? = nil
-            var previousTransState: Bool? = nil
+        var previousRecState: Bool? = nil
+        var previousTransState: Bool? = nil
 
-            whisperKitVM.$isRecording
-                .combineLatest(whisperKitVM.$isTranscribing)
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] (isRec, isTrans) in
-                    guard let self = self else { return }
+        whisperKitVM.$isRecording
+            .combineLatest(whisperKitVM.$isTranscribing) // <-- HANYA 2 SINYAL
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (isRec, isTrans) in // <-- HANYA 2 SINYAL
+                guard let self = self else { return }
 
-                    let startTimeStatus = (self.recordingStartTime == nil) ? "nil" : "set"
-        
-                    // --- KONDISI BARU YANG LEBIH KUAT ---
-                    // Cek apakah ini transisi DARI AKTIF KE BERHENTI?
-                    // Yaitu, state sebelumnya TIDAK false,false DAN state sekarang ADALAH false,false
-                    let justStoppedCompletely = (previousRecState != false || previousTransState != false) && (!isRec && !isTrans)
+                let startTimeStatus = (self.recordingStartTime == nil) ? "nil" : "set"
+    
+                // --- KONDISI ASLI ---
+                let justStoppedCompletely = (previousRecState != false || previousTransState != false) && (!isRec && !isTrans)
 
-                    // Hanya panggil evaluasi JIKA:
-                    // 1. Transisinya adalah "baru saja berhenti total"
-                    // 2. DAN sesi rekaman ini memang sudah dimulai (startTime tidak nil)
-                    if justStoppedCompletely && self.recordingStartTime != nil {
-                        print(">>> Observer Condition MET for final evaluation (Just Stopped Completely).")
-                        self.processEvaluation()
-                    } else {
-                        var reasons: [String] = []
-                        if !justStoppedCompletely { reasons.append("Not a 'Just Stopped Completely' transition") }
-                        if self.recordingStartTime == nil { reasons.append("startTime is nil") }
-                        // Tambahkan debug jika perlu:
-                        if previousRecState == nil { reasons.append("previous state was nil (initial run?)") }
-                        print(">>> Observer Condition FAILED: Reasons - \(reasons.joined(separator: ", "))")
-                    }
-
-                    previousRecState = isRec
-                    previousTransState = isTrans
+                if justStoppedCompletely && self.recordingStartTime != nil {
+                    print(">>> Observer Condition MET for final evaluation (Just Stopped Completely).")
+                    self.processEvaluation()
+                } else {
+                    var reasons: [String] = []
+                    if !justStoppedCompletely { reasons.append("Not a 'Just Stopped Completely' transition") }
+                    if self.recordingStartTime == nil { reasons.append("startTime is nil") }
+                    if previousRecState == nil { reasons.append("previous state was nil (initial run?)") }
+                    print(">>> Observer Condition FAILED: Reasons - \(reasons.joined(separator: ", "))")
                 }
-                .store(in: &cancellables)
-        }
+
+                previousRecState = isRec
+                previousTransState = isTrans
+            }
+            .store(in: &cancellables)
+    }
     
     private func recordingStatus() {
         whisperKitVM.$recordingStatus

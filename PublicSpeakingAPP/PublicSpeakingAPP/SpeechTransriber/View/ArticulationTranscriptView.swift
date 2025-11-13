@@ -14,6 +14,8 @@ struct ArticulationTranscriptView: View {
     
     let fullTranscript: String
     
+    let onMapsCalculated: (TranscriptMaps, Int) -> Void
+    
     @State private var pages: [TranscriptPage] = []
     @State private var maps: TranscriptMaps = .empty
     
@@ -45,6 +47,7 @@ struct ArticulationTranscriptView: View {
             
             self.pages = pages
             self.maps = maps
+            onMapsCalculated(maps, allWords.count) 
         }
     }
 }

@@ -16,6 +16,7 @@ struct NewEvaluationView: View {
     init(
         result: EvaluationModel,
         fullTranscript: String,
+        sentenceAnalysisResult: String,
         settings: PracticeSettings,
         onBack: @escaping () -> Void,
         onNext: @escaping (PracticeSettings) -> Void
@@ -23,6 +24,7 @@ struct NewEvaluationView: View {
         _viewModel = StateObject(wrappedValue: NewEvaluationViewModel(
             result: result,
             fullTranscript: fullTranscript,
+            sentenceAnalysisResult: sentenceAnalysisResult,
             settings: settings
         ))
         self.onBack = onBack
@@ -112,7 +114,9 @@ private extension NewEvaluationView {
             evaluatorNote: viewModel.currentEvaluatorNote,
             sectionTitle: viewModel.currentSectionTitle,
             showFullScreen: $viewModel.showFullScreen,
-            hasScrollableContent: viewModel.currentHasScrollableContent
+            hasScrollableContent: viewModel.currentHasScrollableContent,
+            analysisText: viewModel.sentenceAnalysisResult,
+            transcript: viewModel.fullTranscript
         ) {
             contentForCurrentTab
         }
@@ -125,13 +129,20 @@ private extension NewEvaluationView {
             Text("")
         case .artikulasi:
             ArticulationTranscriptView(
-                fullTranscript: viewModel.fullTranscript
+                fullTranscript: viewModel.fullTranscript,
+                onMapsCalculated: { maps, total in
+                            viewModel.articulationCount = maps.totalCount
+                            viewModel.articulationTotal = total
+                        }
             )
             .padding()
         case .fillerWords:
             FillerWordTranscriptView(
                 result: viewModel.result,
-                fullTranscript: viewModel.fullTranscript
+                fullTranscript: viewModel.fullTranscript,
+                onMapsCalculated: { maps in
+                            viewModel.fillerWordCount = maps.totalCount
+                        }
             ).padding()
         case .tempo: // Tempo
             VStack() {
@@ -175,41 +186,46 @@ private extension NewEvaluationView {
 }
 
 struct EvaluationSectionView<Content: View>: View {
-    let evaluatorNote: String
+    let evaluatorNote: AttributedString
     let sectionTitle: String
     @Binding var showFullScreen: Bool
     let hasScrollableContent: Bool
     let content: Content
+    let analysisText: String
+    let transcript: String
+    @State private var diffComponents: [DiffComponent] = []
     
     init(
-        evaluatorNote: String,
+        evaluatorNote: AttributedString,
         sectionTitle: String,
         showFullScreen: Binding<Bool> = .constant(false),
         hasScrollableContent: Bool,
+        analysisText: String = "",
+        transcript: String,
         @ViewBuilder content: () -> Content
     ) {
         self.evaluatorNote = evaluatorNote
         self.sectionTitle = sectionTitle
         self._showFullScreen = showFullScreen
         self.hasScrollableContent = hasScrollableContent
+        self.analysisText = analysisText
+        self.transcript = transcript
         self.content = content()
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Catatan Evaluator:")
-                .font(.headline)
+                .font(.footnoteBold)
                 .foregroundColor(.baseColorBrown)
             
             Text(evaluatorNote)
-                .font(.custom("BradleyHandITCTT-Bold", size: 22))
+                .font(.body)
                 .foregroundColor(.darkBlue2)
-                .italic()
                 .underline(true, color: Color.baseColorBrown)
             
             Text(sectionTitle)
-                .font(.subheadline)
-                .fontWeight(.semibold)
+                .font(.footnoteBold)
                 .foregroundColor(Color.baseColorBrown)
             
             if hasScrollableContent {
@@ -223,49 +239,52 @@ struct EvaluationSectionView<Content: View>: View {
     
     private var scrollableContentWithGradient: some View {
         ZStack(alignment: .bottomTrailing) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("""
-                        Selamat pagi/siang para hadirin semuanya hadirin semuanya. Hari ini saya ingin membahas satu proses biologi yang kelihatannya sederhana, tapi sebenarnya menjadi dasar kehidupan di Bumi. Coba bayangkan: kita bisa bernapas, hewan bisa hidup, tumbuhan tumbuh, dan makanan tersedia... semua itu terjadi karena satu proses: fotosintesis pada tumbuhan fotosintesis.
-                        
-                        Jadi, apa itu fotosintesis? Fotosintesis adalah proses ketika tumbuhan, alga, dan beberapa bakteri mempunyai kemampuan dapat untuk mengubah cahaya matahari, air, dan karbon dioksida menjadi oksigen dan glukosa. Disebabkan karena reaksi kimia, proses ini menghasilkan oksigen dan energi.
-                        """)
-                    .font(.custom("Nunito-Regular", size: 17))
+            VStack(alignment: .leading, spacing: 8) {
+                if transcript.isEmpty {
+                    Text("Tidak ada transkrip yang terekam.")
+                        .font(.body)
                     .foregroundColor(.baseColorBrown)
-                    .padding(.bottom, 70)
+                    .padding()
+                    
+                } else {
+                    if !diffComponents.isEmpty {
+                        DiffRenderView(components: diffComponents)
+                    }
                 }
-                .padding()
+                   
             }
+            .padding(.bottom, 60)
+            .frame(maxWidth: .infinity, alignment: .leading)
             
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.white.opacity(0),
-                    Color.white.opacity(0.7),
-                    Color.white.opacity(0.95)
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 80)
-            .cornerRadius(10)
-            .allowsHitTesting(false)
+//            LinearGradient(
+//                gradient: Gradient(colors: [
+//                    Color.white.opacity(0),
+//                    Color.white.opacity(0.7),
+//                    Color.white.opacity(0.95)
+//                ]),
+//                startPoint: .top,
+//                endPoint: .bottom
+//            )
+//            .frame(height: 80)
+//            .cornerRadius(10)
+//            .allowsHitTesting(false)
             
-            Button {
-                showFullScreen = true
-            } label: {
-                HStack {
-                    Image("Fullscreen")
-                    Text("Lihat Selengkapnya")
-                        .fontWeight(.semibold)
-                }
-                .padding(.vertical, 10)
-                .padding(.horizontal, 16)
-                .foregroundStyle(Color.baseColorBrown)
-                .background(Color.baseColorYellow)
-                .cornerRadius(24)
-                .shadow(radius: 2)
-                .padding(8)
-            }
+//            Button {
+//                showFullScreen = true
+//            } label: {
+//                HStack {
+//                    Image("Fullscreen")
+//                    Text("Lihat Selengkapnya")
+//                        .fontWeight(.semibold)
+//                }
+//                .padding(.vertical, 10)
+//                .padding(.horizontal, 16)
+//                .foregroundStyle(Color.baseColorBrown)
+//                .background(Color.baseColorYellow)
+//                .cornerRadius(24)
+//                .shadow(radius: 2)
+//                .padding(8)
+//            }
         }
         .frame(maxWidth: .infinity, minHeight: 240)
         .cornerRadius(10)
@@ -273,6 +292,9 @@ struct EvaluationSectionView<Content: View>: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
+        .onAppear {
+            diffComponents = DiffComponent.generate(original: transcript, new: analysisText)
+        }
     }
     
     private var staticContent: some View {
@@ -300,7 +322,7 @@ struct StrukturKalimatFullScreenView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(transcript.isEmpty ? "Tidak ada transkrip yang terekam." : transcript)
-                            .font(.custom("Nunito-Regular", size: 17))
+                            .font(.body)
                             .foregroundColor(Color("BaseColorBrown"))
                             .padding()
                     }
@@ -314,5 +336,40 @@ struct StrukturKalimatFullScreenView: View {
                 .foregroundColor(.blue)
             }
         }
+    }
+}
+
+struct DiffRenderView: View {
+    let components: [DiffComponent]
+    
+    let defaultColor = Color(.baseColorBrown)
+    let deletedColor = Color.red
+    let addedColor = Color.blue
+    
+    var body: some View {
+        VStack {
+            components.reduce(Text("")) { (result, component) in
+                let styledText = Text(component.text)
+                    .font(.body)
+                
+                switch component.type {
+                case .same:
+                    return result + styledText
+                        .foregroundColor(defaultColor)
+                case .deleted:
+                    return result + styledText
+                        .foregroundColor(deletedColor)
+                        .strikethrough(true, color: deletedColor)
+                case .added:
+                    return result + styledText
+                        .foregroundColor(addedColor)
+                    + Text(" ")
+                }
+            }
+        }
+        .padding()
+        .font(.body)
+        .lineSpacing(8)
+        .cornerRadius(10)
     }
 }

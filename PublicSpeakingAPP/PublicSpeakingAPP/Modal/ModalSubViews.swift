@@ -11,12 +11,9 @@ struct TitleView: View {
     var body: some View {
         VStack(spacing: 4) {
             Text("INSTRUKSI")
-                .font(.custom("Nunito-ExtraBold", size: 22))
+                .font(.title2.weight(.black))
                 .foregroundColor(.baseColorBrown)
-           
-            Rectangle()
-                .fill(Color.baseColorBrown)
-                .frame(width: 100, height: 2)
+                .underline(true, color: .baseColorBrown)
         }
     }
 }
@@ -24,6 +21,7 @@ struct TitleView: View {
 struct MicSetupView: View {
     let micMonitor: MicMonitorModal
     let showMicWarning: Bool
+    let imageName: String
     
     var body: some View {
         HStack(alignment: .center, spacing: 60) {
@@ -39,7 +37,7 @@ struct MicSetupView: View {
                    
                 MicIconButton(showMicWarning: showMicWarning)
             }
-            Image("ProfessorEar")
+            Image(imageName)
                 .resizable().scaledToFit().frame(height: 150)
         }
     }
@@ -78,22 +76,25 @@ struct InstructionTextView: View {
     var body: some View {
         VStack {
             Text(message)
-                .font(.custom("Nunito-Medium", size: 17))
+                .font(.subheadline)
                 .lineSpacing(6)
                 .foregroundColor(.baseColorBrown)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, geometry.size.width * 0.05)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
 
 struct StartButtonView: View {
+    let title: String
     let isEnabled: Bool
     let action: () -> Void
     
     var body: some View {
         ButtonComponent(
-            title: "MULAI LATIHAN",
+            title: title,
             systemImage: nil,
             size: .large,
             kind: isEnabled ? .primaryYellow : .disabled,
@@ -101,6 +102,7 @@ struct StartButtonView: View {
             isEnabled: isEnabled,
             action: action
         )
+        .animation(.easeInOut, value: title)
         .animation(.easeInOut, value: isEnabled)
     }
 }
