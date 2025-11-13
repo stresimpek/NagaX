@@ -142,14 +142,17 @@ private extension NewEvaluationView {
                     viewModel.fillerWordCount = maps.totalCount
                 }
             ).padding()
-        case .tempo: // Tempo
+        case .tempo:
             VStack() {
-                TempoResultChart(tempoSeries: viewModel.result.tempoSeries)
-                    .frame(height: 220)
+                TempoResultChart(
+                    tempoSeries: viewModel.result.tempoSeries,
+                    fixedDuration: viewModel.result.durationInSeconds
+                )
+                .frame(maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity)
             .padding()
-        case .intonasi: // Intonasi
+        case .intonasi:
             VStack() {
                 IntonationResultChart(
                     pitchSeries: viewModel.result.pitchSeries,
