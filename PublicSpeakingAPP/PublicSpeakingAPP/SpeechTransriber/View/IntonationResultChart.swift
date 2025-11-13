@@ -83,7 +83,7 @@ struct IntonationResultChart: View {
                         yStart: .value("y0", bandLow),
                         yEnd: .value("y1", bandHigh)
                     )
-                    .foregroundStyle(.lightTurqoise.opacity(0.3))
+                    .foregroundStyle(.lightTurqoise.opacity(0.5))
                     .annotation(position: .overlay, alignment: .center) {
                         Text("BERDINAMIKA")
                             .font(.title3)
@@ -128,6 +128,18 @@ struct IntonationResultChart: View {
             .chartYAxis {
                 AxisMarks(position: .leading) {
                     AxisGridLine()
+                }
+            }
+            .chartXAxis {
+                AxisMarks { value in
+                    AxisGridLine()
+                    AxisTick()
+                    AxisValueLabel {
+                        if let t = value.as(Double.self) {
+                            Text("\(Int(t))s")
+                                .font(.caption)
+                        }
+                    }
                 }
             }
             .chartYAxis { AxisMarks(position: .leading) }
