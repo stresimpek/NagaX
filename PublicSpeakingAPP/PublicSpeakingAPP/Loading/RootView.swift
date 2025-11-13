@@ -8,16 +8,65 @@
 import SwiftUI
 import WhisperKit
 
-struct RootView: View {
-    @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
+enum AppFlowStep {
+    case loading
+    case onboarding
+    case home
+}
 
+struct RootView: View {
+    
+    init() {
+        if ProcessInfo.processInfo.arguments.contains("-ResetOnboarding") {
+            UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+            _hasCompletedOnboarding = AppStorage(wrappedValue: false, "hasCompletedOnboarding")
+        }
+    }
+    
+    @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
+    
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    
+    @State private var currentStep: AppFlowStep = .loading
+    
     var body: some View {
-        if whisperKitVM.modelState == .loaded {
-            NavigationStack {
-                HomeView()
+        ZStack {
+            switch currentStep {
+            
+            case .loading:
+                LoadingView()
+                    .transition(.opacity)
+                
+            case .onboarding:
+                OnboardingView(
+                    onStartTapped: {
+                        self.hasCompletedOnboarding = true
+                        withAnimation {
+                            self.currentStep = .home
+                        }
+                    }
+                )
+                .transition(.opacity)
+                
+            case .home:
+                NavigationStack {
+                    HomeView()
+                }
+                .transition(.opacity)
             }
-        } else {
-            LoadingView()
+        }
+        .onReceive(whisperKitVM.$modelState) { newState in
+            if newState == .loaded && self.currentStep == .loading {
+                if hasCompletedOnboarding {
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        self.currentStep = .home
+                    }
+                } else {
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        self.currentStep = .onboarding
+                    }
+                }
+            }
         }
     }
 }
