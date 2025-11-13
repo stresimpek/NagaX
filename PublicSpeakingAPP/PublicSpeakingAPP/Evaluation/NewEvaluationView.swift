@@ -153,8 +153,11 @@ private extension NewEvaluationView {
             .padding()
         case .intonasi: // Intonasi
             VStack() {
-                IntonationResultChart(pitchSeries: viewModel.result.pitchSeries)
-                    .frame(maxHeight: .infinity)
+                IntonationResultChart(
+                    pitchSeries: viewModel.result.pitchSeries,
+                    fixedDuration: viewModel.result.durationInSeconds
+                )
+                .frame(maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity)
             .padding()
