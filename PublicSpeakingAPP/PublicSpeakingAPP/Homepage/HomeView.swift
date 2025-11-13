@@ -32,6 +32,21 @@ struct HomeView: View {
                     DatePickerView(
                         onBack: {
                             coordinator.returnToHome()
+                        },
+                        onComplete: { selectedDate in
+                            coordinator.goToNotificationPrompt(date: selectedDate)
+                        }
+                    )
+                    .navigationBarBackButtonHidden(true)
+                    
+                case .notificationPrompt(let date):
+                    NotificationPromptView(
+                        selectedDate: date,
+                        onBack: {
+                            coordinator.goBack()
+                        },
+                        onComplete: {
+                            coordinator.returnToHome()
                         }
                     )
                     .navigationBarBackButtonHidden(true)
