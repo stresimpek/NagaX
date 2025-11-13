@@ -31,7 +31,7 @@ class SimulationViewModel: ObservableObject {
     @Published var finalTranscript: String = ""
     @Published var showNoTranscriptAlert: Bool = false
     
-    private let settings: PracticeSettings
+    let settings: PracticeSettings
     private var gameTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
     private var recordingStartTime: Date?
@@ -84,8 +84,6 @@ class SimulationViewModel: ObservableObject {
         setupRecordingObserver()
         setupAnalysisSubscribers()
         setupMoodAggregation()
-        
-        setupAudioPlayers(named: ["fast-knocking-on-door.mp3", "opening-door.mp3"])
     }
     
     private func setupMoodAggregation() {
@@ -242,77 +240,6 @@ class SimulationViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    private func setupAudioPlayers(named fileNames: [String]) {
-        distractionPlayers.removeAll()
-        
-        for fullName in fileNames {
-            guard let lastDot = fullName.lastIndex(of: ".") else {
-                print("Audio Error: Format nama file salah (tidak ada ekstensi): '\(fullName)'.")
-                continue
-            }
-            
-            let pathWithoutExtension = String(fullName[..<lastDot])
-            let fileExtension = String(fullName[lastDot...].dropFirst())
-
-            guard let fileURL = Bundle.main.url(forResource: pathWithoutExtension, withExtension: fileExtension) else {
-                print("Audio Error: File '\(fullName)' (dicari sebagai '\(pathWithoutExtension).\(fileExtension)') tidak ditemukan di bundle.")
-                continue
-            }
-            
-            do {
-                let player = try AVAudioPlayer(contentsOf: fileURL)
-                player.prepareToPlay()
-                distractionPlayers.append(player)
-                print("Audio Player siap dengan file: \(fullName)")
-            } catch {
-                print("Audio Error: Gagal memuat player '\(fullName)': \(error.localizedDescription)")
-            }
-        }
-    }
-    
-    private func playAndScheduleDistraction() {
-        
-        guard settings.distractionLevel > 0 else {
-            print("Distraksi dinonaktifkan (Level 0).")
-            return
-        }
-        
-        guard !distractionPlayers.isEmpty else { return }
-        
-        let delayRange: ClosedRange<TimeInterval>
-        
-        if settings.distractionLevel == 1.0 {
-            delayRange = 30.0...45.0
-            print("Distraksi Level: Sedikit (delay 30-45s)")
-        } else {
-            delayRange = 15.0...25.0
-            print("Distraksi Level: Banyak (delay 15-25s)")
-        }
-        
-        let randomDelay = TimeInterval.random(in: delayRange)
-        
-        print("Audio Distraksi: Dijadwalkan dalam \(String(format: "%.1f", randomDelay)) detik.")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + randomDelay) { [weak self] in
-            guard let self = self else { return }
-            
-            guard self.isRecording else { return }
-            
-            let randomPlayer = self.distractionPlayers.randomElement()
-            
-            if let player = randomPlayer {
-                print("Memutar suara: \(player.url?.lastPathComponent ?? "unknown")")
-                player.currentTime = 0
-                player.play()
-            } else {
-                print("Audio Distraksi: Gagal memilih player.")
-            }
-            
-            // Schedule next distraction
-            self.playAndScheduleDistraction()
-        }
-    }
-    
     func toggleRecording() {
         self.errorMessage = nil
 
@@ -399,7 +326,6 @@ class SimulationViewModel: ObservableObject {
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.updateGameLogic()
         }
-        playAndScheduleDistraction()
         startMoodTimer()
     }
     

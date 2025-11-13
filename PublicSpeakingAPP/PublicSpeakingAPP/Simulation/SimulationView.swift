@@ -61,27 +61,16 @@ struct SimulationView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                let gridHeight = geo.size.height
-                
-                Image(.backgroundRuangKelas)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .edgesIgnoringSafeArea(.all)
-                
-                VStack {
-                    Spacer()
-                    TeacherRiveView(sim: viewModel)
-                        .frame(height: geo.size.height * 0.85)
-                        .onChange(of: viewModel.isRecording) { oldValue, newValue in
-                            if newValue {
-                                micMonitor.startMonitoring()
-                            } else {
-                                micMonitor.stopMonitoring()
-                            }
-                        }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                // === LAYER 0: Rive full screen ===
+                TeacherRiveView(sim: viewModel)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea()                 // <-- penuh, di bawah notch/home bar
+                    .allowsHitTesting(false)           // biar tap ke UI atasnya tidak tertangkap Rive
+                    .onChange(of: viewModel.isRecording) { _, newValue in
+                        newValue ? micMonitor.startMonitoring() : micMonitor.stopMonitoring()
+                    }
 
+                // === LAYER 1+: Overlay UI ===
                 VStack {
                     ZStack {
                         Group {
@@ -89,7 +78,7 @@ struct SimulationView: View {
                                 Text(viewModel.isMoreThanOneMinute ? "LEWAT DURASI!" : "WAKTU HABIS!")
                                     .padding()
                                     .foregroundColor(.baseColorRed)
-                                    .frame(height: 42, alignment: .center)
+                                    .frame(height: 42)
                                     .background(.coral)
                                     .cornerRadius(24)
                                     .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
@@ -97,7 +86,7 @@ struct SimulationView: View {
                                 Text("Objective: Lakukan presentasi terbaikmu dengan aspek yang sudah ditentukan!")
                                     .padding()
                                     .foregroundColor(.baseColorBrown)
-                                    .frame(height: 42, alignment: .center)
+                                    .frame(height: 42)
                                     .background(.baseColorWhite)
                                     .cornerRadius(24)
                                     .shadow(color: .beige, radius: 0, x: 0, y: 4)
@@ -110,9 +99,9 @@ struct SimulationView: View {
                     }
                     .padding(.top, 20)
                     .padding(.horizontal)
-                    
+
                     Spacer()
-                    
+
                     HStack {
                         if viewModel.isOvertime {
                             HStack (alignment: .center) {
@@ -138,13 +127,11 @@ struct SimulationView: View {
                             .shadow(color: .beige, radius: 0, x: 0, y: 4)
                         }
                         Spacer()
-                        
                         if viewModel.isRecording {
-                                AudioVisualizerView(micMonitor: micMonitor)
-                                    .padding(.top, 8)
-                            }
+                            AudioVisualizerView(micMonitor: micMonitor)
+                                .padding(.top, 8)
+                        }
                         Spacer()
-                        
                         HStack(spacing: 5) {
                             ButtonComponent(
                                 title: viewModel.isRecording ? "STOP REKAM" : "MULAI REKAM",
@@ -154,26 +141,21 @@ struct SimulationView: View {
                                 action: viewModel.toggleRecording
                             )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing )
-                            
                             VStack(alignment: .leading) {
                                 if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
-                                    Text(viewModel.whisperModelState.description)
-                                        .font(.caption2)
-                                        .foregroundColor(.gray)
-                                }
+                                    Text(viewModel.whisperModelState.description) .font(.caption2) .foregroundColor(.gray) }
                             }
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, geo.safeAreaInsets.bottom)
+                    .padding(.bottom, geo.safeAreaInsets.bottom) // UI tetap hormati safe area bawah
                 }
                 .zIndex(10)
-                
+
                 if isProcessing {
                     Color.black.opacity(0.5)
-                        .edgesIgnoringSafeArea(.all)
+                        .ignoresSafeArea()
                         .zIndex(11)
-                    
                     ProgressView("Menganalisis...")
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.5)
@@ -181,27 +163,19 @@ struct SimulationView: View {
                         .foregroundColor(.white)
                         .zIndex(12)
                 }
-                
             }
-            .frame(width: geo.size.width, height: geo.size.height)
-            .onDisappear {
-                viewModel.cleanup()
-            }
+            .onDisappear { viewModel.cleanup() }
             .onReceive(viewModel.$isAnalysisComplete) { isComplete in
-                print("onReceive isAnalysisComplete: \(isComplete)")
                 if isComplete {
                     if let result = viewModel.evaluationResult {
-                        print("Evaluation result FOUND. Calling onComplete...")
                         onComplete(result, viewModel.finalTranscript)
                     } else {
-                        print("Evaluation result is NIL. Calling onBack...")
                         onBack()
                     }
                 }
             }
             .navigationBarBackButtonHidden(true)
             .task {
-                print("[SimulationView.task] Mereset state VM...")
                 viewModel.whisperKitVM.resetState()
                 viewModel.textAnalyzerVM.clearResults()
                 viewModel.intonationAnalyzerVM.clearResults()
@@ -210,11 +184,10 @@ struct SimulationView: View {
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") { viewModel.errorMessage = nil }
             } message: {
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                }
+                if let error = viewModel.errorMessage { Text(error) }
             }
         }
     }
+
 }
 
