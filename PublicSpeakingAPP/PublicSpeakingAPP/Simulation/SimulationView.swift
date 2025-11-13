@@ -95,6 +95,7 @@ struct SimulationView: View {
                                     .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
                             } else {
                                 Text("Objective: Lakukan presentasi terbaikmu dengan aspek yang sudah ditentukan!")
+                                    .font(.title3)
                                     .padding()
                                     .foregroundColor(.baseColorBrown)
                                     .frame(height: 42, alignment: .center)

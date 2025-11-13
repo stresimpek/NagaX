@@ -129,13 +129,20 @@ private extension NewEvaluationView {
             Text("")
         case .artikulasi:
             ArticulationTranscriptView(
-                fullTranscript: viewModel.fullTranscript
+                fullTranscript: viewModel.fullTranscript,
+                onMapsCalculated: { maps, total in
+                            viewModel.articulationCount = maps.totalCount
+                            viewModel.articulationTotal = total
+                        }
             )
             .padding()
         case .fillerWords:
             FillerWordTranscriptView(
                 result: viewModel.result,
-                fullTranscript: viewModel.fullTranscript
+                fullTranscript: viewModel.fullTranscript,
+                onMapsCalculated: { maps in
+                            viewModel.fillerWordCount = maps.totalCount
+                        }
             ).padding()
         case .tempo: // Tempo
             VStack() {
@@ -179,7 +186,7 @@ private extension NewEvaluationView {
 }
 
 struct EvaluationSectionView<Content: View>: View {
-    let evaluatorNote: String
+    let evaluatorNote: AttributedString
     let sectionTitle: String
     @Binding var showFullScreen: Bool
     let hasScrollableContent: Bool
@@ -189,7 +196,7 @@ struct EvaluationSectionView<Content: View>: View {
     @State private var diffComponents: [DiffComponent] = []
     
     init(
-        evaluatorNote: String,
+        evaluatorNote: AttributedString,
         sectionTitle: String,
         showFullScreen: Binding<Bool> = .constant(false),
         hasScrollableContent: Bool,
@@ -209,18 +216,16 @@ struct EvaluationSectionView<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Catatan Evaluator:")
-                .font(.headline)
+                .font(.footnoteBold)
                 .foregroundColor(.baseColorBrown)
             
             Text(evaluatorNote)
-                .font(.custom("BradleyHandITCTT-Bold", size: 22))
+                .font(.body)
                 .foregroundColor(.darkBlue2)
-                .italic()
                 .underline(true, color: Color.baseColorBrown)
             
             Text(sectionTitle)
-                .font(.subheadline)
-                .fontWeight(.semibold)
+                .font(.footnoteBold)
                 .foregroundColor(Color.baseColorBrown)
             
             if hasScrollableContent {
@@ -237,7 +242,7 @@ struct EvaluationSectionView<Content: View>: View {
             VStack(alignment: .leading, spacing: 8) {
                 if transcript.isEmpty {
                     Text("Tidak ada transkrip yang terekam.")
-                    .font(.custom("Nunito-Regular", size: 17))
+                        .font(.body)
                     .foregroundColor(.baseColorBrown)
                     .padding()
                     
@@ -317,7 +322,7 @@ struct StrukturKalimatFullScreenView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(transcript.isEmpty ? "Tidak ada transkrip yang terekam." : transcript)
-                            .font(.custom("Nunito-Regular", size: 17))
+                            .font(.body)
                             .foregroundColor(Color("BaseColorBrown"))
                             .padding()
                     }
@@ -345,7 +350,7 @@ struct DiffRenderView: View {
         VStack {
             components.reduce(Text("")) { (result, component) in
                 let styledText = Text(component.text)
-                    .font(.custom("Nunito-Regular", size: 17))
+                    .font(.body)
                 
                 switch component.type {
                 case .same:
@@ -363,7 +368,7 @@ struct DiffRenderView: View {
             }
         }
         .padding()
-        .font(.custom("Nunito-Regular", size: 17))
+        .font(.body)
         .lineSpacing(8)
         .cornerRadius(10)
     }

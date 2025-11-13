@@ -124,7 +124,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var publishedError: String? = nil
     
     // MARK: - Init
-    init(mistralAPIKey: String = "DCzL0PebPbW8L4PMOXcipen5c8f5irFP") {
+    init(mistralAPIKey: String = "rvxmDdHNzkeGxHrJ9hhrZhDJTvjYCV3i") {
         self.mistralService = MistralAIService(apiKey: mistralAPIKey)
     }
     

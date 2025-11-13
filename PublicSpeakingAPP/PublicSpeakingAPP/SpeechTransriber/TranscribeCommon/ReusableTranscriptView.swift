@@ -24,7 +24,7 @@ struct ReusableTranscriptCardView: View {
         TabView(selection: $currentPageIndex) {
             if pages.isEmpty {
                 Text(emptyStateMessage)
-                    .font(.system(.body, design: .serif))
+                    .font(.body)
                     .foregroundColor(.yellow2)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
             } else {
@@ -35,7 +35,7 @@ struct ReusableTranscriptCardView: View {
                         
                         HStack {
                             Text(formatTimestamp(page.startTime, page.endTime))
-                                .font(.caption.monospacedDigit().bold())
+                                .font(.footnoteBold)
                                 .foregroundColor(.baseColorBrown)
                             Spacer()
                             HStack(spacing: 8) {
@@ -45,7 +45,7 @@ struct ReusableTranscriptCardView: View {
                                 .disabled(currentJumperIndex <= 1)
                                 
                                 Text("**\(currentJumperIndex)** / \(maps.totalCount) kata")
-                                    .font(.caption.monospacedDigit())
+                                    .font(.footnoteBold)
                                 
                                 Button(action: { jumpToWord(globalIndex: currentJumperIndex + 1) }) {
                                     Image(systemName: "chevron.right")
