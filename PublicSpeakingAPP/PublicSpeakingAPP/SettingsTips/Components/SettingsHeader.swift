@@ -13,22 +13,28 @@ struct SettingsHeader: View {
     var isNextDisabled: Bool = false
     var body: some View {
         HStack {
-            Button(action: onBack) {
-                HStack(spacing: 6) {
-                    Image(systemName: "chevron.left")
-                    Text("Kembali")
-                }
-            }
+            ButtonComponent(
+                title: nil,
+                systemImage: "arrow.uturn.left",
+                size: .medium,
+                kind: .secondaryBlue,
+                action: onBack
+            )
+            .padding(.leading, 16)
+            .padding(.top, 16)
+            
             Spacer()
-            Button(action: onNext) {
-                HStack(spacing: 6) {
-                    Text("Lanjut")
-                    Image(systemName: "chevron.right")
-                }
-            }
+            
+            ButtonComponent(
+                title: nil,
+                systemImage: "arrow.uturn.right",
+                size: .medium,
+                kind: .secondaryBlue,
+                action: onNext
+            )
+            .padding(.leading, 16)
+            .padding(.top, 16)
             .disabled(isNextDisabled)
         }
-        .buttonStyle(.plain)
-        .padding()
     }
 }

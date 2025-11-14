@@ -21,7 +21,7 @@ struct NotificationPromptView: View {
             
             VStack() {
                 Text("Mau diingetin latihannya?")
-                    .font(.title)
+                    .font(.title2)
                     .foregroundStyle(Color.white)
                     .bold()
 
