@@ -398,7 +398,7 @@ class SimulationViewModel: ObservableObject {
                 if self.whisperKitVM.recordingStatus == .recording {
                     print("⏹ Auto-stopping recording setelah 5 detik > 1 menit overtime")
                     self.stopGame()
-                    self.whisperKitVM.toggleRecording(shouldLoop: false)
+                    toggleRecording()
                 } else {
                     print("✅ Auto-stop dibatalkan, recording sudah berhenti lebih dulu")
                 }
