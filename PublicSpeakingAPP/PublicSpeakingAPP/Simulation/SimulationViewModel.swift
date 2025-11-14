@@ -18,6 +18,21 @@ class SimulationViewModel: ObservableObject {
     @Published var isRecording: Bool = false
     @Published var errorMessage: String? = nil
     
+    @Published var isPaused: Bool = false {
+            didSet {
+                if isPaused {
+                    gameTimer?.invalidate()
+                    gameTimer = nil
+                } else if !isPaused && isRecording {
+                    gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                        DispatchQueue.main.async {
+                            self?.updateGameLogic()
+                        }
+                    }
+                }
+            }
+        }
+
     
     let whisperKitVM: SpeechTranscriberViewModel
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
@@ -76,6 +91,23 @@ class SimulationViewModel: ObservableObject {
             .compactMap { $0 } // Hanya teruskan jika tidak nil
             .sink { [weak self] errorText in
                 self?.errorMessage = errorText
+            }
+            .store(in: &cancellables)
+        self.whisperKitVM.$showEarlyStopModal
+                    .receive(on: DispatchQueue.main)
+                    .sink { [weak self] showing in
+                        guard let self = self else { return }
+                        self.isPaused = showing
+                    }
+                    .store(in: &cancellables)
+        self.whisperKitVM.$showEmptyTranscriptModal
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] showing in
+                guard let self = self else { return }
+                self.isPaused = showing
+                if !showing {
+                    self.isPaused = false
+                }
             }
             .store(in: &cancellables)
         
@@ -138,33 +170,24 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func setupRecordingObserver() {
-        var previousRecState: Bool? = nil
-        var previousTransState: Bool? = nil
-
+        var prevRec: Bool? = nil
+        var prevTrans: Bool? = nil
+        
         whisperKitVM.$isRecording
-            .combineLatest(whisperKitVM.$isTranscribing) // <-- HANYA 2 SINYAL
+            .combineLatest(whisperKitVM.$isTranscribing)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] (isRec, isTrans) in // <-- HANYA 2 SINYAL
+            .sink { [weak self] (isRec, isTrans) in
                 guard let self = self else { return }
-
-                let startTimeStatus = (self.recordingStartTime == nil) ? "nil" : "set"
-    
-                // --- KONDISI ASLI ---
-                let justStoppedCompletely = (previousRecState != false || previousTransState != false) && (!isRec && !isTrans)
-
-                if justStoppedCompletely && self.recordingStartTime != nil {
-                    print(">>> Observer Condition MET for final evaluation (Just Stopped Completely).")
-                    self.processEvaluation()
-                } else {
-                    var reasons: [String] = []
-                    if !justStoppedCompletely { reasons.append("Not a 'Just Stopped Completely' transition") }
-                    if self.recordingStartTime == nil { reasons.append("startTime is nil") }
-                    if previousRecState == nil { reasons.append("previous state was nil (initial run?)") }
-                    print(">>> Observer Condition FAILED: Reasons - \(reasons.joined(separator: ", "))")
+                let justStopped = (prevRec != false || prevTrans != false) && (!isRec && !isTrans)
+                if justStopped && self.recordingStartTime != nil {
+                    if self.isStopModalActive {
+                        print(">>> Suppress evaluation: modal active.")
+                    } else {
+                        self.processEvaluation()
+                    }
                 }
-
-                previousRecState = isRec
-                previousTransState = isTrans
+                prevRec = isRec
+                prevTrans = isTrans
             }
             .store(in: &cancellables)
     }
@@ -321,52 +344,47 @@ class SimulationViewModel: ObservableObject {
         if shouldStart {
             print("Requesting START recording...")
             startGame()
-            whisperKitVM.toggleRecording(shouldLoop: true)
+            whisperKitVM.toggleRecording(
+                shouldLoop: true,
+                timerSeconds: Double(timerSeconds),
+                durationLimitSeconds: durationLimitSeconds
+            )
         } else {
             print("Requesting STOP recording...")
-            stopGame()
-            whisperKitVM.toggleRecording(shouldLoop: false)
+            whisperKitVM.toggleRecording(
+                shouldLoop: false,
+                timerSeconds: Double(timerSeconds),
+                durationLimitSeconds: durationLimitSeconds
+            )
         }
     }
 
 
     private func processEvaluation() {
-        guard !self.isRecording else { /* ... */ return }
-        print("Memproses evaluasi...")
-
-        guard self.recordingStartTime != nil else {
-             print("processEvaluation called again after completion or during processing, ignoring.")
-             return
+        guard !isRecording else { return }
+        guard !isStopModalActive else {
+            print("Evaluation skipped: modal active.")
+            return
         }
-        self.recordingStartTime = nil
+        guard recordingStartTime != nil else { return }
         
+        recordingStartTime = nil
         let finalDuration = whisperKitVM.finalBufferDuration
         
-        let finalIntonationStdDev = intonationAnalyzerVM.calculateFinalStandardDeviation()
-        
-        guard finalDuration > 0 else {
-            self.errorMessage = "Tidak ada data audio yang direkam (durasi: \(finalDuration))."
-            print("Tidak ada data audio yang direkam (durasi: \(finalDuration))")
-            self.isAnalysisComplete = true
+        guard finalDuration > 0 || !whisperKitVM.confirmedText.isEmpty else {
+            errorMessage = "Tidak ada data audio yang direkam (durasi: \(finalDuration))."
+            isAnalysisComplete = true
             return
         }
         
-        print("Data Evaluasi:")
-        print("- Duration: \(finalDuration)s")
-        print("- Tempo WPM: \(tempoVM.wpm)")
-        print("- Filler Words: \(fillerWordVM.totalFillerCount)")
-        print("- Intonation StdDev (Final Full): \(finalIntonationStdDev)")
-        
-        self.finalTranscript = self.whisperKitVM.confirmedText
-        self.evaluationResult = EvaluationViewModel.process(
-            tempoVM: self.tempoVM,
-            intonationVM: self.intonationAnalyzerVM,
-            fillerWordVM: self.fillerWordVM,
+        finalTranscript = whisperKitVM.confirmedText
+        evaluationResult = EvaluationViewModel.process(
+            tempoVM: tempoVM,
+            intonationVM: intonationAnalyzerVM,
+            fillerWordVM: fillerWordVM,
             duration: finalDuration
         )
-        
-        self.isAnalysisComplete = true
-        print("Evaluasi selesai, navigasi ke hasil")
+        isAnalysisComplete = true
     }
 
 
@@ -384,6 +402,8 @@ class SimulationViewModel: ObservableObject {
         moodScoreEMA = 0.0
         lastMoodChangeAt = .distantPast
         
+        isPaused = false
+        
         whisperKitVM.resetState()
         tempoVM.clearResults()
         intonationAnalyzerVM.clearResults()
@@ -391,7 +411,9 @@ class SimulationViewModel: ObservableObject {
         fillerWordVM.clearResults()
         
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.updateGameLogic()
+            DispatchQueue.main.async {
+                self?.updateGameLogic()
+            }
         }
         playAndScheduleDistraction()
         startMoodTimer()
@@ -414,7 +436,9 @@ class SimulationViewModel: ObservableObject {
     private func startMoodTimer() {
         stopMoodTimer()
         moodTimer = Timer.scheduledTimer(withTimeInterval: uiUpdateInterval, repeats: true) { [weak self] _ in
-            self?.applySmoothedMoodToUI()
+            DispatchQueue.main.async {
+                self?.applySmoothedMoodToUI()
+            }
         }
     }
 
@@ -428,8 +452,8 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func updateGameLogic() {
-        timerSeconds += 1
-    }
+            timerSeconds += 1
+        }
     
     func cleanup() {
         gameTimer?.invalidate()
@@ -467,7 +491,7 @@ extension SimulationViewModel {
     var durationLimitSeconds: Int {
         max(0, settings.durationMinutes * 60)
     }
-
+    
     var isOvertime: Bool {
         durationLimitSeconds > 0 && timerSeconds >= durationLimitSeconds
     }
@@ -479,5 +503,25 @@ extension SimulationViewModel {
     
     var isMoreThanOneMinute: Bool {
         overtimeSeconds > 60
+    }
+    
+    private var isStopModalActive: Bool {
+        whisperKitVM.showEarlyStopModal || whisperKitVM.showEmptyTranscriptModal
+    }
+    
+    func resumeAfterEarlyStop() {
+        whisperKitVM.continueRecording(shouldLoop: true)
+        if gameTimer == nil {
+            gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                self?.updateGameLogic()
+            }
+        }
+        isPaused = false
+    }
+    
+    func restartAfterEmptyTranscript() {
+        stopGame()
+        whisperKitVM.restartSession(shouldLoop: true)
+        startGame()
     }
 }

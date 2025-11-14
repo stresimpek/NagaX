@@ -74,6 +74,9 @@ struct HomeView: View {
                         onBack: {
                             coordinator.goBack()
                         },
+                        onRestartPractice: {
+                                coordinator.retrySimulation(from: settings) 
+                            },
                         onComplete: { result, transcript, analysisResult in
                             coordinator.goToNewEvaluation(
                                 result: result,

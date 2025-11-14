@@ -18,6 +18,7 @@ struct SimulationViewWrapper: View {
     
     let settings: PracticeSettings
     let onBack: () -> Void
+    let onRestartPractice: () -> Void
     let onComplete: (EvaluationModel, String, String) -> Void
     
     var body: some View {
@@ -31,7 +32,8 @@ struct SimulationViewWrapper: View {
                 fillerWordVM: fillerWordVM
             ),
             onBack: onBack,
-            onComplete: onComplete
+            onComplete: onComplete,
+            onRestartPractice: onRestartPractice
         )
     }
 }
@@ -42,6 +44,7 @@ struct SimulationView: View {
     @StateObject private var micMonitor = MicMonitorModal()
     
     let onBack: () -> Void
+    let onRestartPractice: () -> Void
     let onComplete: (EvaluationModel, String, String) -> Void
     
     private var isProcessing: Bool {
@@ -51,11 +54,13 @@ struct SimulationView: View {
     init(
         viewModel: SimulationViewModel,
         onBack: @escaping () -> Void,
-        onComplete: @escaping (EvaluationModel, String, String) -> Void
+        onComplete: @escaping (EvaluationModel, String, String) -> Void,
+        onRestartPractice: @escaping () -> Void
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBack = onBack
         self.onComplete = onComplete
+        self.onRestartPractice = onRestartPractice
     }
     
     var body: some View {
@@ -64,9 +69,9 @@ struct SimulationView: View {
                 let gridHeight = geo.size.height
                 
                 Image(.backgroundRuangKelas)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .edgesIgnoringSafeArea(.all)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .edgesIgnoringSafeArea(.all)
                 
                 VStack {
                     Spacer()
@@ -81,7 +86,7 @@ struct SimulationView: View {
                         }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-
+                
                 VStack {
                     ZStack {
                         Group {
@@ -150,11 +155,11 @@ struct SimulationView: View {
                                     .background(Color.black.opacity(0.27))
                                     .clipShape(RoundedRectangle(cornerRadius: 16))
                                     .offset(x: 20)
-                                   
+                                
                                 MicIconButton(showMicWarning: false)
                             }
                             
-                            }
+                        }
                         Spacer()
                         
                         HStack(spacing: 5) {
@@ -165,8 +170,9 @@ struct SimulationView: View {
                                 kind: .primaryYellow,
                                 action: viewModel.toggleRecording
                             )
-                            .disabled(viewModel.whisperModelState != .loaded || isProcessing )
-                            
+                            .disabled(viewModel.whisperModelState != .loaded || isProcessing)
+                            .disabled(viewModel.whisperModelState != .loaded || isProcessing)
+
                             VStack(alignment: .leading) {
                                 if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
                                     Text(viewModel.whisperModelState.description)
@@ -195,6 +201,48 @@ struct SimulationView: View {
                 }
                 
             }
+            .overlay {
+                if viewModel.whisperKitVM.showEarlyStopModal
+                {
+                                EarlyStopModalView(
+                                    onContinue: {
+                                        viewModel.resumeAfterEarlyStop()
+                                    },
+                                    onViewEvaluation: {
+                                        viewModel.whisperKitVM.proceedToEvaluationFromModal(loop: false)
+                                    }
+                                )
+                                .transition(.opacity)
+                                .zIndex(20)
+                            }
+// test the EmptyTranscriptModalView
+//                {
+//                    EmptyTranscriptModalView(
+//                        onRestart: {
+//                            viewModel.restartAfterEmptyTranscript()
+//                        },
+//                        onContinue: {
+//                            viewModel.resumeAfterEarlyStop()
+//                        }
+//                    )
+//                    .transition(.opacity)
+//                    .zIndex(20)
+//                }
+                
+                            
+                if viewModel.whisperKitVM.showEmptyTranscriptModal {
+                                EmptyTranscriptModalView(
+                                    onRestart: {
+                                        viewModel.restartAfterEmptyTranscript()
+                                    },
+                                    onContinue: {
+                                        viewModel.resumeAfterEarlyStop()
+                                    }
+                                )
+                                .transition(.opacity)
+                                .zIndex(20)
+                            }
+                }
             .frame(width: geo.size.width, height: geo.size.height)
             .onDisappear {
                 viewModel.cleanup()
@@ -233,4 +281,3 @@ struct SimulationView: View {
         }
     }
 }
-
