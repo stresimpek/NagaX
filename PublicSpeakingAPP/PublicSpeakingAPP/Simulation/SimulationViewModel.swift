@@ -17,6 +17,12 @@ class SimulationViewModel: ObservableObject {
     @Published var timerSeconds: Int = 0
     @Published var isRecording: Bool = false
     @Published var errorMessage: String? = nil
+    @Published var isOvertimeTrigger: Bool = false
+    @Published var isOverOneMinuteTrigger: Bool = false
+
+    private var hasPlayedOvertimeSound = false
+    private var hasPlayedOverOneMinuteSound = false
+    private var hasScheduledAutoStop = false
     
     @Published var isPaused: Bool = false {
             didSet {
@@ -46,7 +52,7 @@ class SimulationViewModel: ObservableObject {
     @Published var finalTranscript: String = ""
     @Published var showNoTranscriptAlert: Bool = false
     
-    private let settings: PracticeSettings
+    let settings: PracticeSettings
     private var gameTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
     private var recordingStartTime: Date?
@@ -59,7 +65,6 @@ class SimulationViewModel: ObservableObject {
     private var lastMoodChangeAt: Date = .distantPast
     
     private var moodScoreEMA: Double = 0.0
-//    private let emaAlpha: Double = 0.25
     private let emaAlpha: Double = 0.4
     
     var formattedTime: String {
@@ -116,8 +121,6 @@ class SimulationViewModel: ObservableObject {
         setupRecordingObserver()
         setupAnalysisSubscribers()
         setupMoodAggregation()
-        
-        setupAudioPlayers(named: ["fast-knocking-on-door.mp3", "opening-door.mp3"])
     }
     
     private func setupMoodAggregation() {
@@ -259,77 +262,6 @@ class SimulationViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    private func setupAudioPlayers(named fileNames: [String]) {
-        distractionPlayers.removeAll()
-        
-        for fullName in fileNames {
-            guard let lastDot = fullName.lastIndex(of: ".") else {
-                print("Audio Error: Format nama file salah (tidak ada ekstensi): '\(fullName)'.")
-                continue
-            }
-            
-            let pathWithoutExtension = String(fullName[..<lastDot])
-            let fileExtension = String(fullName[lastDot...].dropFirst())
-
-            guard let fileURL = Bundle.main.url(forResource: pathWithoutExtension, withExtension: fileExtension) else {
-                print("Audio Error: File '\(fullName)' (dicari sebagai '\(pathWithoutExtension).\(fileExtension)') tidak ditemukan di bundle.")
-                continue
-            }
-            
-            do {
-                let player = try AVAudioPlayer(contentsOf: fileURL)
-                player.prepareToPlay()
-                distractionPlayers.append(player)
-                print("Audio Player siap dengan file: \(fullName)")
-            } catch {
-                print("Audio Error: Gagal memuat player '\(fullName)': \(error.localizedDescription)")
-            }
-        }
-    }
-    
-    private func playAndScheduleDistraction() {
-        
-        guard settings.distractionLevel > 0 else {
-            print("Distraksi dinonaktifkan (Level 0).")
-            return
-        }
-        
-        guard !distractionPlayers.isEmpty else { return }
-        
-        let delayRange: ClosedRange<TimeInterval>
-        
-        if settings.distractionLevel == 1.0 {
-            delayRange = 30.0...45.0
-            print("Distraksi Level: Sedikit (delay 30-45s)")
-        } else {
-            delayRange = 15.0...25.0
-            print("Distraksi Level: Banyak (delay 15-25s)")
-        }
-        
-        let randomDelay = TimeInterval.random(in: delayRange)
-        
-        print("Audio Distraksi: Dijadwalkan dalam \(String(format: "%.1f", randomDelay)) detik.")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + randomDelay) { [weak self] in
-            guard let self = self else { return }
-            
-            guard self.isRecording else { return }
-            
-            let randomPlayer = self.distractionPlayers.randomElement()
-            
-            if let player = randomPlayer {
-                print("Memutar suara: \(player.url?.lastPathComponent ?? "unknown")")
-                player.currentTime = 0
-                player.play()
-            } else {
-                print("Audio Distraksi: Gagal memilih player.")
-            }
-            
-            // Schedule next distraction
-            self.playAndScheduleDistraction()
-        }
-    }
-    
     func toggleRecording() {
         self.errorMessage = nil
 
@@ -342,6 +274,7 @@ class SimulationViewModel: ObservableObject {
         let shouldStart = (whisperKitVM.recordingStatus == .stopped)
 
         if shouldStart {
+            MicMonitorModal.setupAudioSession()
             print("Requesting START recording...")
             startGame()
             whisperKitVM.toggleRecording(
@@ -402,6 +335,11 @@ class SimulationViewModel: ObservableObject {
         moodScoreEMA = 0.0
         lastMoodChangeAt = .distantPast
         
+        hasPlayedOvertimeSound = false
+        hasPlayedOverOneMinuteSound = false
+        hasScheduledAutoStop = false  
+        isOverOneMinuteTrigger = false
+        isOvertimeTrigger = false
         isPaused = false
         
         whisperKitVM.resetState()
@@ -415,7 +353,6 @@ class SimulationViewModel: ObservableObject {
                 self?.updateGameLogic()
             }
         }
-        playAndScheduleDistraction()
         startMoodTimer()
     }
     
@@ -423,14 +360,8 @@ class SimulationViewModel: ObservableObject {
         gameTimer?.invalidate()
         gameTimer = nil
         
-        distractionPlayers.forEach { player in
-            if player.isPlaying {
-                player.stop()
-            }
-        }
-        
         stopMoodTimer()
-        
+        stopMoodTimer()
     }
     
     private func startMoodTimer() {
@@ -452,8 +383,29 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func updateGameLogic() {
-            timerSeconds += 1
+        timerSeconds += 1
+        
+        if isMoreThanOneMinute,
+           !hasScheduledAutoStop,
+           whisperKitVM.recordingStatus == .recording {
+
+            hasScheduledAutoStop = true
+            print("⏰ Lebih dari 1 menit overtime – akan auto-stop dalam 5 detik")
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+                guard let self = self else { return }
+
+                if self.whisperKitVM.recordingStatus == .recording {
+                    print("⏹ Auto-stopping recording setelah 5 detik > 1 menit overtime")
+                    self.stopGame()
+                    self.whisperKitVM.toggleRecording(shouldLoop: false)
+                } else {
+                    print("✅ Auto-stop dibatalkan, recording sudah berhenti lebih dulu")
+                }
+            }
         }
+    }
+
     
     func cleanup() {
         gameTimer?.invalidate()
@@ -464,13 +416,28 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func applySmoothedMoodToUI() {
-        // — overtime rules (tetap) —
         if isLockedOvertimeMood {
-            presentationScore = -1.0   // paksa angry di Rive
+            presentationScore = -1.0
             return
         }
+        
         if isOvertime {
+            isOvertimeTrigger = true
+            if !hasPlayedOvertimeSound {
+                print("🔔 Overtime mulai – play SFX waktuHabis")
+                playLocalSound(named: "waktuHabis")
+                hasPlayedOvertimeSound = true
+            }
+            
             if isMoreThanOneMinute {
+                isOverOneMinuteTrigger = true
+    
+                if !hasPlayedOverOneMinuteSound {
+                    print("⏰ Overtime > 1 menit – play SFX waktuHabisBanget")
+                    playLocalSound(named: "waktuHabisBanget")
+                    hasPlayedOverOneMinuteSound = true
+                }
+                
                 presentationScore = -1.0
                 isLockedOvertimeMood = true
             } else {
@@ -479,15 +446,34 @@ class SimulationViewModel: ObservableObject {
             return
         }
 
-        // ⬅️ Baris kunci untuk Rive:
         let clamped = max(-1.0, min(1.0, moodScoreEMA))
         presentationScore = clamped
     }
 
 
+
 }
 
 extension SimulationViewModel {
+    
+    private func playLocalSound(named name: String, ext: String = "MP3") {
+        guard let url = Bundle.main.url(forResource: name, withExtension: ext) else {
+            print("⚠️ Sound file \(name).\(ext) tidak ditemukan di bundle")
+            return
+        }
+        
+        do {
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.prepareToPlay()
+            player.play()
+            distractionPlayers.append(player)
+                    
+            distractionPlayers.removeAll { !$0.isPlaying }
+        } catch {
+            print("⚠️ Gagal play sound \(name): \(error)")
+        }
+    }
+
     var durationLimitSeconds: Int {
         max(0, settings.durationMinutes * 60)
     }

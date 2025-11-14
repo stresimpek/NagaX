@@ -160,13 +160,13 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         let sumOfSquaredDiffs = pitchesInWindow.map { pow($0 - mean, 2) }.reduce(0, +)
         self.standardDeviation = sqrt(sumOfSquaredDiffs / Double(pitchesInWindow.count))
          
-        if standardDeviation < 17.0 || standardDeviation > 32.0 {
+        if standardDeviation < 17.0 {
             self.intonationLabel = "Intonasi Cenderung Datar/Berlebihan"
             self.intonationRating = 1
         } else if standardDeviation >= 22.0 && standardDeviation <= 32.0 {
             self.intonationLabel = "Intonasi Sangat Bervariasi!"
             self.intonationRating = 3
-        } else if standardDeviation > 17.0 && standardDeviation < 22.0 {
+        } else if (standardDeviation > 17.0 && standardDeviation < 22.0) || standardDeviation > 32.0 {
             self.intonationLabel = "Intonasi Cukup Dinamis"
             self.intonationRating = 2
         }
