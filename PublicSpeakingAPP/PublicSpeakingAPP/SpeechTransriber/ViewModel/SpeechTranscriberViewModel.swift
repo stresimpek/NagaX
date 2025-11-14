@@ -156,7 +156,19 @@ final class SpeechTranscriberViewModel: ObservableObject {
     func getComputeOptions() -> ModelComputeOptions {
         return ModelComputeOptions(audioEncoderCompute: encoderComputeUnits, textDecoderCompute: decoderComputeUnits)
     }
+    
+    private func resetSessionAggregation() {
+            sessionSamples.removeAll()
+            lastSavedSampleIndexForSession = 0
+            savedRecordingURL = nil
 
+            // Optional: remove previous session's WAV to avoid confusion
+            if let docsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+                let fileURL = docsDir.appendingPathComponent("full_recording.wav")
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+        }
+    
     func resetState() {
         transcribeTask?.cancel()
         transcriptionTask?.cancel()
@@ -166,7 +178,10 @@ final class SpeechTranscriberViewModel: ObservableObject {
         whisperKit?.audioProcessor.stopRecording()
         currentText = ""
         currentChunks = [:]
+        
+        resetSessionAggregation()
 
+        
         pipelineStart = Double.greatestFiniteMagnitude
         firstTokenTime = Double.greatestFiniteMagnitude
         effectiveRealTimeFactor = 0
