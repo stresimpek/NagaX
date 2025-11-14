@@ -64,9 +64,16 @@ struct SimulationView: View {
                 let gridHeight = geo.size.height
                 
                 Image(.backgroundRuangKelas)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .edgesIgnoringSafeArea(.all)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .edgesIgnoringSafeArea(.all)
+                    .zIndex(2)
+                
+                if viewModel.isTrackingEyeContact {
+                    SimulationARTrackerView(viewModel: viewModel)
+                        .edgesIgnoringSafeArea(.all)
+                        .zIndex(1) // Di bawah UI tapi di atas background
+                }
                 
                 VStack {
                     Spacer()
@@ -81,6 +88,7 @@ struct SimulationView: View {
                         }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .zIndex(5)
 
                 VStack {
                     ZStack {

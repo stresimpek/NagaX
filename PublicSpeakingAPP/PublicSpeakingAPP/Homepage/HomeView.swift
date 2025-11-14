@@ -65,7 +65,7 @@ struct HomeView: View {
                     ModalView(
                         onStart: {
                             coordinator.goToSimulation(settings)
-                        }
+                        },settings: settings
                     )
                     
                 case .simulation(let settings):
