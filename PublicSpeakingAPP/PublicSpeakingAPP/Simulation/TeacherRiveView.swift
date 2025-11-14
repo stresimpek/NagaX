@@ -23,6 +23,7 @@ struct TeacherRiveView: View {
         ctrl.view()
             .onAppear {
                 Task { @MainActor in
+                    ctrl.triggerBoredomBar(value: false)
                     ctrl.setScore(0.0)
                     lastSent = 0.0
                 }
@@ -38,12 +39,15 @@ struct TeacherRiveView: View {
             }
             .onReceive(sim.$isRecording) { isRecording in
                 if isRecording {
-                    // Baru mulai record:
                     ctrl.resumeAll()
                     ctrl.startDistractionLoop()
                 } else {
-                    // STOP record:
                     ctrl.pauseAll()
+                }
+            }
+            .onReceive(sim.$isOverOneMinuteTrigger) { value in
+                if value == true {
+                    ctrl.triggerBoredomBar(value: true)
                 }
             }
     }

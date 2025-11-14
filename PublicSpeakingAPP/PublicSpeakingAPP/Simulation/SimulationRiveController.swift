@@ -19,10 +19,8 @@ final class SimulationRiveController: ObservableObject {
         artboardName: "Simulation"
     )
 
-    // VM instance untuk data binding
     private var vmInstance: RiveDataBindingViewModel.Instance?
 
-    // Kontrol distraksi
     private var isDistractionActive = false
     private var scheduledLoopWorkItem: DispatchWorkItem?
     private var scheduledDoorWorkItem: DispatchWorkItem?
@@ -35,8 +33,6 @@ final class SimulationRiveController: ObservableObject {
         }
     }
 
-    // MARK: - Mood → Rive
-
     @MainActor
     func setScore(_ value: Double) {
         guard let numberProp = vmInstance?.numberProperty(fromPath: "PresentationScore") else {
@@ -44,8 +40,6 @@ final class SimulationRiveController: ObservableObject {
         }
         numberProp.value = Float(value)
     }
-
-    // MARK: - Public control dari SwiftUI
 
     func startDistractionLoop() {
         guard settings.distractionLevel > 0 else {
@@ -56,10 +50,8 @@ final class SimulationRiveController: ObservableObject {
 
         isDistractionActive = true
 
-        // loop kecil: PhoneBuzz + Sneeze
         scheduleNextSmallDistraction()
 
-        // khusus level “banyak”: Door + DropBottle 1x di tiap half
         if settings.distractionLevel > 1 {
             scheduleDoorAndBottleOncePerHalf()
         }
@@ -77,22 +69,33 @@ final class SimulationRiveController: ObservableObject {
         scheduledBottleWorkItem?.cancel()
         scheduledBottleWorkItem = nil
     }
+    
+    func triggerBoredomBar(value: Bool) {
+        guard let vm = vmInstance,
+              let boredom = vm.booleanProperty(fromPath: "EngagementBar OFF") else {
+            return
+        }
+
+        boredom.value = value
+    }
+
 
     func pauseAll() {
         stopDistractionLoop()
     }
+    
+    func pause() {
+        rive.pause()
+    }
 
     func resumeAll() {
-        rive.play()       // atau riveView?.play() tergantung API
+        rive.play()
     }
 
     func view() -> some View { rive.view() }
 }
 
-// MARK: - Private helpers
-
 private extension SimulationRiveController {
-    /// Loop distraksi “ringan”: Phone Buzz & Sneeze, untuk kedua level.
     func scheduleNextSmallDistraction() {
         guard isDistractionActive else { return }
         guard let vmInstance else {
@@ -108,10 +111,8 @@ private extension SimulationRiveController {
 
         let delayRange: ClosedRange<TimeInterval>
         if settings.distractionLevel == 1.0 {
-            // Sedikit distraksi
             delayRange = 45.0...60.0
         } else {
-            // Banyak distraksi
             delayRange = 20.0...30.0
         }
 
@@ -130,7 +131,6 @@ private extension SimulationRiveController {
                 print("Trigger: Sneeze")
             }
 
-            // jadwalkan lagi
             self.scheduleNextSmallDistraction()
         }
 
@@ -138,7 +138,6 @@ private extension SimulationRiveController {
         DispatchQueue.main.asyncAfter(deadline: .now() + randomDelay, execute: workItem)
     }
 
-    /// Untuk level “banyak”: Door & Drop Bottle hanya 1x per half durasi.
     func scheduleDoorAndBottleOncePerHalf() {
         guard let vmInstance else {
             print("VM belum siap, tunda Door/DropBottle.")
@@ -151,19 +150,16 @@ private extension SimulationRiveController {
             return
         }
 
-        // Ambil total durasi dari settings; kalau 0, pakai default 120s
         let totalDurationSec: TimeInterval
         if settings.durationMinutes > 0 {
             totalDurationSec = TimeInterval(settings.durationMinutes * 60)
         } else {
-            totalDurationSec = 120   // fallback kalau unlimited; bisa kamu sesuaikan
+            totalDurationSec = 120
         }
 
         let half = totalDurationSec / 2
-
-        // Door: random di [0, half)
+        
         let doorDelay = TimeInterval.random(in: 0...(max(half, 1)))
-        // DropBottle: random di [half, total)
         let bottleDelay = TimeInterval.random(in: half...(max(totalDurationSec, half + 1)))
 
         print("Door akan dijadwalkan sekitar \(String(format: "%.1f", doorDelay)) detik dari start.")

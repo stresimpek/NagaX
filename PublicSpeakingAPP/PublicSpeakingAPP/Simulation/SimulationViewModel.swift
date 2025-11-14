@@ -17,7 +17,12 @@ class SimulationViewModel: ObservableObject {
     @Published var timerSeconds: Int = 0
     @Published var isRecording: Bool = false
     @Published var errorMessage: String? = nil
-    
+    @Published var isOvertimeTrigger: Bool = false
+    @Published var isOverOneMinuteTrigger: Bool = false
+
+    private var hasPlayedOvertimeSound = false
+    private var hasPlayedOverOneMinuteSound = false
+    private var hasScheduledAutoStop = false
     
     let whisperKitVM: SpeechTranscriberViewModel
     let textAnalyzerVM: TextFrequencyAnalyzerViewModel
@@ -44,7 +49,6 @@ class SimulationViewModel: ObservableObject {
     private var lastMoodChangeAt: Date = .distantPast
     
     private var moodScoreEMA: Double = 0.0
-//    private let emaAlpha: Double = 0.25
     private let emaAlpha: Double = 0.4
     
     var formattedTime: String {
@@ -140,14 +144,13 @@ class SimulationViewModel: ObservableObject {
         var previousTransState: Bool? = nil
 
         whisperKitVM.$isRecording
-            .combineLatest(whisperKitVM.$isTranscribing) // <-- HANYA 2 SINYAL
+            .combineLatest(whisperKitVM.$isTranscribing)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] (isRec, isTrans) in // <-- HANYA 2 SINYAL
+            .sink { [weak self] (isRec, isTrans) in
                 guard let self = self else { return }
 
                 let startTimeStatus = (self.recordingStartTime == nil) ? "nil" : "set"
     
-                // --- KONDISI ASLI ---
                 let justStoppedCompletely = (previousRecState != false || previousTransState != false) && (!isRec && !isTrans)
 
                 if justStoppedCompletely && self.recordingStartTime != nil {
@@ -246,6 +249,7 @@ class SimulationViewModel: ObservableObject {
         let shouldStart = (whisperKitVM.recordingStatus == .stopped)
 
         if shouldStart {
+            MicMonitorModal.setupAudioSession()
             print("Requesting START recording...")
             startGame()
             whisperKitVM.toggleRecording(shouldLoop: true)
@@ -311,6 +315,12 @@ class SimulationViewModel: ObservableObject {
         moodScoreEMA = 0.0
         lastMoodChangeAt = .distantPast
         
+        hasPlayedOvertimeSound = false
+        hasPlayedOverOneMinuteSound = false
+        hasScheduledAutoStop = false  
+        isOverOneMinuteTrigger = false
+        isOvertimeTrigger = false
+        
         whisperKitVM.resetState()
         tempoVM.clearResults()
         intonationAnalyzerVM.clearResults()
@@ -327,14 +337,8 @@ class SimulationViewModel: ObservableObject {
         gameTimer?.invalidate()
         gameTimer = nil
         
-        distractionPlayers.forEach { player in
-            if player.isPlaying {
-                player.stop()
-            }
-        }
-        
         stopMoodTimer()
-        
+        stopMoodTimer()
     }
     
     private func startMoodTimer() {
@@ -355,7 +359,28 @@ class SimulationViewModel: ObservableObject {
     
     private func updateGameLogic() {
         timerSeconds += 1
+        
+        if isMoreThanOneMinute,
+           !hasScheduledAutoStop,
+           whisperKitVM.recordingStatus == .recording {
+
+            hasScheduledAutoStop = true
+            print("⏰ Lebih dari 1 menit overtime – akan auto-stop dalam 5 detik")
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+                guard let self = self else { return }
+
+                if self.whisperKitVM.recordingStatus == .recording {
+                    print("⏹ Auto-stopping recording setelah 5 detik > 1 menit overtime")
+                    self.stopGame()
+                    self.whisperKitVM.toggleRecording(shouldLoop: false)
+                } else {
+                    print("✅ Auto-stop dibatalkan, recording sudah berhenti lebih dulu")
+                }
+            }
+        }
     }
+
     
     func cleanup() {
         gameTimer?.invalidate()
@@ -366,13 +391,28 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func applySmoothedMoodToUI() {
-        // — overtime rules (tetap) —
         if isLockedOvertimeMood {
-            presentationScore = -1.0   // paksa angry di Rive
+            presentationScore = -1.0
             return
         }
+        
         if isOvertime {
+            isOvertimeTrigger = true
+            if !hasPlayedOvertimeSound {
+                print("🔔 Overtime mulai – play SFX waktuHabis")
+                playLocalSound(named: "waktuHabis")
+                hasPlayedOvertimeSound = true
+            }
+            
             if isMoreThanOneMinute {
+                isOverOneMinuteTrigger = true
+    
+                if !hasPlayedOverOneMinuteSound {
+                    print("⏰ Overtime > 1 menit – play SFX waktuHabisBanget")
+                    playLocalSound(named: "waktuHabisBanget")
+                    hasPlayedOverOneMinuteSound = true
+                }
+                
                 presentationScore = -1.0
                 isLockedOvertimeMood = true
             } else {
@@ -381,15 +421,34 @@ class SimulationViewModel: ObservableObject {
             return
         }
 
-        // ⬅️ Baris kunci untuk Rive:
         let clamped = max(-1.0, min(1.0, moodScoreEMA))
         presentationScore = clamped
     }
 
 
+
 }
 
 extension SimulationViewModel {
+    
+    private func playLocalSound(named name: String, ext: String = "MP3") {
+        guard let url = Bundle.main.url(forResource: name, withExtension: ext) else {
+            print("⚠️ Sound file \(name).\(ext) tidak ditemukan di bundle")
+            return
+        }
+        
+        do {
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.prepareToPlay()
+            player.play()
+            distractionPlayers.append(player)
+                    
+            distractionPlayers.removeAll { !$0.isPlaying }
+        } catch {
+            print("⚠️ Gagal play sound \(name): \(error)")
+        }
+    }
+
     var durationLimitSeconds: Int {
         max(0, settings.durationMinutes * 60)
     }
