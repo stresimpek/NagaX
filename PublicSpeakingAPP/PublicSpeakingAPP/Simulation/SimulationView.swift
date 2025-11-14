@@ -196,6 +196,7 @@ struct SimulationView: View {
                 setupInitialBanners()
                 isOverOneMinutes = false
                 hasShownOvertimeBanner = false
+            }
             .overlay {
                 if viewModel.whisperKitVM.showEarlyStopModal
                 {

@@ -23,11 +23,11 @@ struct AspectCheckTile: View {
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
             .frame(width: 110, height: 90)
-            .background(Color.darkBlue.opacity(0.15))
+            .background(Color.darkBlue2.opacity(0.8))
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Color.darkBlue.opacity(0.25), lineWidth: 1)
+                    .stroke(Color.darkBlue3.opacity(0.9), lineWidth: 1)
             )
             
             Group {
@@ -35,12 +35,12 @@ struct AspectCheckTile: View {
                     Image(systemName: "checkmark.circle.fill")
                         .imageScale(.large)
                         .symbolRenderingMode(.hierarchical)
-                        .foregroundColor(.darkBlue)
+                        .foregroundColor(.white)
                         .padding(6)
                         .transition(.scale.combined(with: .opacity))
                 } else {
                     Circle()
-                        .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                        .stroke(Color.lightBlue.opacity(0.8), lineWidth: 1)
                         .frame(width: 24, height: 24)
                         .padding(8)
                 }

@@ -24,8 +24,9 @@ struct DatePickerView: View {
             
             VStack(spacing: 20) {
                 Text("Tanggal dan jam berapakah kamu akan presentasi?")
-                    .font(.title)
+                    .font(.title2)
                     .foregroundStyle(Color.white)
+                    .bold()
 
                 DatePicker(
                     "",
