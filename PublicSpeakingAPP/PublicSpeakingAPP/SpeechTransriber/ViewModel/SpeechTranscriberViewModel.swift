@@ -491,7 +491,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         whisperKit?.audioProcessor.stopRecording()
 
         Task {
-            await flushPendingTranscription(graceSeconds: 0.35)
+//            await flushPendingTranscription(graceSeconds: 0.35)
 
             let currentTranscript = confirmedText.trimmingCharacters(in: .whitespacesAndNewlines)
             if currentTranscript.isEmpty && !hasSpokenInSession {
