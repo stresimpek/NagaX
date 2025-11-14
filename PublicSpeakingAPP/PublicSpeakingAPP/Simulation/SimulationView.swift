@@ -18,6 +18,7 @@ struct SimulationViewWrapper: View {
     
     let settings: PracticeSettings
     let onBack: () -> Void
+    let onRestartPractice: () -> Void
     let onComplete: (EvaluationModel, String, String) -> Void
     
     var body: some View {
@@ -31,7 +32,8 @@ struct SimulationViewWrapper: View {
                 fillerWordVM: fillerWordVM
             ),
             onBack: onBack,
-            onComplete: onComplete
+            onComplete: onComplete,
+            onRestartPractice: onRestartPractice
         )
     }
 }
@@ -42,6 +44,7 @@ struct SimulationView: View {
     @StateObject private var micMonitor = MicMonitorModal()
     
     let onBack: () -> Void
+    let onRestartPractice: () -> Void
     let onComplete: (EvaluationModel, String, String) -> Void
     
 //    private var isProcessing: Bool {
@@ -59,11 +62,13 @@ struct SimulationView: View {
     init(
         viewModel: SimulationViewModel,
         onBack: @escaping () -> Void,
-        onComplete: @escaping (EvaluationModel, String, String) -> Void
+        onComplete: @escaping (EvaluationModel, String, String) -> Void,
+        onRestartPractice: @escaping () -> Void
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBack = onBack
         self.onComplete = onComplete
+        self.onRestartPractice = onRestartPractice
     }
     
     @State private var isOverOneMinutes: Bool = false
@@ -136,7 +141,7 @@ struct SimulationView: View {
                                     .background(Color.black.opacity(0.27))
                                     .clipShape(RoundedRectangle(cornerRadius: 16))
                                     .offset(x: 20)
-                                   
+                                
                                 MicIconButton(showMicWarning: false)
                             }
                         }
@@ -191,7 +196,49 @@ struct SimulationView: View {
                 setupInitialBanners()
                 isOverOneMinutes = false
                 hasShownOvertimeBanner = false
-            }
+            .overlay {
+                if viewModel.whisperKitVM.showEarlyStopModal
+                {
+                                EarlyStopModalView(
+                                    onContinue: {
+                                        viewModel.resumeAfterEarlyStop()
+                                    },
+                                    onViewEvaluation: {
+                                        viewModel.whisperKitVM.proceedToEvaluationFromModal(loop: false)
+                                    }
+                                )
+                                .transition(.opacity)
+                                .zIndex(20)
+                            }
+// test the EmptyTranscriptModalView
+//                {
+//                    EmptyTranscriptModalView(
+//                        onRestart: {
+//                            viewModel.restartAfterEmptyTranscript()
+//                        },
+//                        onContinue: {
+//                            viewModel.resumeAfterEarlyStop()
+//                        }
+//                    )
+//                    .transition(.opacity)
+//                    .zIndex(20)
+//                }
+                
+                            
+                if viewModel.whisperKitVM.showEmptyTranscriptModal {
+                                EmptyTranscriptModalView(
+                                    onRestart: {
+                                        viewModel.restartAfterEmptyTranscript()
+                                    },
+                                    onContinue: {
+                                        viewModel.resumeAfterEarlyStop()
+                                    }
+                                )
+                                .transition(.opacity)
+                                .zIndex(20)
+                            }
+                }
+            .frame(width: geo.size.width, height: geo.size.height)
             .onDisappear { viewModel.cleanup() }
             .onReceive(viewModel.$isAnalysisComplete) { isComplete in
                 if isComplete {
