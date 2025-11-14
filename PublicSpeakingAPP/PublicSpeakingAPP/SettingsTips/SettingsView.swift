@@ -27,11 +27,7 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        // MARK: - MODIFIKASI 1: Gunakan ZStack
-        // ZStack digunakan untuk menumpuk modal di atas konten
         ZStack {
-            
-            // --- Konten SettingsView Anda yang sudah ada ---
             VStack(spacing: 0) {
                 SettingsHeader(
                     onBack: onBack,
@@ -53,7 +49,7 @@ struct SettingsView: View {
                         .frame(maxWidth: 280)
                         .padding(.leading, 12)
 
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 18) {
                         HStack(alignment: .center) {
                             Text("Durasi")
                                 .font(.headline)
@@ -86,7 +82,7 @@ struct SettingsView: View {
 //                                .toggleStyle(SwitchToggleStyle(tint: .darkBlue))
 //                        }
 
-                        HStack(alignment: .center, spacing: 40) {
+                        HStack(alignment: .top, spacing: 40) {
                             Text("Distraksi").font(.headline)
                             
                             VStack(spacing: 4) {
@@ -114,7 +110,6 @@ struct SettingsView: View {
                             Spacer()
                             
                             Button(action: {
-                                // MARK: - MODIFIKASI 2: Tampilkan modal
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     showAspectInfo = true
                                 }
@@ -145,38 +140,29 @@ struct SettingsView: View {
                     }
                     .padding(.horizontal, 20)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(Color.baseColorBlue)
             .foregroundStyle(Color.baseColorWhite)
             .navigationBarBackButtonHidden(true)
             
-            // --- AKHIR KONTEN SettingsView ---
-            
-            
-            // MARK: - MODIFIKASI 3: Modal Overlay
-            // (Memenuhi Poin 1: Latar belakang gelap, muncul di depan)
             if showAspectInfo {
-                // Layer 1: Dimming Background
                 Color.black.opacity(0.5)
                     .edgesIgnoringSafeArea(.all)
                     .onTapGesture {
-                        // Tutup jika user tap di luar modal
                         withAnimation(.easeInOut(duration: 0.2)) {
                             showAspectInfo = false
                         }
                     }
                 
-                // Layer 2: Modal Content
                 AspectInfoView(onDismiss: {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         showAspectInfo = false
                     }
                 })
-                // Gunakan .transition untuk fade-in/out (bukan swipe up)
                 .transition(.opacity)
             }
         }
-        // Hapus .fullScreenCover dari sini
     }
 }

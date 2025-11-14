@@ -33,9 +33,10 @@ struct NewEvaluationView: View {
     
     var body: some View {
         ZStack {
-            Color("BaseColorBlue")
-                .ignoresSafeArea()
-            
+            Image("BG")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .edgesIgnoringSafeArea(.all)
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 16) {
@@ -122,8 +123,8 @@ private extension NewEvaluationView {
         case .strukturKalimat:
             
             Spacer()
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                .frame(maxWidth: .infinity)
+                .padding()
             
         case .artikulasi:
             ArticulationTranscriptView(
@@ -142,14 +143,17 @@ private extension NewEvaluationView {
                     viewModel.fillerWordCount = maps.totalCount
                 }
             ).padding()
-        case .tempo: // Tempo
+        case .tempo:
             VStack() {
-                TempoResultChart(tempoSeries: viewModel.result.tempoSeries)
-                    .frame(height: 220)
+                TempoResultChart(
+                    tempoSeries: viewModel.result.tempoSeries,
+                    fixedDuration: viewModel.result.durationInSeconds
+                )
+                .frame(maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity)
             .padding()
-        case .intonasi: // Intonasi
+        case .intonasi:
             VStack() {
                 IntonationResultChart(
                     pitchSeries: viewModel.result.pitchSeries,
@@ -188,13 +192,13 @@ private extension NewEvaluationView {
 
 struct GuidanceView: View {
     let items: [AttributedString]
-
+    
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(.lightbulb)
                 .foregroundColor(.yellow)
                 .frame(width: 24, height: 24)
-
+            
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                     Text("\(index + 1). \(item)")
@@ -343,7 +347,7 @@ struct EvaluationSectionView<Content: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             content
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 240, alignment: .leading)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)

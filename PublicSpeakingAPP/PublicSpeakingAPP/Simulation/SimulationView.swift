@@ -18,6 +18,7 @@ struct SimulationViewWrapper: View {
     
     let settings: PracticeSettings
     let onBack: () -> Void
+    let onRestartPractice: () -> Void
     let onComplete: (EvaluationModel, String, String) -> Void
     
     var body: some View {
@@ -31,7 +32,8 @@ struct SimulationViewWrapper: View {
                 fillerWordVM: fillerWordVM
             ),
             onBack: onBack,
-            onComplete: onComplete
+            onComplete: onComplete,
+            onRestartPractice: onRestartPractice
         )
     }
 }
@@ -42,21 +44,37 @@ struct SimulationView: View {
     @StateObject private var micMonitor = MicMonitorModal()
     
     let onBack: () -> Void
+    let onRestartPractice: () -> Void
     let onComplete: (EvaluationModel, String, String) -> Void
     
+//    private var isProcessing: Bool {
+//        return !viewModel.isRecording && viewModel.whisperKitVM.isTranscribing
+//    }
+    
     private var isProcessing: Bool {
-        return !viewModel.isRecording && viewModel.whisperKitVM.isTranscribing
+        let status = viewModel.whisperKitVM.recordingStatus
+        return !viewModel.isRecording
+            && viewModel.whisperKitVM.isTranscribing
+            && (status == .stopping || status == .stopped)
     }
+
     
     init(
         viewModel: SimulationViewModel,
         onBack: @escaping () -> Void,
-        onComplete: @escaping (EvaluationModel, String, String) -> Void
+        onComplete: @escaping (EvaluationModel, String, String) -> Void,
+        onRestartPractice: @escaping () -> Void
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBack = onBack
         self.onComplete = onComplete
+        self.onRestartPractice = onRestartPractice
     }
+    
+    @State private var isOverOneMinutes: Bool = false
+    @State private var bannerQueue: [BannerItem] = []
+    @State private var currentBanner: BannerItem? = nil
+    @State private var hasShownOvertimeBanner = false
     
     var body: some View {
         GeometryReader { geo in
@@ -91,37 +109,24 @@ struct SimulationView: View {
                 .zIndex(5)
 
                 VStack {
-                    ZStack {
-                        Group {
-                            if viewModel.isOvertime {
-                                Text(viewModel.isMoreThanOneMinute ? "LEWAT DURASI!" : "WAKTU HABIS!")
-                                    .padding()
-                                    .foregroundColor(.baseColorRed)
-                                    .frame(height: 42, alignment: .center)
-                                    .background(.coral)
-                                    .cornerRadius(24)
-                                    .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
-                            } else {
-                                Text("Objective: Lakukan presentasi terbaikmu dengan aspek yang sudah ditentukan!")
-                                    .font(.title3)
-                                    .padding()
-                                    .foregroundColor(.baseColorBrown)
-                                    .frame(height: 42, alignment: .center)
-                                    .background(.baseColorWhite)
-                                    .cornerRadius(24)
-                                    .shadow(color: .beige, radius: 0, x: 0, y: 4)
-                            }
+                    Group {
+                        if isOverOneMinutes {
+                            Text("WAKTU HABIS!")
+                                .padding()
+                                .foregroundColor(.baseColorRed)
+                                .frame(height: 42)
+                                .background(.coral)
+                                .cornerRadius(24)
+                                .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
                         }
-                        .font(.headline)
-                        .animation(.easeInOut, value: viewModel.isOvertime)
-                        .animation(.easeInOut, value: viewModel.isMoreThanOneMinute)
-                        .padding(.top, 16)
                     }
-                    .padding(.top, 20)
-                    .padding(.horizontal)
-                    
+                    .font(.headline)
+                    .animation(.easeInOut, value: isOverOneMinutes)
+                    .padding(.top, 16)
+
+
                     Spacer()
-                    
+
                     HStack {
                         if viewModel.isOvertime {
                             HStack (alignment: .center) {
@@ -147,7 +152,6 @@ struct SimulationView: View {
                             .shadow(color: .beige, radius: 0, x: 0, y: 4)
                         }
                         Spacer()
-                        
                         if viewModel.isRecording {
                             ZStack(alignment: .leading) {
                                 AudioVisualizerModalView(micMonitor: micMonitor)
@@ -158,13 +162,11 @@ struct SimulationView: View {
                                     .background(Color.black.opacity(0.27))
                                     .clipShape(RoundedRectangle(cornerRadius: 16))
                                     .offset(x: 20)
-                                   
+                                
                                 MicIconButton(showMicWarning: false)
                             }
-                            
-                            }
+                        }
                         Spacer()
-                        
                         HStack(spacing: 5) {
                             ButtonComponent(
                                 title: viewModel.isRecording ? "STOP REKAM" : "MULAI REKAM",
@@ -174,7 +176,6 @@ struct SimulationView: View {
                                 action: viewModel.toggleRecording
                             )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing )
-                            
                             VStack(alignment: .leading) {
                                 if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
                                     Text(viewModel.whisperModelState.description)
@@ -185,15 +186,14 @@ struct SimulationView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, geo.safeAreaInsets.bottom)
+                    .padding(.bottom)
                 }
                 .zIndex(10)
-                
+
                 if isProcessing {
                     Color.black.opacity(0.5)
-                        .edgesIgnoringSafeArea(.all)
+                        .ignoresSafeArea()
                         .zIndex(11)
-                    
                     ProgressView("Menganalisis...")
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.5)
@@ -201,14 +201,68 @@ struct SimulationView: View {
                         .foregroundColor(.white)
                         .zIndex(12)
                 }
+            }
+            .overlay(alignment: .top) {
+                if let banner = currentBanner {
+                    ComponentObjective(
+                        text: banner.text,
+                        isOvertime: banner.isOvertime
+                    ) {
+                        advanceBannerQueue()
+                    }
+                    .id(banner.id)
+                }
+            }
+            .onAppear() {
+                setupInitialBanners()
+                isOverOneMinutes = false
+                hasShownOvertimeBanner = false
+            }
+            .overlay {
+                if viewModel.whisperKitVM.showEarlyStopModal
+                {
+                                EarlyStopModalView(
+                                    onContinue: {
+                                        viewModel.resumeAfterEarlyStop()
+                                    },
+                                    onViewEvaluation: {
+                                        viewModel.whisperKitVM.proceedToEvaluationFromModal(loop: false)
+                                    }
+                                )
+                                .transition(.opacity)
+                                .zIndex(20)
+                            }
+// test the EmptyTranscriptModalView
+//                {
+//                    EmptyTranscriptModalView(
+//                        onRestart: {
+//                            viewModel.restartAfterEmptyTranscript()
+//                        },
+//                        onContinue: {
+//                            viewModel.resumeAfterEarlyStop()
+//                        }
+//                    )
+//                    .transition(.opacity)
+//                    .zIndex(20)
+//                }
                 
-            }
+                            
+                if viewModel.whisperKitVM.showEmptyTranscriptModal {
+                                EmptyTranscriptModalView(
+                                    onRestart: {
+                                        viewModel.restartAfterEmptyTranscript()
+                                    },
+                                    onContinue: {
+                                        viewModel.resumeAfterEarlyStop()
+                                    }
+                                )
+                                .transition(.opacity)
+                                .zIndex(20)
+                            }
+                }
             .frame(width: geo.size.width, height: geo.size.height)
-            .onDisappear {
-                viewModel.cleanup()
-            }
+            .onDisappear { viewModel.cleanup() }
             .onReceive(viewModel.$isAnalysisComplete) { isComplete in
-                print("onReceive isAnalysisComplete: \(isComplete)")
                 if isComplete {
                     if let result = viewModel.evaluationResult {
                         print("Evaluation result FOUND. Calling onComplete...")
@@ -218,14 +272,26 @@ struct SimulationView: View {
                             viewModel.whisperKitVM.sentenceAnalysisResult
                         )
                     } else {
-                        print("Evaluation result is NIL. Calling onBack...")
                         onBack()
                     }
                 }
             }
+            .onReceive(viewModel.$isOverOneMinuteTrigger) { isOverOneMinute in
+                if isOverOneMinute {
+                    isOverOneMinutes = !isOverOneMinutes
+                }
+            }
+            .onReceive(viewModel.$isOvertimeTrigger) { isOver in
+                if isOver && !hasShownOvertimeBanner {
+                    hasShownOvertimeBanner = true
+                    enqueueBanner(
+                        text: "Sudah lewat durasi. Cepat selesaikan presentasimu!",
+                        isOvertime: true
+                    )
+                }
+            }
             .navigationBarBackButtonHidden(true)
             .task {
-                print("[SimulationView.task] Mereset state VM...")
                 viewModel.whisperKitVM.resetState()
                 viewModel.textAnalyzerVM.clearResults()
                 viewModel.intonationAnalyzerVM.clearResults()
@@ -234,11 +300,103 @@ struct SimulationView: View {
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") { viewModel.errorMessage = nil }
             } message: {
-                if let error = viewModel.errorMessage {
-                    Text(error)
+                if let error = viewModel.errorMessage { Text(error) }
+            }
+        }
+    }
+    
+    private func setupInitialBanners() {
+        enqueueBanner(
+            text: "Selama sesi latihan, audiens akan ikut merespon pada presentasimu.",
+            isOvertime: false
+        )
+        enqueueBanner(
+            text: "Jadi, lakukan presentasi dengan baik. Jangan sampai mereka bosan!",
+            isOvertime: false
+        )
+    }
+
+    private func enqueueBanner(text: String, isOvertime: Bool) {
+        let item = BannerItem(text: text, isOvertime: isOvertime)
+        bannerQueue.append(item)
+        processQueueIfNeeded()
+    }
+
+    private func processQueueIfNeeded() {
+        guard currentBanner == nil, !bannerQueue.isEmpty else { return }
+        currentBanner = bannerQueue.removeFirst()
+    }
+
+    private func advanceBannerQueue() {
+        currentBanner = nil
+        processQueueIfNeeded()
+    }
+
+}
+
+struct ComponentObjective: View {
+    let text: String
+    let isOvertime: Bool
+    var onFinished: (() -> Void)? = nil   // dipanggil setelah animasi selesai
+
+    @State private var appear = false
+
+    private var fadeMask: some View {
+        LinearGradient(
+            gradient: Gradient(stops: [
+                .init(color: .clear,  location: 0.0),
+                .init(color: .white,  location: 0.30),
+                .init(color: .white,  location: 0.70),
+                .init(color: .clear,  location: 1.0)
+            ]),
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
+    var body: some View {
+        ZStack {
+            // background gelap ikut animasi muncul/hilang
+            Color.black
+                .opacity(appear ? 0.5 : 0.0)
+                .ignoresSafeArea()
+
+            Text(text)
+                .padding(.horizontal, 64)
+                .padding(.vertical, 10)
+                .foregroundColor(.white)
+                .background(
+                    (isOvertime ? Color.baseColorRed : Color.blue)
+                        .mask(fadeMask)
+                )
+                .frame(maxWidth: .infinity)
+                .offset(y: appear ? 0 : -20)
+                .opacity(appear ? 1 : 0)
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: appear)
+        .onAppear {
+            // animasi masuk
+            appear = true
+
+            // tampil 3 detik
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                // animasi keluar
+                withAnimation(.easeOut(duration: 0.25)) {
+                    appear = false
+                }
+
+                // beri waktu animasi keluar
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    onFinished?()
                 }
             }
         }
     }
 }
 
+
+struct BannerItem: Identifiable, Equatable {
+    let id = UUID()
+    let text: String
+    let isOvertime: Bool
+}
