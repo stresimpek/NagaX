@@ -272,6 +272,7 @@ struct SimulationView: View {
                 viewModel.whisperKitVM.resetState()
                 viewModel.tempoVM.clearResults()
                 viewModel.fillerWordVM.clearResults()
+                viewModel.intonationAnalyzerVM.clearResults()
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") { viewModel.errorMessage = nil }
