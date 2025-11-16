@@ -13,7 +13,6 @@ struct SettingsView: View {
     @State private var enableQnA: Bool = false
     @State private var randomTopic: Bool = false
     
-    // State untuk mengontrol tampilan modal info
     @State private var showAspectInfo: Bool = false
     
     let onBack: () -> Void
@@ -27,23 +26,8 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topLeading) {
             VStack(spacing: 0) {
-                SettingsHeader(
-                    onBack: onBack,
-                    onNext: {
-                        let settings = PracticeSettings(
-                            durationMinutes: durationMinutes,
-                            distractionLevel: distractionLevel,
-//                            enableQnA: enableQnA,
-//                            randomTopic: randomTopic,
-                            selectedAspects: selectedAspects
-                        )
-                        onNext(settings)
-                    },
-                    isNextDisabled: shouldDisableNext
-                )
-
                 HStack(alignment: .center) {
                     RoomPreview()
                         .frame(maxWidth: 280)
@@ -71,16 +55,6 @@ struct SettingsView: View {
                             .cornerRadius(24)
                             .shadow(color: Color.darkBlue2, radius: 0, x: 0, y: 4)
                         }
-                        
-//                        HStack(spacing: 24) {
-//                            Toggle("QnA", isOn: $enableQnA)
-//                                .font(.headline)
-//                                .toggleStyle(SwitchToggleStyle(tint: .darkBlue))
-//                            Spacer()
-//                            Toggle("Random Topik", isOn: $randomTopic)
-//                                .font(.headline)
-//                                .toggleStyle(SwitchToggleStyle(tint: .darkBlue))
-//                        }
 
                         HStack(alignment: .top, spacing: 40) {
                             Text("Distraksi").font(.headline)
@@ -92,14 +66,30 @@ struct SettingsView: View {
                                         distractionLevel = v.rounded()
                                     }
                                 HStack {
-                                    Text("tidak ada")
+                                    VStack(alignment: .center) {
+                                        Circle()
+                                            .frame(width: 8, height: 8)
+                                        Text("Tidak ada")
+                                    }
+                                    
                                     Spacer()
-                                    Text("sedikit")
+                                    
+                                    VStack(alignment: .center) {
+                                        Circle()
+                                            .frame(width: 8, height: 8)
+                                        Text("Sedikit")
+                                    }
+                                    
                                     Spacer()
-                                    Text("banyak")
+                                    
+                                    VStack(alignment: .center) {
+                                        Circle()
+                                            .frame(width: 8, height: 8)
+                                        Text("banyak")
+                                    }
                                 }
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.baseColorWhite)
                             }
                         }
                         
@@ -137,6 +127,26 @@ struct SettingsView: View {
                             }
                             .padding(.vertical, 4)
                         }
+                        
+                        HStack {
+                            Spacer()
+                            ButtonComponent(
+                                title: "MULAI LATIHAN",
+                                systemImage: nil,
+                                size: .medium,
+                                kind: .primaryYellow,
+                                isEnabled: !shouldDisableNext,
+                                action: {
+                                    let settings = PracticeSettings(
+                                        durationMinutes: durationMinutes,
+                                        distractionLevel: distractionLevel,
+                                        selectedAspects: selectedAspects
+                                    )
+                                    onNext(settings)
+                                }
+                            )
+                        }
+                        
                     }
                     .padding(.horizontal, 20)
                 }
@@ -146,6 +156,17 @@ struct SettingsView: View {
             .background(Color.baseColorBlue)
             .foregroundStyle(Color.baseColorWhite)
             .navigationBarBackButtonHidden(true)
+            
+            ButtonComponent(
+                title: nil,
+                systemImage: "arrow.uturn.left",
+                size: .largeIconCircle,
+                kind: .secondaryBlue,
+                isEnabled: true,
+                action: onBack
+            )
+            .padding(.leading, 16)
+            .padding(.top, 16)
             
             if showAspectInfo {
                 Color.black.opacity(0.5)

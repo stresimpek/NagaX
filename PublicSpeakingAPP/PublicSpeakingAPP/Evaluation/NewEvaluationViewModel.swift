@@ -236,7 +236,7 @@ class NewEvaluationViewModel: ObservableObject {
         case "B":
             return try! AttributedString(markdown: "OK! Kecepatan bicaramu **\(wpm) wpm** masuk zona aman. Pertahankan ritme ini, jangan tiba-tiba berubah jadi komentator sepak bola.")
         case "C":
-            if wpm < 120 {
+            if wpm < 80 {
                 return try! AttributedString(markdown: "Terlalu lambat! **\(wpm) wpm** bisa bikin audiens ngantuk. Naikkan sedikit tempomu agar lebih energik!")
             } else {
                 return try! AttributedString(markdown: "Kebut banget! **\(wpm) wpm** terlalu cepat, audiens kesulitan mengikuti. Pelan-pelan saja, ini bukan lomba ngomong tercepat.")

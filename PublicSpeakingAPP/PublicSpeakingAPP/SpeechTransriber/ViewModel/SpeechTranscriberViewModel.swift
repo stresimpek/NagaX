@@ -113,8 +113,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
     
     @Published var savedRecordingURL: URL? = nil
     
-    // MARK: - Analyzer Links
-    weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     weak var intonationAnalyzerVM: IntonationAnalyzerViewModel?
     weak var tempoVM: TempoViewModel?
     weak var fillerWordVM: FillerWordViewModel?
@@ -214,7 +212,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
         savedRecordingURL = nil
         
         analyzerLastSampleIndex = 0
-        textAnalyzerVM?.clearResults()
         intonationAnalyzerVM?.clearResults()
         tempoVM?.clearResults()
         fillerWordVM?.clearResults()
@@ -969,8 +966,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 if let tempoVM = self.tempoVM {
                     tempoVM.updateTempo(from: allCurrentWords, totalDuration: totalDuration)
                 }
-                
-                textAnalyzerVM?.analyze(text: self.confirmedText + self.hypothesisText)
             }
         } catch {
             print("[EagerMode] Error: \(error)")
@@ -980,8 +975,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         let mergedResult = TranscriptionUtilities.mergeTranscriptionResults(eagerResults, confirmedWords: confirmedWords)
         return mergedResult
     }
-    
-    // MARK: - Helper: convert float samples -> AVAudioPCMBuffer (DITAMBAHKAN KEMBALI)
+
     private func makePCMBuffer(from samples: [Float], sampleRate: Double = Double(WhisperKit.sampleRate)) -> AVAudioPCMBuffer? {
         guard !samples.isEmpty else { return nil }
         guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,

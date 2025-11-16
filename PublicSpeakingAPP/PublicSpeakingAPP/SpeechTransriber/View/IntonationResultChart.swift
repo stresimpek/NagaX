@@ -71,7 +71,7 @@ struct IntonationResultChart: View {
                     )
                     .foregroundStyle(.shadowDisabled.opacity(0.1))
                     .annotation(position: .overlay, alignment: .center) {
-                        Text("TERLALU BERLEBIHAN")
+                        Text("MONOTON")
                             .font(.title3)
                             .fontWeight(.bold)
                             .foregroundStyle(Color.textGrey.opacity(0.9))
@@ -99,12 +99,22 @@ struct IntonationResultChart: View {
                     )
                     .foregroundStyle(.shadowDisabled.opacity(0.1))
                     .annotation(position: .overlay, alignment: .center) {
-                        Text("MONOTON")
+                        Text("AGAK BERLEBIHAN")
                             .font(.title3)
                             .fontWeight(.bold)
                             .foregroundStyle(Color.textGrey.opacity(0.9))
                     }
+                    
                 }
+                
+                
+                RuleMark(y: .value("Limit1", bandLow))
+                        .foregroundStyle(.gray.opacity(0.6))
+                        .lineStyle(.init(lineWidth: 1, dash: [4]))
+
+                RuleMark(y: .value("Limit2", bandHigh))
+                    .foregroundStyle(.gray.opacity(0.6))
+                    .lineStyle(.init(lineWidth: 1, dash: [4]))
                 
                 ForEach(processedSeries) { p in
                     LineMark(
@@ -126,8 +136,7 @@ struct IntonationResultChart: View {
             }
             .transaction { $0.animation = nil }
             .chartYAxis {
-                AxisMarks(position: .leading) {
-                    AxisGridLine()
+                AxisMarks {
                 }
             }
             .chartXAxis {

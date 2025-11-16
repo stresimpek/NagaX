@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-/// Design tokens untuk ukuran
 enum AppButtonSize {
     case large, medium, small, largeIconCircle
     
@@ -53,44 +52,6 @@ enum AppButtonSize {
     }
 }
 
-//private extension Font {
-//    /// Perkiraan ketinggian font untuk menghitung minHeight
-//    var sizeApprox: CGFloat {
-//        // Heuristic: try to infer common system sizes by comparing description
-//        let description = String(describing: self).lowercased()
-//        // Look for explicit size markers in the description (best-effort, non-fatal)
-//        if let sizeMatch = description.split(separator: "(").last?.split(separator: ")").first,
-//           let explicit = sizeMatch.split(separator: ",").first,
-//           let parsed = Double(explicit.trimmingCharacters(in: .whitespaces)) {
-//            return CGFloat(parsed)
-//        }
-//        #if canImport(UIKit)
-//        // Map common SwiftUI fonts to UIKit point sizes as a fallback
-//        // This mapping is approximate and only used when we can't parse a size.
-//        switch description {
-//        case let d where d.contains("largetitle"): return UIFont.preferredFont(forTextStyle: .largeTitle).pointSize
-//        case let d where d.contains("title2"): return UIFont.preferredFont(forTextStyle: .title2).pointSize
-//        case let d where d.contains("title3"): return UIFont.preferredFont(forTextStyle: .title3).pointSize
-//        case let d where d.contains("title"): return UIFont.preferredFont(forTextStyle: .title1).pointSize
-//        case let d where d.contains("headline"): return UIFont.preferredFont(forTextStyle: .headline).pointSize
-//        case let d where d.contains("subheadline"): return UIFont.preferredFont(forTextStyle: .subheadline).pointSize
-//        case let d where d.contains("callout"): return UIFont.preferredFont(forTextStyle: .callout).pointSize
-//        case let d where d.contains("footnote"): return UIFont.preferredFont(forTextStyle: .footnote).pointSize
-//        case let d where d.contains("caption2"): return UIFont.preferredFont(forTextStyle: .caption2).pointSize
-//        case let d where d.contains("caption"): return UIFont.preferredFont(forTextStyle: .caption1).pointSize
-//        default:
-//            return UIFont.preferredFont(forTextStyle: .body).pointSize
-//        }
-//        #elseif canImport(AppKit)
-//        // On macOS, provide a reasonable default body size
-//        return NSFont.preferredFont(forTextStyle: .body).pointSize
-//        #else
-//        return 16
-//        #endif
-//    }
-//}
-
-/// Variasi warna
 enum AppButtonStyleKind {
     case secondaryBlue
     case primaryYellow
@@ -119,22 +80,40 @@ enum AppButtonStyleKind {
     }
 }
 
-/// ButtonStyle untuk efek tekan/disabled
 struct AppButtonStyle: ButtonStyle {
     let size: AppButtonSize
     let kind: AppButtonStyleKind
     let isLoading: Bool
     let isEnabled: Bool
+    let isIconOnly: Bool
     
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let isCircle = isIconOnly && (size == .largeIconCircle)
+        
+        return configuration.label
             .font(size.font)
             .foregroundStyle(kind.foreground)
             .padding(.horizontal, size.horizontalPadding)
             .padding(.vertical, size.verticalPadding)
-            .background(kind.background)
-            .clipShape(RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous))
-            .shadow(color: kind.shadow, radius: 0, x: 0, y: configuration.isPressed ? 1 : 3)
+            .frame(
+                width: isCircle ? (size.iconSize + size.horizontalPadding * 2) : nil,
+                height: isCircle ? (size.iconSize + size.verticalPadding * 2) : nil
+            )
+            .background(
+                Group {
+                    if isCircle {
+                        Circle()
+                            .fill(kind.background)
+                    } else {
+                        RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous)
+                            .fill(kind.background)
+                    }
+                }
+                .shadow(color: kind.shadow,
+                        radius: 0,
+                        x: 0,
+                        y: configuration.isPressed ? 1 : 3)
+            )
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
             .animation(.spring(response: 0.22, dampingFraction: 0.9), value: configuration.isPressed)
             .overlay {
@@ -144,14 +123,13 @@ struct AppButtonStyle: ButtonStyle {
                         .tint(kind.foreground)
                 }
             }
-            .contentShape(Rectangle()) // perbesar area tap
+            .contentShape(Rectangle())
     }
 }
 
-/// Satu komponen untuk: teks-only, ikon-only, atau ikon+teks
 struct ButtonComponent: View {
-    let title: String?                 // nil => ikon-only
-    let systemImage: String?           // nil => teks-only
+    let title: String?
+    let systemImage: String?
     var size: AppButtonSize = .medium
     var kind: AppButtonStyleKind = .primaryYellow
     var fullWidth: Bool = false
@@ -160,33 +138,45 @@ struct ButtonComponent: View {
     var action: () -> Void
     
     var body: some View {
-        Button(action: action) {
+        // icon-only: ada icon, tidak ada title
+        let isIconOnly = (title == nil && systemImage != nil)
+        let effectiveKind: AppButtonStyleKind = isEnabled ? kind : .disabled
+        
+        Button {
+            if isEnabled && !isLoading {
+                action()
+            }
+        } label: {
             HStack(spacing: 8) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .font(.title1)
-                    //                        .font(.system(size: size.iconSize, weight: .semibold))
+                        .font(.system(size: size.iconSize, weight: .semibold))
                 }
                 if let title {
                     Text(title)
-                        .font(.title1)
+                        .font(size.font)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
             }
             .frame(maxWidth: fullWidth ? .infinity : nil)
         }
-        .buttonStyle(AppButtonStyle(size: size, kind: kind, isLoading: isLoading, isEnabled: isEnabled))
+        .buttonStyle(
+            AppButtonStyle(
+                size: size,
+                kind: effectiveKind,
+                isLoading: isLoading,
+                isEnabled: isEnabled,
+                isIconOnly: isIconOnly
+            )
+        )
         .disabled(!isEnabled || isLoading)
-        // Aksesibilitas untuk ikon-only
         .accessibilityLabel(accessibilityLabel)
     }
     
     private var accessibilityLabel: Text {
         if let title = title { return Text(title) }
-        // fallback ikon-only
         if let systemImage = systemImage { return Text(systemImage.replacingOccurrences(of: ".", with: " ")) }
         return Text("Button")
     }
 }
-

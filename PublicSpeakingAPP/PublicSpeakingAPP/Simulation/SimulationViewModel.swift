@@ -41,7 +41,6 @@ class SimulationViewModel: ObservableObject {
 
     
     let whisperKitVM: SpeechTranscriberViewModel
-    let textAnalyzerVM: TextFrequencyAnalyzerViewModel
     let intonationAnalyzerVM: IntonationAnalyzerViewModel
     let tempoVM: TempoViewModel
     let fillerWordVM: FillerWordViewModel
@@ -76,14 +75,12 @@ class SimulationViewModel: ObservableObject {
     init(
         settings: PracticeSettings,
         whisperKitVM: SpeechTranscriberViewModel,
-        textAnalyzerVM: TextFrequencyAnalyzerViewModel,
         intonationAnalyzerVM: IntonationAnalyzerViewModel,
         tempoVM: TempoViewModel,
         fillerWordVM: FillerWordViewModel
     ) {
         self.settings = settings
         self.whisperKitVM = whisperKitVM
-        self.textAnalyzerVM = textAnalyzerVM
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
         self.fillerWordVM = fillerWordVM
@@ -345,7 +342,6 @@ class SimulationViewModel: ObservableObject {
         whisperKitVM.resetState()
         tempoVM.clearResults()
         intonationAnalyzerVM.clearResults()
-        textAnalyzerVM.clearResults()
         fillerWordVM.clearResults()
         
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in

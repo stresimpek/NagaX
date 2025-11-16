@@ -21,19 +21,6 @@ final class AudioPlayerService: ObservableObject {
     private var timeObserverToken: Any?
     private var segmentEndTime: Double?
 
-    init() {
-        do {
-            let s = AVAudioSession.sharedInstance()
-            try s.setCategory(.playback, mode: .default, options: [.defaultToSpeaker])
-            try s.setActive(true)
-        } catch {
-            print("AVAudioSession error: \(error)")
-        }
-    }
-
-    // MARK: - Public API
-
-    /// Main case: play dari cursorTime (tanpa batas end)
     func play(from url: URL, startAt seconds: Double = 0) {
         playFromCursor(url: url, startAt: seconds)
     }

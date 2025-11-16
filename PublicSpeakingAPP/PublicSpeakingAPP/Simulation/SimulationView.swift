@@ -11,7 +11,6 @@ import WhisperKit
 
 struct SimulationViewWrapper: View {
     @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
-    @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
     @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
     @EnvironmentObject private var tempoVM: TempoViewModel
     @EnvironmentObject private var fillerWordVM: FillerWordViewModel
@@ -26,7 +25,6 @@ struct SimulationViewWrapper: View {
             viewModel: SimulationViewModel(
                 settings: settings,
                 whisperKitVM: whisperKitVM,
-                textAnalyzerVM: textAnalyzerVM,
                 intonationAnalyzerVM: intonationAnalyzerVM,
                 tempoVM: tempoVM,
                 fillerWordVM: fillerWordVM
@@ -272,9 +270,8 @@ struct SimulationView: View {
             .navigationBarBackButtonHidden(true)
             .task {
                 viewModel.whisperKitVM.resetState()
-                viewModel.textAnalyzerVM.clearResults()
-                viewModel.intonationAnalyzerVM.clearResults()
                 viewModel.tempoVM.clearResults()
+                viewModel.fillerWordVM.clearResults()
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") { viewModel.errorMessage = nil }
