@@ -288,7 +288,6 @@ class SimulationViewModel: ObservableObject {
         }
     }
 
-
     private func processEvaluation() {
         guard !isRecording else { return }
         guard !isStopModalActive else {
@@ -315,8 +314,6 @@ class SimulationViewModel: ObservableObject {
         )
         isAnalysisComplete = true
     }
-
-
     
     private func startGame() {
         resetGame()
@@ -385,17 +382,17 @@ class SimulationViewModel: ObservableObject {
            whisperKitVM.recordingStatus == .recording {
 
             hasScheduledAutoStop = true
-            print("⏰ Lebih dari 1 menit overtime – akan auto-stop dalam 5 detik")
+            print("Lebih dari 1 menit overtime – akan auto-stop dalam 5 detik")
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
                 guard let self = self else { return }
 
                 if self.whisperKitVM.recordingStatus == .recording {
-                    print("⏹ Auto-stopping recording setelah 5 detik > 1 menit overtime")
+                    print("Auto-stopping recording setelah 5 detik > 1 menit overtime")
                     self.stopGame()
                     toggleRecording()
                 } else {
-                    print("✅ Auto-stop dibatalkan, recording sudah berhenti lebih dulu")
+                    print("Auto-stop dibatalkan, recording sudah berhenti lebih dulu")
                 }
             }
         }
@@ -419,7 +416,7 @@ class SimulationViewModel: ObservableObject {
         if isOvertime {
             isOvertimeTrigger = true
             if !hasPlayedOvertimeSound {
-                print("🔔 Overtime mulai – play SFX waktuHabis")
+                print("Overtime mulai – play SFX waktuHabis")
                 playLocalSound(named: "waktuHabis")
                 hasPlayedOvertimeSound = true
             }
@@ -428,7 +425,7 @@ class SimulationViewModel: ObservableObject {
                 isOverOneMinuteTrigger = true
     
                 if !hasPlayedOverOneMinuteSound {
-                    print("⏰ Overtime > 1 menit – play SFX waktuHabisBanget")
+                    print("Overtime > 1 menit – play SFX waktuHabisBanget")
                     playLocalSound(named: "waktuHabisBanget")
                     hasPlayedOverOneMinuteSound = true
                 }
@@ -444,16 +441,13 @@ class SimulationViewModel: ObservableObject {
         let clamped = max(-1.0, min(1.0, moodScoreEMA))
         presentationScore = clamped
     }
-
-
-
 }
 
 extension SimulationViewModel {
     
     private func playLocalSound(named name: String, ext: String = "MP3") {
         guard let url = Bundle.main.url(forResource: name, withExtension: ext) else {
-            print("⚠️ Sound file \(name).\(ext) tidak ditemukan di bundle")
+            print("Sound file \(name).\(ext) tidak ditemukan di bundle")
             return
         }
         
@@ -465,7 +459,7 @@ extension SimulationViewModel {
                     
             distractionPlayers.removeAll { !$0.isPlaying }
         } catch {
-            print("⚠️ Gagal play sound \(name): \(error)")
+            print("Gagal play sound \(name): \(error)")
         }
     }
 

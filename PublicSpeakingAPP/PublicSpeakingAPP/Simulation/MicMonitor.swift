@@ -32,16 +32,16 @@ class MicMonitor: ObservableObject {
         
         do {
             try audioEngine.start()
-            print("🎙️ Mic monitoring started")
+            print("Mic monitoring started")
         } catch {
-            print("❌ AudioEngine failed to start:", error.localizedDescription)
+            print("AudioEngine failed to start:", error.localizedDescription)
         }
     }
     
     func stopMonitoring() {
         inputNode?.removeTap(onBus: bus)
         audioEngine.stop()
-        print("🛑 Mic monitoring stopped")
+        print("Mic monitoring stopped")
     }
     
     private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {

@@ -110,14 +110,13 @@ final class AudioPlayerService: ObservableObject {
         })
     }
 
-    // MARK: - Private helpers
-
+    // Private helpers
     private func playFromCursor(url: URL, startAt seconds: Double) {
         isPlayingPageID = nil
         setupAndPlay(url: url, startAt: seconds, endAt: nil, trackPageProgress: false)
     }
 
-    /// Helper tunggal yang meniru pola `playSegment` (seek → add timeObserver → play)
+    // Helper tunggal yang meniru pola `playSegment` (seek → add timeObserver → play)
     private func setupAndPlay(url: URL,
                               startAt: Double,
                               endAt: Double?,

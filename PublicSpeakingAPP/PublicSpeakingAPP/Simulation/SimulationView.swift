@@ -196,46 +196,31 @@ struct SimulationView: View {
                 hasShownOvertimeBanner = false
             }
             .overlay {
-                if viewModel.whisperKitVM.showEarlyStopModal
-                {
-                                EarlyStopModalView(
-                                    onContinue: {
-                                        viewModel.resumeAfterEarlyStop()
-                                    },
-                                    onViewEvaluation: {
-                                        viewModel.whisperKitVM.proceedToEvaluationFromModal(loop: false)
-                                    }
-                                )
-                                .transition(.opacity)
-                                .zIndex(20)
-                            }
-// test the EmptyTranscriptModalView
-//                {
-//                    EmptyTranscriptModalView(
-//                        onRestart: {
-//                            viewModel.restartAfterEmptyTranscript()
-//                        },
-//                        onContinue: {
-//                            viewModel.resumeAfterEarlyStop()
-//                        }
-//                    )
-//                    .transition(.opacity)
-//                    .zIndex(20)
-//                }
-                
+                if viewModel.whisperKitVM.showEarlyStopModal {
+                    EarlyStopModalView(
+                        onContinue: {
+                            viewModel.resumeAfterEarlyStop()
+                        },
+                        onViewEvaluation: {
+                            viewModel.whisperKitVM.proceedToEvaluationFromModal(loop: false)
+                        }
+                    )
+                    .transition(.opacity)
+                    .zIndex(20)
+                }
                             
                 if viewModel.whisperKitVM.showEmptyTranscriptModal {
-                                EmptyTranscriptModalView(
-                                    onRestart: {
-                                        viewModel.restartAfterEmptyTranscript()
-                                    },
-                                    onContinue: {
-                                        viewModel.resumeAfterEarlyStop()
-                                    }
-                                )
-                                .transition(.opacity)
-                                .zIndex(20)
+                        EmptyTranscriptModalView(
+                            onRestart: {
+                                viewModel.restartAfterEmptyTranscript()
+                            },
+                            onContinue: {
+                                viewModel.resumeAfterEarlyStop()
                             }
+                        )
+                        .transition(.opacity)
+                        .zIndex(20)
+                    }
                 }
             .frame(width: geo.size.width, height: geo.size.height)
             .onDisappear { viewModel.cleanup() }

@@ -303,36 +303,6 @@ struct EvaluationSectionView<Content: View>: View {
             }
             .padding(.bottom, 60)
             .frame(maxWidth: .infinity, alignment: .leading)
-            
-            //            LinearGradient(
-            //                gradient: Gradient(colors: [
-            //                    Color.white.opacity(0),
-            //                    Color.white.opacity(0.7),
-            //                    Color.white.opacity(0.95)
-            //                ]),
-            //                startPoint: .top,
-            //                endPoint: .bottom
-            //            )
-            //            .frame(height: 80)
-            //            .cornerRadius(10)
-            //            .allowsHitTesting(false)
-            
-            //            Button {
-            //                showFullScreen = true
-            //            } label: {
-            //                HStack {
-            //                    Image("Fullscreen")
-            //                    Text("Lihat Selengkapnya")
-            //                        .fontWeight(.semibold)
-            //                }
-            //                .padding(.vertical, 10)
-            //                .padding(.horizontal, 16)
-            //                .foregroundStyle(Color.baseColorBrown)
-            //                .background(Color.baseColorYellow)
-            //                .cornerRadius(24)
-            //                .shadow(radius: 2)
-            //                .padding(8)
-            //            }
         }
         .frame(maxWidth: .infinity, minHeight: 240)
         .cornerRadius(10)
@@ -366,8 +336,7 @@ struct StrukturKalimatFullScreenView: View {
         NavigationView {
             ZStack {
                 Color("BaseColorWhite")
-//                    .ignoresSafeArea()
-                
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(transcript.isEmpty ? "Tidak ada transkrip yang terekam." : transcript)

@@ -5,7 +5,6 @@
 //  Created by Elisabeth Levana on 13/11/25.
 //
 
-
 import SwiftUI
 
 struct EmptyTranscriptModalView: View {
