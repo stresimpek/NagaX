@@ -52,7 +52,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
     private func loadModel() {
         guard let modelPath = Bundle.main.path(forResource: "spice", ofType: "tflite") else {
             let err = IntonationError.modelNotFound
-            print("❌ FATAL: \(err.localizedDescription)")
+            print("FATAL: \(err.localizedDescription)")
             self.intonationLabel = "Error: Model file not found."
             self.publishedError = err.localizedDescription
             return
@@ -60,10 +60,10 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         do {
             interpreter = try Interpreter(modelPath: modelPath)
             try interpreter?.allocateTensors()
-            print("✅ TFLite model loaded.")
+            print("TFLite model loaded.")
         } catch {
             let err = IntonationError.interpreterFailed(error)
-            print("❌ Interpreter init error: \(err.localizedDescription)")
+            print("Interpreter init error: \(err.localizedDescription)")
             self.intonationLabel = "Error: Could not load model."
             self.publishedError = err.localizedDescription
         }
@@ -112,7 +112,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
             updatePitchHistory(with: f0Hz, at: currentTime)
             
         } catch {
-            print("❌ Inference error: \(error)")
+            print("Inference error: \(error)")
         }
     }
 
@@ -136,7 +136,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
             (time - timestamp) <= windowSize
         }
 
-        // 🔹 untuk hasil akhir & chart (tidak difilter)
+        // untuk hasil akhir & chart (tidak difilter)
         allPitchHistory.append(contentsOf: newEntries)
         
         // Kirim `currentTime` untuk proses filter window
@@ -160,13 +160,13 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         let sumOfSquaredDiffs = pitchesInWindow.map { pow($0 - mean, 2) }.reduce(0, +)
         self.standardDeviation = sqrt(sumOfSquaredDiffs / Double(pitchesInWindow.count))
          
-        if standardDeviation < 17.0 {
-            self.intonationLabel = "Intonasi Cenderung Datar/Berlebihan"
+        if standardDeviation < 18.0 {
+            self.intonationLabel = "Intonasi Cenderung Datar"
             self.intonationRating = 1
-        } else if standardDeviation >= 22.0 && standardDeviation <= 32.0 {
+        } else if standardDeviation >= 22.0 && standardDeviation <= 35.0 {
             self.intonationLabel = "Intonasi Sangat Bervariasi!"
             self.intonationRating = 3
-        } else if (standardDeviation > 17.0 && standardDeviation < 22.0) || standardDeviation > 32.0 {
+        } else if (standardDeviation >= 18.0 && standardDeviation < 22.0) || standardDeviation > 35.0 {
             self.intonationLabel = "Intonasi Cukup Dinamis"
             self.intonationRating = 2
         }
@@ -202,7 +202,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         }
         converter.convert(to: convertedBuffer, error: &error, withInputFrom: inputBlock)
         if let error = error {
-            print("❌ Error during audio conversion: \(error.localizedDescription)")
+            print("Error during audio conversion: \(error.localizedDescription)")
             return nil
         }
         return convertedBuffer

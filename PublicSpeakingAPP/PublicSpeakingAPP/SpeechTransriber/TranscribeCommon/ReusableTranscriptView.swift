@@ -44,7 +44,7 @@ struct ReusableTranscriptCardView: View {
                                 }
                                 .disabled(currentJumperIndex <= 1)
                                 
-                                Text("**\(currentJumperIndex)** / \(maps.totalCount) kata")
+                                Text("**\(currentJumperIndex)** / \(maps.totalPages)")
                                     .font(.footnoteBold)
                                 
                                 Button(action: { jumpToWord(globalIndex: currentJumperIndex + 1) }) {
@@ -84,7 +84,6 @@ struct ReusableTranscriptCardView: View {
                 }
             }
         }
-//        .frame(maxHeight: .infinity)
         .tabViewStyle(.page(indexDisplayMode: .never))
         .onChange(of: currentPageIndex) {
              audioPlayerVM.stopPlayback()

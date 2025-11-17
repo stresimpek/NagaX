@@ -12,7 +12,6 @@ import SwiftData
 struct PublicSpeakingAPPApp: App {
     
     @StateObject private var whisperKitVM = SpeechTranscriberViewModel()
-    @StateObject private var textAnalyzerVM = TextFrequencyAnalyzerViewModel()
     @StateObject private var intonationAnalyzerVM = IntonationAnalyzerViewModel()
     @StateObject private var tempoVM = TempoViewModel()
     @StateObject private var fillerWordVM = FillerWordViewModel()
@@ -23,13 +22,10 @@ struct PublicSpeakingAPPApp: App {
                 .modelContainer(for: PresentationDateModel.self)
                 .environment(\.timeZone, TimeZone(identifier: "Asia/Jakarta")!)
                 .environmentObject(whisperKitVM)
-                .environmentObject(textAnalyzerVM)
                 .environmentObject(intonationAnalyzerVM)
                 .environmentObject(tempoVM)
                 .environmentObject(fillerWordVM)
                 .task {
-                    guard whisperKitVM.textAnalyzerVM == nil else { return }
-                    whisperKitVM.textAnalyzerVM = textAnalyzerVM
                     whisperKitVM.intonationAnalyzerVM = intonationAnalyzerVM
                     whisperKitVM.tempoVM = tempoVM
                     whisperKitVM.fillerWordVM = fillerWordVM

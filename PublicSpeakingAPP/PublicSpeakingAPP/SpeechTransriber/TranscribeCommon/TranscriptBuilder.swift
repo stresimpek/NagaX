@@ -11,30 +11,35 @@ import SwiftUI
 
 struct TranscriptBuilder {
     
-    func buildPagesAndMaps(allWords: [WordTiming],
-                           isProblematic: (WordTiming) -> Bool) -> (pages: [TranscriptPage], maps: TranscriptMaps) {
+    func buildPagesAndMaps(
+        allWords: [WordTiming],
+        isProblematic: (WordTiming) -> Bool
+    ) -> (pages: [TranscriptPage], maps: TranscriptMaps) {
         
         guard !allWords.isEmpty else {
             return ([], .empty)
         }
-
+        
         var pages: [TranscriptPage] = []
         let punctuationSet = CharacterSet(charactersIn: ".?!")
         var currentIndex = 0
         
+        // slot error (1 slot per halaman yang punya error, seperti sekarang)
+        var errorSlotIndex = 0
+        
+        // 🔹 NEW: total jumlah kata yang dianggap problematik (global)
+        var totalProblematicWordCount = 0
+        
+        // index slot -> pageIndex
         var wordIndexToPageIndex: [Int: Int] = [:]
+        // pageIndex -> daftar globalIndex kata bermasalah di page tsb
         var pageIndexToWordIndices: [Int: [Int]] = [:]
         
-        let allProblematicWordGlobalIndices: [Int] = allWords.enumerated().compactMap { (index, word) -> Int? in
-            return isProblematic(word) ? index : nil
-        }
-        let totalProblematicWordCount = allProblematicWordGlobalIndices.count
-
         while currentIndex < allWords.count {
-            
-            let nextProblematicWord = allWords[currentIndex...].enumerated().first { (index, word) -> Bool in
-                return isProblematic(word)
-            }
+            // cari kata bermasalah berikutnya, mulai dari currentIndex
+            let nextProblematicWord = allWords[currentIndex...]
+                .enumerated()
+                .first { (_, word) in isProblematic(word) }
             
             guard let foundWord = nextProblematicWord else {
                 break
@@ -45,11 +50,12 @@ struct TranscriptBuilder {
             let start: Int
             let end: Int
             
+            // window ±25 kata untuk cek tanda baca
             let windowStart = max(0, wordIndex - 25)
-            let windowEnd = min(allWords.count - 1, wordIndex + 25)
-            let punctuationFoundInWindow = allWords[windowStart...windowEnd].contains(where: {
+            let windowEnd   = min(allWords.count - 1, wordIndex + 25)
+            let punctuationFoundInWindow = allWords[windowStart...windowEnd].contains {
                 $0.word.rangeOfCharacter(from: punctuationSet) != nil
-            })
+            }
             
             if punctuationFoundInWindow {
                 let searchRangeBefore = currentIndex..<wordIndex
@@ -63,53 +69,58 @@ struct TranscriptBuilder {
                     $0.word.rangeOfCharacter(from: punctuationSet) != nil
                 }
                 end = nearestPuncAfter ?? (allWords.count - 1)
-                
             } else {
+                // fallback: window kecil ±10 kata
                 start = max(currentIndex, wordIndex - 10)
-                end = min(allWords.count - 1, wordIndex + 10)
+                end   = min(allWords.count - 1, wordIndex + 10)
             }
             
             let pageWords = allWords[start...end]
             let currentPageIndex = pages.count
             
-            guard let firstWord = pageWords.first, let lastWord = pageWords.last else {
+            guard let firstWord = pageWords.first,
+                  let lastWord  = pageWords.last else {
                 currentIndex = end + 1
                 continue
             }
+            
             let pageStartTime = TimeInterval(firstWord.start)
-            let pageEndTime = TimeInterval(lastWord.end)
+            let pageEndTime   = TimeInterval(lastWord.end)
             
             var pageString = AttributedString("")
+            var problematicGlobalIndicesOnThisPage: [Int] = []
             
-            var problematicIndicesOnThisPage: [Int] = []
-            for word in pageWords {
+            for (localOffset, word) in pageWords.enumerated() {
                 var str = AttributedString(word.word + " ")
                 
                 if isProblematic(word) {
+                    // styling kata bermasalah
                     str.foregroundColor = .baseColorRed
                     str.font = .system(.body, design: .serif).bold()
                     
-                    let globalIndexForThisWord = allWords.firstIndex(of: word)
-                    if let globalIndex = globalIndexForThisWord, allProblematicWordGlobalIndices.contains(globalIndex) {
-                        
-                        if let countIndex = allProblematicWordGlobalIndices.firstIndex(of: globalIndex) {
-                            let oneBasedIndex = countIndex + 1
-                            
-                            if wordIndexToPageIndex[oneBasedIndex] == nil {
-                                wordIndexToPageIndex[oneBasedIndex] = currentPageIndex
-                                problematicIndicesOnThisPage.append(oneBasedIndex)
-                            }
-                        }
-                    }
+                    // global index kata ini
+                    let globalIndex = start + localOffset
+                    problematicGlobalIndicesOnThisPage.append(globalIndex)
+                    
+                    // 🔹 hitung kata problematik (global)
+                    totalProblematicWordCount += 1
                 } else {
                     str.foregroundColor = .primary
                     str.font = .system(.body, design: .serif)
                 }
+                
                 pageString.append(str)
             }
             
-            if !problematicIndicesOnThisPage.isEmpty {
-                pageIndexToWordIndices[currentPageIndex] = problematicIndicesOnThisPage
+            if !problematicGlobalIndicesOnThisPage.isEmpty {
+                // halaman ini punya error → tambah 1 “slot error”
+                errorSlotIndex += 1
+                
+                // slot error ke-n → page index
+                wordIndexToPageIndex[errorSlotIndex] = currentPageIndex
+                
+                // simpan list global index kata bermasalah di page ini
+                pageIndexToWordIndices[currentPageIndex] = problematicGlobalIndicesOnThisPage
             }
             
             let page = TranscriptPage(
@@ -122,10 +133,15 @@ struct TranscriptBuilder {
             currentIndex = end + 1
         }
         
-        let maps = TranscriptMaps(totalCount: totalProblematicWordCount,
-                                  wordIndexToPageIndex: wordIndexToPageIndex,
-                                  pageIndexToWordIndices: pageIndexToWordIndices)
+        // 🔹 Sekarang totalCount balik lagi jadi JUMLAH KATA problematik, bukan jumlah halaman
+        let maps = TranscriptMaps(
+            totalPages: errorSlotIndex,
+            totalCount: totalProblematicWordCount,
+            wordIndexToPageIndex: wordIndexToPageIndex,
+            pageIndexToWordIndices: pageIndexToWordIndices
+        )
         
         return (pages, maps)
     }
 }
+

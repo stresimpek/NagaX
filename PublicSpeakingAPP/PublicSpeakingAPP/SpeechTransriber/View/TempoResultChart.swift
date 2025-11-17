@@ -19,9 +19,9 @@ struct TempoResultChart: View {
     @State private var cursorTime: Double = 0.0
     @State private var isDragging: Bool = false
     
-    private let idealMin: Double = 110.0
+    private let idealMin: Double = 100.0
     private let idealMax: Double = 140.0
-    private let cukupMin: Double = 90.0
+    private let cukupMin: Double = 80.0
     private let cukupMax: Double = 160.0
     private let maxY: Double = 200.0
     
@@ -136,8 +136,7 @@ struct TempoResultChart: View {
             }
             .transaction { $0.animation = nil }
             .chartYAxis {
-                AxisMarks(position: .leading) {
-                    AxisGridLine()
+                AxisMarks {
                 }
             }
             .chartXAxis {

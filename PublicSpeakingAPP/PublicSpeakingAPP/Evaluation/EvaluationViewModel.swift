@@ -73,11 +73,11 @@ struct EvaluationViewModel {
     private static func gradeTempo(wpm: Double) -> (String, String, Double) {
         let roundedWPM = wpm.rounded()
 
-        if roundedWPM >= 100.0 && roundedWPM <= 150.0 {
+        if roundedWPM >= 100.0 && roundedWPM <= 140.0 {
             return ("A", "Tempo Ideal", 1.0)
         } else if (roundedWPM >= 80.0 && roundedWPM < 100.0) ||
-                  (roundedWPM > 150.0 && roundedWPM <= 170.0) {
-             let feedback = (roundedWPM < 100.0) ? "Tempo Agak Lambat" : "Tempo Agak Cepat"
+                  (roundedWPM > 140.0 && roundedWPM <= 160.0) {
+             let feedback = (roundedWPM >= 80.0 && roundedWPM < 100.0) ? "Tempo Agak Lambat" : "Tempo Agak Cepat"
             return ("B", feedback, 0.75)
         } else {
             let feedback = (roundedWPM < 80.0) ? "Tempo Sangat Lambat" : "Tempo Sangat Cepat"
@@ -104,13 +104,13 @@ struct EvaluationViewModel {
     }
 
     private static func gradeIntonation(stdDev: Double) -> (String, String, Double) {
-        if stdDev >= 25.0 && stdDev <= 35.0 {
+        if stdDev >= 22.0 && stdDev <= 35.0 {
             return ("A", "Sangat Dinamis", 1.0)
-        } else if stdDev >= 18.0 && stdDev < 25.0 {
-            return ("B", "Cukup Bervariasi", 0.75)
+        } else if (stdDev >= 18.0 && stdDev < 22.0) || stdDev > 35.0 {
+            let feedback = (stdDev > 35.0) ? "Agak Berlebihan" : "Cukup Dinamis"
+            return ("B", feedback, 0.75)
         } else {
-            let feedback = (stdDev < 18.0) ? "Cenderung Datar" : "Agak Berlebihan"
-            return ("C", feedback, 0.5)
+            return ("C", "Sangat Datar", 0.5)
         }
     }
 

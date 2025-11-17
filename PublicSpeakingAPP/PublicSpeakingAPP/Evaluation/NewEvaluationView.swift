@@ -43,8 +43,10 @@ struct NewEvaluationView: View {
                         tabsAndPaperSection
                         bottomButtons
                     }
+                    .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.horizontal, 16)
                 }
+                .safeAreaPadding(.horizontal)
             }
         }
         .fullScreenCover(isPresented: $viewModel.showFullScreen) {
@@ -64,7 +66,7 @@ private extension NewEvaluationView {
                 .padding(.bottom, -4)
             
             paperContent
-        }
+        }.frame(maxWidth: .infinity)
         .padding(.top, 16)
     }
     
@@ -229,7 +231,7 @@ struct EvaluationSectionView<Content: View>: View {
     let analysisText: String
     let transcript: String
     let guidance: [AttributedString]  // Add this
-    @State private var diffComponents: [DiffComponent] = []
+//    @State private var diffComponents: [DiffComponent] = []
     
     init(
         evaluatorNote: AttributedString,
@@ -293,44 +295,36 @@ struct EvaluationSectionView<Content: View>: View {
                         .padding()
                     
                 } else {
-                    if !diffComponents.isEmpty {
-                        DiffRenderView(components: diffComponents)
+//                    if !diffComponents.isEmpty {
+//                        DiffRenderView(components: diffComponents)
+//                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        VStack (spacing: 0) {
+                            Text("Transkrip Asli: ")
+                                .font(.body)
+                                .bold()
+                                .foregroundColor(.baseColorBrown)
+                            +
+                            Text(transcript)
+                                .font(.body)
+                                .foregroundColor(.baseColorBrown)
+                        }
+                       
+                        VStack (spacing: 0) {
+                            Text("Koreksi: ")
+                                .font(.body)
+                                .bold()
+                                .foregroundColor(.baseColorBrown)
+                            +
+                            Text(analysisText)
+                                .font(.body)
+                                .foregroundColor(.baseColorBrown)
+                        }
                     }
                 }
-                
             }
             .padding(.bottom, 60)
             .frame(maxWidth: .infinity, alignment: .leading)
-            
-            //            LinearGradient(
-            //                gradient: Gradient(colors: [
-            //                    Color.white.opacity(0),
-            //                    Color.white.opacity(0.7),
-            //                    Color.white.opacity(0.95)
-            //                ]),
-            //                startPoint: .top,
-            //                endPoint: .bottom
-            //            )
-            //            .frame(height: 80)
-            //            .cornerRadius(10)
-            //            .allowsHitTesting(false)
-            
-            //            Button {
-            //                showFullScreen = true
-            //            } label: {
-            //                HStack {
-            //                    Image("Fullscreen")
-            //                    Text("Lihat Selengkapnya")
-            //                        .fontWeight(.semibold)
-            //                }
-            //                .padding(.vertical, 10)
-            //                .padding(.horizontal, 16)
-            //                .foregroundStyle(Color.baseColorBrown)
-            //                .background(Color.baseColorYellow)
-            //                .cornerRadius(24)
-            //                .shadow(radius: 2)
-            //                .padding(8)
-            //            }
         }
         .frame(maxWidth: .infinity, minHeight: 240)
         .cornerRadius(10)
@@ -338,9 +332,9 @@ struct EvaluationSectionView<Content: View>: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
-        .onAppear {
-            diffComponents = DiffComponent.generate(original: transcript, new: analysisText)
-        }
+//        .onAppear {
+//            diffComponents = DiffComponent.generate(original: transcript, new: analysisText)
+//        }
     }
     
     private var staticContent: some View {
@@ -363,8 +357,8 @@ struct StrukturKalimatFullScreenView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color("BaseColorWhite").ignoresSafeArea()
-                
+                Color("BaseColorWhite")
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(transcript.isEmpty ? "Tidak ada transkrip yang terekam." : transcript)
