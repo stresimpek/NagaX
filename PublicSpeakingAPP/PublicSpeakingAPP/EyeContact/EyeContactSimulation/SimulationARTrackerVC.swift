@@ -89,6 +89,9 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         self.view.addSubview(arView)
         arView.delegate = self
         arView.backgroundColor = .clear
+        // === BARIS BARU DITAMBAHKAN DI SINI ===
+        arView.isHidden = true // Menyembunyikan tampilan kamera/AR, tetapi sesi tetap berjalan.
+        // =======================================
         arView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             arView.topAnchor.constraint(equalTo: self.view.topAnchor),

@@ -81,32 +81,20 @@ struct SimulationView: View {
             ZStack {
                 let gridHeight = geo.size.height
                 
-                Image(.backgroundRuangKelas)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .edgesIgnoringSafeArea(.all)
-                    .zIndex(2)
-                
                 if viewModel.isTrackingEyeContact {
                     SimulationARTrackerView(viewModel: viewModel)
                         .edgesIgnoringSafeArea(.all)
                         .zIndex(1) // Di bawah UI tapi di atas background
                 }
                 
-                VStack {
-                    Spacer()
-                    TeacherRiveView(sim: viewModel)
-                        .frame(height: geo.size.height * 0.85)
-                        .onChange(of: viewModel.isRecording) { oldValue, newValue in
-                            if newValue {
-                                micMonitor.startMonitoring()
-                            } else {
-                                micMonitor.stopMonitoring()
-                            }
-                        }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .zIndex(5)
+                TeacherRiveView(sim: viewModel)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    .zIndex(5)
+                    .onChange(of: viewModel.isRecording) { _, newValue in
+                        newValue ? micMonitor.startMonitoring() : micMonitor.stopMonitoring()
+                    }
 
                 VStack {
                     Group {
