@@ -43,8 +43,10 @@ struct NewEvaluationView: View {
                         tabsAndPaperSection
                         bottomButtons
                     }
+                    .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.horizontal, 16)
                 }
+                .safeAreaPadding(.horizontal)
             }
         }
         .fullScreenCover(isPresented: $viewModel.showFullScreen) {
@@ -64,7 +66,7 @@ private extension NewEvaluationView {
                 .padding(.bottom, -4)
             
             paperContent
-        }
+        }.frame(maxWidth: .infinity)
         .padding(.top, 16)
     }
     
@@ -363,7 +365,8 @@ struct StrukturKalimatFullScreenView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color("BaseColorWhite").ignoresSafeArea()
+                Color("BaseColorWhite")
+//                    .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {

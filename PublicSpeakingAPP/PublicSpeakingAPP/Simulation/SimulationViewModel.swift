@@ -271,7 +271,7 @@ class SimulationViewModel: ObservableObject {
         let shouldStart = (whisperKitVM.recordingStatus == .stopped)
 
         if shouldStart {
-            MicMonitorModal.setupAudioSession()
+//            MicMonitorModal.setupAudioSession()
             print("Requesting START recording...")
             startGame()
             whisperKitVM.toggleRecording(
