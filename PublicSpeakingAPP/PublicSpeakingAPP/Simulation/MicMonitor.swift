@@ -28,7 +28,7 @@ class MicMonitor: ObservableObject {
 
         AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
             guard granted else {
-                print("❌ Microphone permission denied")
+                print("Microphone permission denied")
                 return
             }
             DispatchQueue.main.async {
@@ -60,7 +60,7 @@ class MicMonitor: ObservableObject {
             // NOW create engine after session is fully active
             audioEngine = AVAudioEngine()
             guard let engine = audioEngine else {
-                print("❌ Failed to create engine")
+                print("Failed to create engine")
                 startSimulatedMonitoring()
                 return
             }
@@ -73,16 +73,16 @@ class MicMonitor: ObservableObject {
             
             let format = inputNode.inputFormat(forBus: bus)
             
-            print("🔍 Format check: SR=\(format.sampleRate), Ch=\(format.channelCount)")
+            print("Format check: SR=\(format.sampleRate), Ch=\(format.channelCount)")
             
             guard format.sampleRate > 0, format.channelCount > 0 else {
-                print("❌ Invalid format - falling back to simulation")
+                print("Invalid format - falling back to simulation")
                 cleanupEngine()
                 startSimulatedMonitoring()
                 return
             }
             
-            print("✅ Valid format: \(format.sampleRate) Hz, \(format.channelCount) channels")
+            print("Valid format: \(format.sampleRate) Hz, \(format.channelCount) channels")
             
             inputNode.installTap(onBus: bus, bufferSize: 1024, format: format) { [weak self] buffer, _ in
                 self?.processAudioBuffer(buffer)
@@ -90,10 +90,10 @@ class MicMonitor: ObservableObject {
             
             try engine.start()
             isMonitoring = true
-            print("🎙️ Mic monitoring started successfully")
+            print("Mic monitoring started successfully")
             
         } catch {
-            print("❌ Audio setup error: \(error.localizedDescription)")
+            print("Audio setup error: \(error.localizedDescription)")
             cleanupEngine()
             startSimulatedMonitoring()
         }
@@ -114,10 +114,10 @@ class MicMonitor: ObservableObject {
         do {
             try AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
         } catch {
-            print("⚠️ Session deactivation failed:", error.localizedDescription)
+            print("Session deactivation failed:", error.localizedDescription)
         }
 
-        print("🛑 Mic monitoring stopped")
+        print("Mic monitoring stopped")
     }
 
     private func cleanupEngine() {
@@ -159,6 +159,6 @@ class MicMonitor: ObservableObject {
             }
         }
 
-        print("🎙️ Simulated monitoring started")
+        print("Simulated monitoring started")
     }
 }
