@@ -22,13 +22,8 @@ final class AudioPlayerService: ObservableObject {
     private var segmentEndTime: Double?
 
     init() {
-        do {
-            let s = AVAudioSession.sharedInstance()
-            try s.setCategory(.playback, mode: .default, options: [.defaultToSpeaker])
-            try s.setActive(true)
-        } catch {
-            print("AVAudioSession error: \(error)")
-        }
+        // Don't activate session here - do it when actually playing
+        // This prevents conflicts with MicMonitor
     }
 
     // MARK: - Public API
@@ -69,6 +64,14 @@ final class AudioPlayerService: ObservableObject {
         currentTime = 0.0
         duration = 0.0
         segmentEndTime = nil
+        
+        // Deactivate the audio session when stopping
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+            print("Audio session deactivated")
+        } catch {
+            print("Failed to deactivate audio session: \(error)")
+        }
     }
 
     func playSegment(url: URL, page: TranscriptPage) {
@@ -77,6 +80,16 @@ final class AudioPlayerService: ObservableObject {
             return
         }
         stopPlayback()
+        
+        // Activate playback session
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default)
+            try session.setActive(true)
+        } catch {
+            print("Failed to activate playback session: \(error)")
+            return
+        }
         
         let playerItem = AVPlayerItem(url: url)
         player = AVPlayer(playerItem: playerItem)
@@ -126,6 +139,16 @@ final class AudioPlayerService: ObservableObject {
                               endAt: Double?,
                               trackPageProgress: Bool)
     {
+        // Activate playback session when starting playback
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default)
+            try session.setActive(true)
+        } catch {
+            print("Failed to activate playback session: \(error)")
+            return
+        }
+        
         // Reuse kalau URL sama
         if let player,
            let item = player.currentItem,
