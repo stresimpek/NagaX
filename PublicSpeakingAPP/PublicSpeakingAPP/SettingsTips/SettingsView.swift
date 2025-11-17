@@ -85,7 +85,7 @@ struct SettingsView: View {
                                     VStack(alignment: .center) {
                                         Circle()
                                             .frame(width: 8, height: 8)
-                                        Text("banyak")
+                                        Text("Banyak")
                                     }
                                 }
                                 .font(.caption)
@@ -165,7 +165,6 @@ struct SettingsView: View {
                 isEnabled: true,
                 action: onBack
             )
-            .padding(.leading, 16)
             .padding(.top, 16)
             
             if showAspectInfo {
