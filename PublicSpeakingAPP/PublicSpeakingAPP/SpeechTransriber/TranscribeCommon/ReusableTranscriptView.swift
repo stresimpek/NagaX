@@ -44,7 +44,7 @@ struct ReusableTranscriptCardView: View {
                                 }
                                 .disabled(currentJumperIndex <= 1)
                                 
-                                Text("**\(currentJumperIndex)** / \(maps.totalCount)")
+                                Text("**\(currentJumperIndex)** / \(maps.totalPages)")
                                     .font(.footnoteBold)
                                 
                                 Button(action: { jumpToWord(globalIndex: currentJumperIndex + 1) }) {

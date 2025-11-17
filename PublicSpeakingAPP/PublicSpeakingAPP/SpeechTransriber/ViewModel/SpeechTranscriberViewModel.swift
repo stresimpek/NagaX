@@ -160,7 +160,6 @@ final class SpeechTranscriberViewModel: ObservableObject {
             lastSavedSampleIndexForSession = 0
             savedRecordingURL = nil
 
-            // Optional: remove previous session's WAV to avoid confusion
             if let docsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
                 let fileURL = docsDir.appendingPathComponent("full_recording.wav")
                 try? FileManager.default.removeItem(at: fileURL)
@@ -222,7 +221,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             hasSpokenInSession = false
     }
 
-    // MARK: - Model Management Logic
+
     func fetchModels() {
         availableModels = [selectedModel]
 

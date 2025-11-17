@@ -16,12 +16,13 @@ struct TranscriptPage: Identifiable {
 }
 
 struct TranscriptMaps {
+    let totalPages: Int
     let totalCount: Int
     let wordIndexToPageIndex: [Int: Int]
     let pageIndexToWordIndices: [Int: [Int]]
     
     static var empty: TranscriptMaps {
-        TranscriptMaps(totalCount: 0, wordIndexToPageIndex: [:], pageIndexToWordIndices: [:])
+        TranscriptMaps(totalPages: 0, totalCount: 0, wordIndexToPageIndex: [:], pageIndexToWordIndices: [:])
     }
 }
 

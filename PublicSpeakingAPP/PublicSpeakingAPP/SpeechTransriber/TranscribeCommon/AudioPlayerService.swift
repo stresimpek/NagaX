@@ -24,7 +24,7 @@ final class AudioPlayerService: ObservableObject {
     init() {
         do {
             let s = AVAudioSession.sharedInstance()
-            try s.setCategory(.playback, mode: .default, options: [.defaultToSpeaker])
+            try s.setCategory(.playback, mode: .default)
             try s.setActive(true)
         } catch {
             print("AVAudioSession error: \(error)")

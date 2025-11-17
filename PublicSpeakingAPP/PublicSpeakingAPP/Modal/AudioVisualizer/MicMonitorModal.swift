@@ -104,7 +104,7 @@ class MicMonitorModal: ObservableObject {
             }
             return
         }
-        
+        stopMonitoring()
         inputNode.installTap(onBus: bus, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             self?.processAudioBuffer(buffer)
         }
@@ -145,4 +145,8 @@ class MicMonitorModal: ObservableObject {
             self.levels.append(normalized * 60)
         }
     }
+    
+    deinit {
+            stopMonitoring()
+        }
 }
