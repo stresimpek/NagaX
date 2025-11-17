@@ -23,7 +23,7 @@ enum RecordingStatus {
 
 @MainActor
 final class SpeechTranscriberViewModel: ObservableObject {
-    // MARK: - Sentence Analysis (LLM)
+    //Sentence Analysis (LLM)
     @Published var sentenceAnalysisResult: String = ""
     @Published var isAnalyzingSentence: Bool = false
     @Published var sentenceAnalysisError: String? = nil
@@ -31,7 +31,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     // LLM service for sentence analysis
     private let mistralService: MistralAIService
 
-    // MARK: - Core Properties
+    //Core Properties
     @Published var whisperKit: WhisperKit?
     @Published var isRecording: Bool = false
     @Published var isTranscribing: Bool = false
@@ -40,7 +40,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var transcriptionTask: Task<Void, Never>?
     @Published var transcribeTask: Task<Void, Never>?
 
-    // MARK: - Model Management
+    //Model Management
     @Published var modelState: ModelState = .unloaded
     @Published var modelStorage: String = "huggingface/models/argmaxinc/whisperkit-coreml"
     @Published var localModels: [String] = []
@@ -51,7 +51,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var loadingProgressValue: Float = 0.0
     @Published var specializationProgressRatio: Float = 0.7
 
-    // MARK: - Transcription Settings
+    //Transcription Settings
     @Published var selectedModel: String = "openai_whisper-large-v3-v20240930_547MB"
     @Published var selectedTask: String = "transcribe"
     @Published var selectedLanguage: String = "indonesian"
@@ -75,7 +75,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var encoderComputeUnits: MLComputeUnits = .cpuAndNeuralEngine
     @Published var decoderComputeUnits: MLComputeUnits = .cpuAndNeuralEngine
 
-    // MARK: - Transcription State & Stats
+    // Transcription State & Stats
     @Published var currentText: String = ""
     @Published var currentChunks: [Int: (chunkText: [String], fallbacks: Int)] = [:]
     @Published var modelLoadingTime: TimeInterval = 0
@@ -98,7 +98,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var confirmedSegments: [TranscriptionSegment] = []
     @Published var unconfirmedSegments: [TranscriptionSegment] = []
 
-    // MARK: - Eager Mode Properties
+    //Eager Mode Properties
     @Published var eagerResults: [TranscriptionResult?] = []
     @Published var prevResult: TranscriptionResult?
     @Published var lastAgreedSeconds: Float = 0.0
@@ -113,7 +113,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     
     @Published var savedRecordingURL: URL? = nil
     
-    // MARK: - Analyzer Links
+    //Analyzer Links
     weak var textAnalyzerVM: TextFrequencyAnalyzerViewModel?
     weak var intonationAnalyzerVM: IntonationAnalyzerViewModel?
     weak var tempoVM: TempoViewModel?
@@ -131,7 +131,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     private var sessionSamples: [Float] = []
     private var lastSavedSampleIndexForSession: Int = 0
     
-    // MARK: - Init
+    //Init
     init(mistralAPIKey: String = "rvxmDdHNzkeGxHrJ9hhrZhDJTvjYCV3i") {
         self.mistralService = MistralAIService(apiKey: mistralAPIKey)
     }
@@ -225,7 +225,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             hasSpokenInSession = false
     }
 
-    // MARK: - Model Management Logic
+    // Model Management Logic
     func fetchModels() {
         availableModels = [selectedModel]
 
@@ -410,7 +410,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Recording Logic
+    //Recording Logic
     func toggleRecording(shouldLoop: Bool, timerSeconds: Double, durationLimitSeconds: Int) {
         isRecording.toggle()
 
@@ -569,7 +569,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
     }
     
-    // MARK: - LLM Sentence Analysis
+    //LLM Sentence Analysis
     func analyzeTranscriptSentence() async {
         // Use the finalized confirmedText as transcript after finalizeText()
         let transcript = self.confirmedText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -620,7 +620,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         finalizedStyledTranscript = attributed
     }
     
-    // MARK: - Transcription Logic
+    //Transcription Logic
     func realtimeLoop() {
         transcriptionTask = Task {
             while isRecording && isTranscribing {
@@ -981,7 +981,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         return mergedResult
     }
     
-    // MARK: - Helper: convert float samples -> AVAudioPCMBuffer (DITAMBAHKAN KEMBALI)
+    //Helper: convert float samples -> AVAudioPCMBuffer (DITAMBAHKAN KEMBALI)
     private func makePCMBuffer(from samples: [Float], sampleRate: Double = Double(WhisperKit.sampleRate)) -> AVAudioPCMBuffer? {
         guard !samples.isEmpty else { return nil }
         guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,

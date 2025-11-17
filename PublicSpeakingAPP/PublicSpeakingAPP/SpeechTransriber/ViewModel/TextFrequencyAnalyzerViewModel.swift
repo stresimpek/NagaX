@@ -11,7 +11,7 @@ import Combine
 
 @MainActor
 final class TextFrequencyAnalyzerViewModel: ObservableObject {
-    // MARK: - Published Properties for UI
+    // Published Properties for UI
     @Published var wordFrequencies: [String: Int] = [:]
     @Published var termFrequencies: [String: Double] = [:]
     @Published var repeatedWordsInWindow: [String: Int] = [:]
@@ -24,7 +24,7 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
         "eh", "ehm", "hmm", "ee", "um", "uh", "anu", "um", "eee"
     ]
 
-    // MARK: - Indonesian Stop Words
+    //Indonesian Stop Words
     private let stopWordsID: Set<String> = [
         "ada", "adalah", "adanya", "adapun", "agak", "agaknya", "agar", "akan", "akankah", "akhir",
         "akhiri", "akhirnya", "aku", "akulah", "amat", "amatlah", "anda", "andalah", "antar",
@@ -116,7 +116,7 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
         "walaupun", "while", "ya", "yaitu", "yakin", "yakni", "yang"
     ]
 
-    // MARK: - Public API
+    //Public API
     func analyze(text: String) {
         guard !text.isEmpty else {
             clearResults()
@@ -140,7 +140,7 @@ final class TextFrequencyAnalyzerViewModel: ObservableObject {
         fillerWordCount = [:]
     }
 
-    // MARK: - Analysis Functions
+    //Analysis Functions
     private func preprocess(text: String) -> (allTokens: [String], filteredTokens: [String]) {
         let tagger = NLTagger(tagSchemes: [.tokenType])
         tagger.string = text
