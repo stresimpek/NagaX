@@ -12,8 +12,15 @@ struct TitleView: View {
         VStack(spacing: 4) {
             Text("INSTRUKSI")
                 .font(.title2.weight(.black))
-                .foregroundColor(.baseColorBrown)
-                .underline(true, color: .baseColorBrown)
+                .foregroundColor(Color("BaseColorBrown"))
+                .padding(.bottom, 1)
+                .background(
+                    Rectangle()
+                        .fill(Color("BaseColorBrown"))
+                        .frame(height: 3)
+                        .cornerRadius(10)
+                    , alignment: .bottom
+                )
         }
     }
 }
@@ -38,7 +45,9 @@ struct MicSetupView: View {
                 MicIconButton(showMicWarning: showMicWarning)
             }
             Image(imageName)
-                .resizable().scaledToFit().frame(height: 150)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 150)
         }
     }
 }
@@ -77,11 +86,10 @@ struct InstructionTextView: View {
         VStack {
             Text(message)
                 .font(.subheadline)
-                .lineSpacing(6)
+                .lineSpacing(4)
                 .foregroundColor(.baseColorBrown)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, geometry.size.width * 0.05)
-                .lineLimit(nil)
+                .padding(.horizontal)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
