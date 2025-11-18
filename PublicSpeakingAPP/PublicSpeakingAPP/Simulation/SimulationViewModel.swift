@@ -70,15 +70,8 @@ class SimulationViewModel: ObservableObject {
     private var moodScoreEMA: Double = 0.0
     private let emaAlpha: Double = 0.4
     
-    // 🆕 Properti baru untuk Debounce berbasis Tick/Counter
     private var eyeContactViolationCount: Int = 0
-    private let eyeContactViolationThreshold: Int = 2 // 3 tick * 0.5 detik/tick = 1.5 detik
-    
-//    // untuk menahan kapan pelanggaran non-normal pertama kali muncul
-//    private var eyeContactViolationStart: Date? = nil
-//
-//    // ambang durasi (detik) sebelum dianggap pelanggaran nyata
-//    private let eyeContactViolationDebounce: TimeInterval = 2.0
+    private let eyeContactViolationThreshold: Int = 2
     
     var formattedTime: String {
         let minutes = timerSeconds / 60
@@ -434,9 +427,7 @@ class SimulationViewModel: ObservableObject {
     func updateHeadGazeEvent(_ event: HeadGazeEvent) {
         guard self.isTrackingEyeContact else { return }
 
-        // Jika normal -> reset counter dan set rating normal (3)
         if event == .normal {
-            // Reset counter
             if eyeContactViolationCount > 0 {
                  print("ARKit Event: \(event) -> Violation CANCELLED (Count reset).")
             }
@@ -449,28 +440,16 @@ class SimulationViewModel: ObservableObject {
             }
             return
         }
-
-        // event != .normal -> kemungkinan pelanggaran (head/gaze)
-        
-        // 1. Tambah hitungan pelanggaran
         eyeContactViolationCount += 1
         print("ARKit Event: \(event) -> Violation Count: \(eyeContactViolationCount)")
 
-
-        // 2. Cek apakah hitungan mencapai ambang batas
         if eyeContactViolationCount >= eyeContactViolationThreshold {
-            // melebihi ambang -> baru dianggap pelanggaran nyata (Rating 1)
             let newRating = 1
             if self.eyeContactRating != newRating {
                 self.eyeContactRating = newRating
                 print("ARKit Event: \(event) -> Violation Confirmed! Rating set to \(newRating)")
             }
-            
-            // Catatan: Biarkan counter tetap di 3 (atau lebih) setelah dikonfirmasi,
-            // sehingga rating 1 tetap dipertahankan selama event non-normal terus diterima.
-            
         } else {
-            // Belum mencapai threshold (Rating 2)
             let newRating = 2
             if self.eyeContactRating != newRating {
                 self.eyeContactRating = newRating
@@ -510,13 +489,9 @@ class SimulationViewModel: ObservableObject {
             }
             return
         }
-
         let clamped = max(-1.0, min(1.0, moodScoreEMA))
         presentationScore = clamped
     }
-
-
-
 }
 
 extension SimulationViewModel {

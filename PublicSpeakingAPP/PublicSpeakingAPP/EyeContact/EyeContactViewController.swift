@@ -9,19 +9,16 @@ import UIKit
 import ARKit
 import SceneKit
 
-// Protokol untuk kirim data ke SwiftUI
 protocol EyeContactViewControllerDelegate: AnyObject {
     func didUpdateGaze(point: CGPoint, onTarget: Bool)
 }
 
-// Ini adalah ViewController ASLI kamu, tapi di-strip UI-nya
 class EyeContactViewController: UIViewController, ARSCNViewDelegate {
     
     weak var delegate: EyeContactViewControllerDelegate?
     
     private var arView: ARSCNView!
     
-    // Properti dari kode kamu untuk kalkulasi gaze
     private let detectionRadius: CGFloat = 30
     private let gazeSmoothness: Int = 30
     private let gazeLerpFactor: CGFloat = 0.05
@@ -34,8 +31,6 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
     
     private var lastLerpedGazePoint: CGPoint = .zero
 
-    // MARK: - View Lifecycle
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .clear
@@ -44,7 +39,6 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // Titik target adalah pusat layar
         self.screenCenter = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
         self.lastLerpedGazePoint = self.screenCenter
     }
@@ -64,8 +58,6 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
         arView.session.pause()
     }
     
-    // MARK: - Setup
-    
     private func setupARView() {
         arView = ARSCNView(frame: self.view.bounds)
         self.view.addSubview(arView)
@@ -81,11 +73,8 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
         ])
     }
     
-    // MARK: - ARSCNViewDelegate
-    
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         
-        // --- [1. AMBIL WAJAH TERDEKAT] ---
         guard let frame = arView.session.currentFrame else { return }
         let faceAnchors = frame.anchors.compactMap { $0 as? ARFaceAnchor }
         
@@ -96,10 +85,8 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
         
         self.latestFaceAnchor = closestFaceAnchor
         
-        // --- [2. KALKULASI GAZE (Logika Asli Kamu)] ---
         guard let faceAnchor = self.latestFaceAnchor else { return }
         
-        // (... perhitungan avgDir, avgEyePos, gazeOriginWorld, gazeDirWorld ...)
         let leftEyeTransform = faceAnchor.leftEyeTransform
         let rightEyeTransform = faceAnchor.rightEyeTransform
         let leftDir = simd_make_float3(leftEyeTransform.columns.2)
@@ -123,7 +110,6 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
             y: CGFloat(projectedGazePoint.y)
         )
         
-        // --- [3. KALIBRASI/ZEROING (Logika Asli Kamu)] ---
         if self.gazeOrigin == nil && faceAnchor.isTracked {
             if !calibratedGazePoint2D.x.isNaN && !calibratedGazePoint2D.y.isNaN {
                 print("===> SISTEM DIKALIBRASI (ZEROED) <===")
@@ -131,7 +117,6 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
             }
         }
         
-        // --- [4. KALKULASI GAZE RELATIF & SMOOTHING (Logika Asli Kamu)] ---
         var finalGazePoint: CGPoint = self.screenCenter
         if let gazeOrigin = self.gazeOrigin {
             guard !calibratedGazePoint2D.x.isNaN && !calibratedGazePoint2D.y.isNaN else { return }
@@ -145,26 +130,16 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
             self.recentGazePoints.removeFirst()
         }
         let targetGazePoint = self.averagePoint(from: self.recentGazePoints)
-        // --- INI PERBAIKANNYA ---
-        // Ganti 'self.screenCenter' dengan 'self.lastLerpedGazePoint'
-        // agar sesuai logika asli kamu.
-        
-        // let currentGazePoint = self.screenCenter // <-- KODE LAMA (SALAH)
-        let currentGazePoint = self.lastLerpedGazePoint // <-- KODE BARU (BENAR)
+        let currentGazePoint = self.lastLerpedGazePoint
         
         let newX = currentGazePoint.x + (targetGazePoint.x - currentGazePoint.x) * self.gazeLerpFactor
         let newY = currentGazePoint.y + (targetGazePoint.y - currentGazePoint.y) * self.gazeLerpFactor
         let lerpedGazePoint = CGPoint(x: newX, y: newY)
         
-        self.lastLerpedGazePoint = lerpedGazePoint // <-- SIMPAN POSISI LERP UNTUK FRAME BERIKUTNYA
-                
-                // --- AKHIR PERBAIKAN ---
-        // --- [5. CEK TARGET & KIRIM DELEGATE] ---
-        // Cek apakah "lingkaran" (gaze) ada di dalam target (pusat layar)
+        self.lastLerpedGazePoint = lerpedGazePoint
         let dist = self.distance(from: lerpedGazePoint, to: self.screenCenter)
         let isGazeOnTarget = dist < self.detectionRadius
         
-        // Kirim data ini ke SwiftUI
         DispatchQueue.main.async {
             self.delegate?.didUpdateGaze(point: lerpedGazePoint, onTarget: isGazeOnTarget)
         }
@@ -174,8 +149,6 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
         self.gazeOrigin = nil
         self.lastLerpedGazePoint = self.screenCenter
     }
-    
-    // MARK: - Utility (Dari Kode Asli Kamu)
     
     private func distance(from p1: CGPoint, to p2: CGPoint) -> CGFloat {
         let dx = p1.x - p2.x

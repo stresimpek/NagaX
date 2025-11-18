@@ -9,44 +9,33 @@ import UIKit
 import ARKit
 import SceneKit
 
-// Tambahkan di properti kelas, misalnya di bawah 'private var lastSentEvent: HeadGazeEvent? = nil'
-
-// Protokol untuk mengirim data kembali ke SwiftUI
 protocol SimulationARTrackerDelegate: AnyObject {
     func didUpdate(event: HeadGazeEvent)
 }
 
 class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
     
-    // Pengontrol Throttling
-    private let logInterval: TimeInterval = 1.0 // Kirim log/event setiap 1.0 detik
-    private var lastLogTime: TimeInterval = 0.0 // Waktu terakhir log/event dikirim
+    private let logInterval: TimeInterval = 1.0
+    private var lastLogTime: TimeInterval = 0.0
     private var lastGazeLogTime: TimeInterval = 0
 
-    // 🆕 Pengontrol Throttling DELEGATE (0.5 detik)
     private let delegateInterval: TimeInterval = 0.5
     private var lastDelegateTime: TimeInterval = 0.0
     
     weak var delegate: SimulationARTrackerDelegate?
     private var arView: ARSCNView!
     
-    // MARK: - Konstanta dari Logika Anda
-    
-    // Sensitivitas & Smoothing
     private let gazeSmoothness: Int = 30
     private let gazeLerpFactor: CGFloat = 0.1
     private let gazeSensitivity: Float = 3.0
     private var recentGazePoints: [CGPoint] = []
     private var lastLerpedGazePoint: CGPoint = .zero
 
-    // Threshold Kepala (Pitch/Anggukan)
-    let headPitchUpThreshold: Float = 0.08     // Mendongak
-    let headPitchDownThreshold: Float = -0.08  // Menunduk (Nilai asli Anda salah, harusnya negatif)
+    let headPitchUpThreshold: Float = 0.08
+    let headPitchDownThreshold: Float = -0.08
     
-    // Threshold Mata (Gaze)
     private let gazeThresholdVertical: CGFloat = 25.0
     
-    // Properti Status
     private var latestFaceAnchor: ARFaceAnchor?
     private var gazeOrigin: CGPoint?
     private var headOriginEulerAngles: SCNVector3?
@@ -54,8 +43,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
     
     private var lastSentEvent: HeadGazeEvent? = nil
 
-    // MARK: - View Lifecycle
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .clear
@@ -64,7 +51,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // Titik target adalah pusat layar
         self.screenCenter = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
         self.lastLerpedGazePoint = self.screenCenter
     }
@@ -89,9 +75,7 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         self.view.addSubview(arView)
         arView.delegate = self
         arView.backgroundColor = .clear
-        // === BARIS BARU DITAMBAHKAN DI SINI ===
-        arView.isHidden = true // Menyembunyikan tampilan kamera/AR, tetapi sesi tetap berjalan.
-        // =======================================
+        arView.isHidden = true
         arView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             arView.topAnchor.constraint(equalTo: self.view.topAnchor),
@@ -101,18 +85,13 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         ])
     }
     
-    // Fungsi untuk mereset kalibrasi jika diperlukan
     func resetCalibration() {
         self.gazeOrigin = nil
         self.headOriginEulerAngles = nil
         self.lastLerpedGazePoint = self.screenCenter
     }
-
-    // MARK: - ARSCNViewDelegate (Logika Inti)
     
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-        
-        // --- [1. AMBIL WAJAH TERDEKAT] ---
         guard let frame = arView.session.currentFrame else { return }
         let faceAnchors = frame.anchors.compactMap { $0 as? ARFaceAnchor }
         
@@ -125,8 +104,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         
         self.latestFaceAnchor = closestFaceAnchor
         let currentHeadEulerAngles = node.eulerAngles
-        
-        // --- [2. KALKULASI GAZE (Logika Asli Anda)] ---
         let leftEyeTransform = closestFaceAnchor.leftEyeTransform
         let rightEyeTransform = closestFaceAnchor.rightEyeTransform
         let leftDir = simd_make_float3(leftEyeTransform.columns.2)
@@ -149,7 +126,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
             y: CGFloat(projectedGazePoint.y)
         )
         
-        // Di bagian kalibrasi
         if self.gazeOrigin == nil && closestFaceAnchor.isTracked {
             if !calibratedGazePoint2D.x.isNaN && !calibratedGazePoint2D.y.isNaN {
                 
@@ -159,13 +135,10 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
             }
         }
         
-        // KODE BARU (FIX)
         var headEvent: HeadGazeEvent = .normal
-        // Kita hanya perlu 'if let' untuk 'headOriginEulerAngles' yang memang optional
         if let headOrigin = self.headOriginEulerAngles {
             let pitch = currentHeadEulerAngles.x - headOrigin.x
             
-            // TAMBAHKAN LOG INI:
             if pitch < headPitchDownThreshold {
                 headEvent = .headPitchDown
             } else if pitch > headPitchUpThreshold {
@@ -175,7 +148,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
             }
         }
         
-        // --- [5. KALKULASI GAZE (MATA)] ---
         var gazeEvent: HeadGazeEvent = .normal
         var finalGazePoint: CGPoint = self.screenCenter
         
@@ -186,7 +158,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
             finalGazePoint = CGPoint(x: self.screenCenter.x + deltaX, y: self.screenCenter.y + deltaY)
         }
         
-        // Smoothing Gaze
         self.recentGazePoints.append(finalGazePoint)
         if self.recentGazePoints.count > self.gazeSmoothness {
             self.recentGazePoints.removeFirst()
@@ -198,50 +169,41 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         let lerpedGazePoint = CGPoint(x: newX, y: newY)
         self.lastLerpedGazePoint = lerpedGazePoint
         
-        // Cek Gaze Threshold
         let deltaY = lerpedGazePoint.y - self.screenCenter.y
         
-        // === LOG DELTA Y SETIAP 1 DETIK ===
         let now = CACurrentMediaTime()
         if now - lastGazeLogTime >= 1.0 {
             print("⏱️ Vertical Gaze deltaY: \(deltaY)")
             lastGazeLogTime = now
         }
         
-        if deltaY < -self.gazeThresholdVertical { // Lihat ke atas (Y lebih kecil)
+        if deltaY < -self.gazeThresholdVertical {
             gazeEvent = .gazeUp
-        } else if deltaY > self.gazeThresholdVertical { // Lihat ke bawah (Y lebih besar)
+        } else if deltaY > self.gazeThresholdVertical {
             gazeEvent = .gazeDown
         } else {
             gazeEvent = .normal
         }
 
-        // --- [6. KIRIM EVENT (Prioritas: Kepala dulu, baru mata)] ---
         var finalEvent: HeadGazeEvent
         if headEvent != .normal {
-            finalEvent = headEvent // Pelanggaran kepala lebih prioritas
+            finalEvent = headEvent
         } else {
-            finalEvent = gazeEvent // Jika kepala normal, cek pelanggaran mata
+            finalEvent = gazeEvent
         }
         
-        // 🆕 THROLTTING PENGIRIMAN DELEGATE (0.5 DETIK)
-            // Kirim update ke delegate HANYA jika statusnya berubah ATAU sudah lewat 0.5 detik.
-            // Jika event berubah, kirim segera. Jika tidak, kirim setiap 0.5s agar VM mendapatkan sinyal tick.
         if finalEvent != self.lastSentEvent || time - self.lastDelegateTime >= self.delegateInterval {
             
             self.lastSentEvent = finalEvent
             
-            // ⚠️ Panggilan delegate HANYA terjadi di sini
-            DispatchQueue.main.async { // Tetap gunakan main.async untuk delegasi ke SwiftUI VM
+            DispatchQueue.main.async {
                 self.delegate?.didUpdate(event: finalEvent)
             }
-            self.lastDelegateTime = time // Perbarui waktu terakhir kirim delegate
+            self.lastDelegateTime = time
         }
         
-        // --- [7. THROTTLED LOG + EVENT PER DETIK] ---
         if time - self.lastLogTime >= self.logInterval {
 
-            // Log kalibrasi (hanya sekali)
             if self.gazeOrigin != nil && self.lastLogTime == 0.0 {
                 if let headOrigin = self.headOriginEulerAngles {
                     print("===> SIMULASI AR-TRACKER DIKALIBRASI <===")
@@ -249,7 +211,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
                 }
             }
 
-            // Log pitch
             if let headOrigin = self.headOriginEulerAngles {
                 let currentPitch = currentHeadEulerAngles.x - headOrigin.x
                 print("Pitch: \(currentPitch) | Up: \(headPitchUpThreshold) | Down: \(headPitchDownThreshold)")
@@ -264,8 +225,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
             self.lastLogTime = time
         }
     }
-    
-    // MARK: - Utility (Dari Kode Asli Anda)
     
     private func averagePoint(from points: [CGPoint]) -> CGPoint {
         guard !points.isEmpty else { return .zero }

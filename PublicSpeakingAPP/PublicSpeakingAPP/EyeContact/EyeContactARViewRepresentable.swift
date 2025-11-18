@@ -10,7 +10,6 @@ import SwiftUI
 
 struct EyeContactARViewRepresentable: UIViewControllerRepresentable {
     
-    // **MODIFIKASI: Terima ModalViewModel**
     @ObservedObject var viewModel: ModalViewModel
 
     func makeUIViewController(context: Context) -> EyeContactViewController {
@@ -23,7 +22,6 @@ struct EyeContactARViewRepresentable: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: EyeContactViewController, context: Context) {
         context.coordinator.viewModel = self.viewModel
         
-        // Cek sinyal reset dari ModalViewModel
         if self.viewModel.resetARKit {
             uiViewController.resetCalibration()
             DispatchQueue.main.async {
@@ -37,7 +35,6 @@ struct EyeContactARViewRepresentable: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, EyeContactViewControllerDelegate {
-        // **MODIFIKASI: Pegang referensi ke ModalViewModel**
         var viewModel: ModalViewModel?
 
         func didUpdateGaze(point: CGPoint, onTarget: Bool) {
@@ -49,7 +46,6 @@ struct EyeContactARViewRepresentable: UIViewControllerRepresentable {
                 }
                 vm.gazePoint = point
                 
-                // **MODIFIKASI: "Gate" sekarang membaca 'cameraCheckState'**
                 guard vm.cameraCheckState == .detecting || vm.cameraCheckState == .holding else {
                     return
                 }

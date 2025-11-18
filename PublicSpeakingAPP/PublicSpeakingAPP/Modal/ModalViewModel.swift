@@ -8,9 +8,8 @@
 import Foundation
 import AVFoundation
 import Combine
-import SwiftUI // Diperlukan untuk CGPoint
+import SwiftUI
 
-// Enum dari EyeContactViewModel sekarang pindah ke sini (atau file global)
 enum CameraCheckState {
     case preparing
     case detecting
@@ -19,7 +18,6 @@ enum CameraCheckState {
     case success
 }
 
-// Enum utama untuk langkah-langkah
 enum InstructionStep {
     case micCheck
     case cameraSetup
@@ -29,8 +27,6 @@ enum InstructionStep {
 
 @MainActor
 class ModalViewModel: ObservableObject {
-    
-    // MARK: - Properti Modal yang Sudah Ada
     @Published var currentStep: InstructionStep = .micCheck
     @Published var permissionStatus: AVAudioApplication.recordPermission = .undetermined
     @Published var isAudioDetected: Bool = false
@@ -47,26 +43,22 @@ class ModalViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let instructions: [InstructionStep: String] = [
         .micCheck: "Nyalakan mikrofonmu, letakan HPmu, lalu cobalah berbicara!\nPastikan suaramu sudah bisa didengar Prof. Belagu!",
-        .cameraSetup: "", // Ini akan dikelola oleh state machine di bawah
+        .cameraSetup: "",
         .quietRoom: "Pastikan kamu di ruangan yang kondusif.\nGunakan headset untuk pengalaman yang lebih maksimal!",
         .distanceCheck: "Letakan HP di posisi sejajar dengan matamu dan\nnyalakan kameramu!"
     ]
     let needsCameraCheck: Bool
     
-    // MARK: - ProPERTI BARU (Digabung dari EyeContactViewModel)
-    
     @Published var cameraCheckState: CameraCheckState = .preparing
     @Published var gazeOnTarget: Bool = false
     @Published var gazePoint: CGPoint = .zero
     @Published var hasReceivedFirstGazePoint: Bool = false
-    @Published var eyeContactCountdown: Int = 3 // Ganti nama dari 'countdown'
+    @Published var eyeContactCountdown: Int = 3
     @Published var resetARKit: Bool = false
     
     private var prepTask: DispatchWorkItem?
     private var detectTask: DispatchWorkItem?
     private var holdTask: DispatchWorkItem?
-    
-    // MARK: - Init dan Setup
     
     init(practiceSettings: PracticeSettings) {
         self.needsCameraCheck = practiceSettings.selectedAspects.contains(.kontakMata)
@@ -84,7 +76,6 @@ class ModalViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // ... (binding mic lainnya tetap sama) ...
         Publishers.CombineLatest($permissionStatus, $isAudioDetected)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] (status, detected) in
@@ -106,15 +97,12 @@ class ModalViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    // MARK: - UI Logic
-    
     private func updateUIForCurrentStep(step: InstructionStep) {
-        // Set instruksi default
         instructionText = instructions[step] ?? ""
         
         switch step {
         case .micCheck:
-            stopAllTimers() // Pastikan timer kamera mati
+            stopAllTimers()
             mainImageName = "ProfessorEar_Angry"
             buttonTitle = "LANJUT"
             isButtonEnabled = false
@@ -122,28 +110,26 @@ class ModalViewModel: ObservableObject {
             checkAndRequestMicPermission()
             
         case .cameraSetup:
-            stopMonitoring() // Matikan mic
+            stopMonitoring()
             mainImageName = ""
-            buttonTitle = "" // Tombol diurus oleh ModalView
+            buttonTitle = ""
             isButtonEnabled = false
             showMicVisualizer = false
-            startPreparing() // **MULAI LOGIKA KAMERA DI SINI**
+            startPreparing()
             
         case .quietRoom:
-            stopAllTimers() // Pastikan timer kamera mati
+            stopAllTimers()
             mainImageName = "InstructionQuiet"
             buttonTitle = "LANJUT"
             isButtonEnabled = true
             showMicVisualizer = false
             
-        // KODE BARU
         case .distanceCheck:
             mainImageName = "InstructionDistance"
-            // Tombolnya sekarang dinamis
             if needsCameraCheck {
-                buttonTitle = "LANJUT" // Akan lanjut ke setup kamera
+                buttonTitle = "LANJUT"
             } else {
-                buttonTitle = "MULAI LATIHAN" // Ini langkah terakhir jika tak perlu kamera
+                buttonTitle = "MULAI LATIHAN"
             }
             isButtonEnabled = true
             showMicVisualizer = false
@@ -151,7 +137,6 @@ class ModalViewModel: ObservableObject {
     }
     
     private func updateMicCheckUI(permission: AVAudioApplication.recordPermission, audioDetected: Bool) {
-        // ... (fungsi ini tetap sama) ...
         let micOK = (permission == .granted)
         let audioOK = audioDetected
         
@@ -165,41 +150,31 @@ class ModalViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Flow Logic
-    
-    // KODE BARU
     func nextStep() {
         switch currentStep {
         case .micCheck:
             stopMonitoring()
-            currentStep = .quietRoom // Selalu ke quietRoom setelah mic
+            currentStep = .quietRoom
             
         case .quietRoom:
-            currentStep = .distanceCheck // Selalu ke distanceCheck setelah quietRoom
+            currentStep = .distanceCheck
             
         case .distanceCheck:
-            // Cek kamera HANYA di langkah ini
             if needsCameraCheck {
-                currentStep = .cameraSetup // Lanjut ke kamera jika perlu
+                currentStep = .cameraSetup
             } else {
-                // Jika tidak perlu kamera, langkah ini adalah yang terakhir,
-                // tapi tombol "MULAI LATIHAN" akan ditangani di ModalView.
-                // Jadi, kita tidak melakukan apa-apa di sini.
             }
             
         case .cameraSetup:
-            // Ini sekarang langkah terakhir, tombolnya akan ditangani di ModalView.
             break
         }
     }
     
-    // ... (fungsi mic check: startMonitoring, checkAndRequestMicPermission, stopMonitoring tetap sama) ...
     private func startMonitoring() {
         micMonitor.startMonitoring()
     }
     
     func checkAndRequestMicPermission() {
-        // ... (kode asli Anda) ...
         permissionStatus = AVAudioApplication.shared.recordPermission
 
         switch permissionStatus {
@@ -222,7 +197,7 @@ class ModalViewModel: ObservableObject {
         case .denied:
             self.showPermissionAlert = true
         @unknown default:
-            print("Mic Access ???")
+            
         }
     }
 
@@ -230,19 +205,14 @@ class ModalViewModel: ObservableObject {
         micMonitor.stopMonitoring()
     }
     
-    // MARK: - LOGIKA BARU (Digabung dari EyeContactViewModel)
-    
     func stopAllTimers() {
         prepTask?.cancel()
         detectTask?.cancel()
         holdTask?.cancel()
-        print("Flow: SEMUA TIMER DIBATALKAN.")
     }
     
     func startPreparing() {
-        print("Flow: startPreparing()")
         cameraCheckState = .preparing
-        // **Update properti instructionText milik ModalViewModel**
         instructionText = "Nyalakan kamera dan posisikan dirimu supaya terlihat dalam frame. Perhatikan titik merah ini selama 3 detik."
         
         stopAllTimers()
@@ -261,7 +231,6 @@ class ModalViewModel: ObservableObject {
     }
     
     func startDetecting() {
-        print("Flow: startDetecting() (Timer 5s GAGAL dimulai)")
         cameraCheckState = .detecting
         instructionText = "Pencocokan..."
         
@@ -269,10 +238,9 @@ class ModalViewModel: ObservableObject {
         
         let task = DispatchWorkItem {
             if self.cameraCheckState == .detecting {
-                print("Flow: GAGAL 5 DETIK. Menampilkan tombol reset.")
                 self.setFailed()
             } else {
-                print("Flow: Timer 5s selesai, tapi state sudah berubah. Aman.")
+                
             }
         }
         self.detectTask = task
@@ -282,7 +250,6 @@ class ModalViewModel: ObservableObject {
     func handleGazeChange(isGazing: Bool) {
         
         if isGazing && cameraCheckState == .detecting {
-            print("Flow: Gaze KETEMU. Membatalkan timer gagal 5s.")
             stopAllTimers()
             cameraCheckState = .holding
             instructionText = "Good! Sekarang pertahankan posisimu..."
@@ -300,32 +267,28 @@ class ModalViewModel: ObservableObject {
             runHoldCountdown(count: 3)
             
         } else if !isGazing && cameraCheckState == .holding {
-            print("Flow: Gaze LEPAS. Batal hold, kembali ke detecting.")
             stopAllTimers()
             startDetecting()
         }
     }
     
     func setFailed() {
-        print("Flow: setFailed() dipanggil.")
         stopAllTimers()
         cameraCheckState = .failed
         instructionText = "Pencocokan gagal! Silahkan ulangi lagi"
     }
     
     func setSuccess() {
-        print("Flow: SUKSES TOTAL.")
         stopAllTimers()
         cameraCheckState = .success
         instructionText = "Good! Sekarang pertahankan posisimu dan hindari berpindah-pindah untuk hasil yang lebih maksimal!"
     }
     
     func resetFlow() {
-        print("Flow: resetFlow() dipanggil oleh tombol.")
         stopAllTimers()
         
         self.gazeOnTarget = false
-        self.resetARKit = true // Sinyal untuk reset UIKit VC
+        self.resetARKit = true
         self.hasReceivedFirstGazePoint = false
         self.gazePoint = .zero
         

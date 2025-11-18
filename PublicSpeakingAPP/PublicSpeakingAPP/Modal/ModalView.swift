@@ -33,7 +33,6 @@ struct ModalView: View {
                     VStack(spacing: 0) {
                         Spacer().frame(height: geometry.size.height * 0.005)
                         
-                        // **MODIFIKASI: Tampilkan judul yang berbeda untuk setup kamera**
                         if viewModel.currentStep == .cameraSetup {
                             Text("DETEKSI GERAKAN MATA")
                                 .font(.title2.weight(.black))
@@ -48,10 +47,8 @@ struct ModalView: View {
                         VStack {
                             switch viewModel.currentStep {
                             
-                            // **MODIFIKASI: Panggil "Dumb View" yang baru**
                             case .cameraSetup:
                                 EyeContactMainView(viewModel: viewModel)
-                                // View ini sudah punya tinggi sendiri (150)
                                 
                             case .quietRoom:
                                 Image(viewModel.mainImageName)
@@ -77,22 +74,16 @@ struct ModalView: View {
                         .frame(minHeight: 150)
                         .animation(.easeInOut, value: viewModel.currentStep)
                         
-//                        Spacer().frame(height: geometry.size.height * 0.01)
-                        
-                        // **MODIFIKASI: Tampilkan InstructionText, jangan disembunyikan**
                         InstructionTextView(
                             message: viewModel.instructionText,
                             geometry: geometry
                         )
-                        // **MODIFIKASI: Ubah warna teks jika gagal**
                         .foregroundColor(
                             viewModel.currentStep == .cameraSetup && viewModel.cameraCheckState == .failed
                             ? .baseColorRed
                             : .baseColorBrown
                         )
-                        .frame(height: 80, alignment: .center) // Pastikan tingginya konsisten
-                        
-//                        Spacer().frame(height: geometry.size.height * 0.1)
+                        .frame(height: 80, alignment: .center)
                     }
                     .padding(.horizontal, geometry.size.width * 0.06)
                     .frame(width: geometry.size.width * 0.85)
@@ -103,17 +94,15 @@ struct ModalView: View {
                     )
                     .zIndex(0)
 
-                    // KODE BARU
                     VStack {
                         if viewModel.currentStep == .cameraSetup {
-                            // --- Logika Tombol untuk .cameraSetup ---
                             if viewModel.cameraCheckState == .success {
                                 ButtonComponent(
                                     title: "MULAI LATIHAN",
                                     systemImage: nil,
                                     size: .large,
                                     kind: .primaryYellow,
-                                    action: onStart // <-- BENAR: Ini adalah akhir flow, panggil onStart
+                                    action: onStart
                                 )
                             } else if viewModel.cameraCheckState == .failed {
                                 ButtonComponent(
@@ -121,28 +110,22 @@ struct ModalView: View {
                                     systemImage: nil,
                                     size: .large,
                                     kind: .primaryYellow,
-                                    action: viewModel.resetFlow // Panggil reset di VM
+                                    action: viewModel.resetFlow
                                 )
                             } else {
-                                // Placeholder agar layout tidak "lompat"
                                 Rectangle()
                                     .fill(Color.clear)
                                     .frame(height: 60)
                             }
                         } else {
-                            // --- Logika Tombol untuk .micCheck, .quietRoom, .distanceCheck ---
                             StartButtonView(
                                 title: viewModel.buttonTitle,
                                 isEnabled: viewModel.isButtonEnabled,
                                 action: {
-                                    // LOGIKA BARU YANG LEBIH CERDAS:
                                     if viewModel.currentStep == .distanceCheck && !viewModel.needsCameraCheck {
-                                        // Kasus 1: Di step 'Distance' DAN tidak perlu kamera
-                                        onStart() // Ini adalah akhir flow
+                                        onStart()
                                     } else {
-                                        // Kasus 2: Semua step lain (.micCheck, .quietRoom,
-                                        // atau .distanceCheck yang PERLU kamera)
-                                        viewModel.nextStep() // Lanjut ke step berikutnya
+                                        viewModel.nextStep()
                                     }
                                 }
                             )
@@ -160,9 +143,8 @@ struct ModalView: View {
         }
         .onDisappear {
             viewModel.stopMonitoring()
-            viewModel.stopAllTimers() // **TAMBAHKAN: Matikan timer kamera**
+            viewModel.stopAllTimers()
         }
-        // **TAMBAHKAN: Event handler .onChange pindah ke sini**
         .onChange(of: viewModel.gazeOnTarget) { _, newValue in
             viewModel.handleGazeChange(isGazing: newValue)
         }

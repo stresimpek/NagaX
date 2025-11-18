@@ -9,26 +9,20 @@ import SwiftUI
 
 struct EyeContactMainView: View {
     
-    // **MODIFIKASI: Terima ViewModel dari parent (ModalView)**
     @ObservedObject var viewModel: ModalViewModel
-    
-    // **HAPUS: onComplete, geometry, @StateObject**
 
     var body: some View {
         
-        // **HAPUS: Semua VStack luar, Spacer, Text Judul, Text Instruksi, dan VStack Tombol**
-        
-        // HANYA ZSTACK KAMERA
         ZStack {
             EyeContactARViewRepresentable(viewModel: viewModel)
 
-            Circle() // Statis
+            Circle()
                 .fill(viewModel.gazeOnTarget ? Color("Turqoise") : Color("BaseColorRed"))
                 .frame(width: 30, height: 30)
                 .opacity(0.8)
                 .animation(.easeInOut, value: viewModel.gazeOnTarget)
             
-            Circle() // Bergerak
+            Circle()
                 .fill(viewModel.gazeOnTarget ? Color("Turqoise").opacity(0.7) : Color.clear)
                 .overlay(Circle().stroke(Color.white, lineWidth: 2))
                 .frame(width: 30, height: 30)
@@ -37,7 +31,6 @@ struct EyeContactMainView: View {
                 .animation(.easeInOut, value: viewModel.gazeOnTarget)
                 .opacity(viewModel.hasReceivedFirstGazePoint ? 1.0 : 0.0)
 
-            // **MODIFIKASI: Gunakan 'cameraCheckState' dan 'eyeContactCountdown'**
             Text(viewModel.cameraCheckState == .preparing || viewModel.cameraCheckState == .holding ? "\(viewModel.eyeContactCountdown)" : "")
                 .font(.system(size: 48, weight: .bold))
                 .foregroundColor(Color.white.opacity(0.85))
@@ -49,6 +42,5 @@ struct EyeContactMainView: View {
         .frame(width: 300, height: 150)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         
-        // **HAPUS: .onAppear, .onDisappear, .onChange (Pindah ke ModalView)**
     }
 }
