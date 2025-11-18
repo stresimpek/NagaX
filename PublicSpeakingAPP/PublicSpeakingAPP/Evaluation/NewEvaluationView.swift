@@ -39,8 +39,12 @@ struct NewEvaluationView: View {
                 .edgesIgnoringSafeArea(.all)
             VStack(spacing: 0) {
                 ScrollView {
-                    VStack(spacing: 79) {
-                        tabsAndPaperSection
+                    VStack(spacing: 49){
+                        VStack(spacing: 21){
+                            tabsAndPaperSection
+                            disclaimerBanner
+                        }
+                        .padding(.leading, 60)
                         bottomButtons
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -67,8 +71,7 @@ private extension NewEvaluationView {
             
             paperContent
         }.frame(maxWidth: .infinity)
-        .padding(.top, 28)
-        .padding(.leading, 60)
+            .padding(.top, 28)
     }
     
     var tabsView: some View {
@@ -171,6 +174,22 @@ private extension NewEvaluationView {
         }
     }
     
+    var disclaimerBanner: some View {
+        VStack (alignment: .leading, spacing: 6){
+            Text("⚠️ Feedback ini dibuat oleh machine learning")
+                .font(.custom("Nunito-Black", size: 13))
+            Text("Cako hanya ngasih insight sebagai alat bantu, tapi tetap kamu yang paling ngerti gaya presentasimu")
+                .font(.custom("Nunito-Medium", size: 11))
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 16)
+        .foregroundStyle(Color("DarkBlue2"))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .fill(.whiteBlue)
+            .shadow(color: .lightBlue2, radius: 0, x: 0, y: 4))
+    }
+    
     var bottomButtons: some View {
         HStack(spacing: 16) {
             ButtonComponent(
@@ -232,7 +251,7 @@ struct EvaluationSectionView<Content: View>: View {
     let analysisText: String
     let transcript: String
     let guidance: [AttributedString]  // Add this
-//    @State private var diffComponents: [DiffComponent] = []
+    //    @State private var diffComponents: [DiffComponent] = []
     
     init(
         evaluatorNote: AttributedString,
@@ -296,9 +315,9 @@ struct EvaluationSectionView<Content: View>: View {
                         .padding()
                     
                 } else {
-//                    if !diffComponents.isEmpty {
-//                        DiffRenderView(components: diffComponents)
-//                    }
+                    //                    if !diffComponents.isEmpty {
+                    //                        DiffRenderView(components: diffComponents)
+                    //                    }
                     VStack(alignment: .leading, spacing: 6) {
                         VStack (spacing: 0) {
                             Text("Transkrip Asli: ")
@@ -310,7 +329,7 @@ struct EvaluationSectionView<Content: View>: View {
                                 .font(.body)
                                 .foregroundColor(.baseColorBrown)
                         }
-                       
+                        
                         VStack (spacing: 0) {
                             Text("Koreksi: ")
                                 .font(.body)
@@ -333,9 +352,9 @@ struct EvaluationSectionView<Content: View>: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
-//        .onAppear {
-//            diffComponents = DiffComponent.generate(original: transcript, new: analysisText)
-//        }
+        //        .onAppear {
+        //            diffComponents = DiffComponent.generate(original: transcript, new: analysisText)
+        //        }
     }
     
     private var staticContent: some View {
@@ -359,7 +378,7 @@ struct StrukturKalimatFullScreenView: View {
         NavigationView {
             ZStack {
                 Color("BaseColorWhite")
-
+                
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(transcript.isEmpty ? "Tidak ada transkrip yang terekam." : transcript)
