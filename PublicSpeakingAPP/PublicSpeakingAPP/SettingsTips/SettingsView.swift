@@ -153,6 +153,7 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .padding(.top, 30)
             .background(Color.baseColorBlue)
             .foregroundStyle(Color.baseColorWhite)
             .navigationBarBackButtonHidden(true)
@@ -165,7 +166,7 @@ struct SettingsView: View {
                 isEnabled: true,
                 action: onBack
             )
-            .padding(.top, 16)
+            .padding(.top, 30)
             
             if showAspectInfo {
                 Color.black.opacity(0.5)
