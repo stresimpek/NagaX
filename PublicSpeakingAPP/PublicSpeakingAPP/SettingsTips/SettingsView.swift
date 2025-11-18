@@ -69,7 +69,7 @@ struct SettingsView: View {
                                     VStack(alignment: .center) {
                                         Circle()
                                             .frame(width: 8, height: 8)
-                                        Text("Tidak ada")
+                                        Text("Tidak Ada")
                                     }
                                     
                                     Spacer()
@@ -131,7 +131,7 @@ struct SettingsView: View {
                         HStack {
                             Spacer()
                             ButtonComponent(
-                                title: "MULAI LATIHAN",
+                                title: "Mulai Latihan",
                                 systemImage: nil,
                                 size: .medium,
                                 kind: .primaryYellow,

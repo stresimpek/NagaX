@@ -19,7 +19,7 @@ struct AspectCheckTile: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
-                    .foregroundColor(.white)
+                    .foregroundColor(isSelected || !option.isEnabled ? .darkTurqoise : .baseColorWhite)
                 
                 Text(option.title)
                     .font(.footnote.bold())
@@ -34,30 +34,39 @@ struct AspectCheckTile: View {
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
-            .frame(width: 110, height: 98, alignment: .top)
-            .foregroundColor(.baseColorWhite)
-            .background(.darkBlue2)
+            .frame(width: 134, height: 98, alignment: .top)
+            .foregroundColor(isSelected || !option.isEnabled ? .darkTurqoise : .baseColorWhite)
+            .background(isSelected || !option.isEnabled ? Color.turqoise : Color.darkBlue2)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .shadow(color: .darkBlue3, radius: 0, x: 0, y: 3)
+            .shadow(color: isSelected || !option.isEnabled ? Color.shadowTurqoise : Color.darkBlue3, radius: 0, x: 0, y: 3)
             
-            if option.isEnabled == true {
-                Group {
-                    if isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .imageScale(.large)
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundColor(.white)
-                            .padding(6)
-                            .transition(.scale.combined(with: .opacity))
-                    } else {
+            ZStack {
+                Circle()
+                    .fill(Color.baseColorWhite)
+                    .frame(width: 17, height: 17)
+                    .overlay(
                         Circle()
-                            .stroke(Color.lightBlue.opacity(0.8), lineWidth: 1)
-                            .frame(width: 24, height: 24)
-                            .padding(8)
-                    }
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.black.opacity(0.18),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .center
+                                )
+                            )
+                            .blur(radius: 1.2)
+                    )
+
+
+                if isSelected || !option.isEnabled {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.baseColorBlack)
                 }
             }
-            
+            .padding(8)
         }
         .contentShape(Rectangle())
         .onTapGesture {
