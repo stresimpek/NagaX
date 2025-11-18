@@ -231,7 +231,7 @@ struct EvaluationSectionView<Content: View>: View {
     let analysisText: String
     let transcript: String
     let guidance: [AttributedString]  // Add this
-//    @State private var diffComponents: [DiffComponent] = []
+    @State private var diffComponents: [DiffComponent] = []
     
     init(
         evaluatorNote: AttributedString,
@@ -295,35 +295,17 @@ struct EvaluationSectionView<Content: View>: View {
                         .padding()
                     
                 } else {
-//                    if !diffComponents.isEmpty {
-//                        DiffRenderView(components: diffComponents)
-//                    }
-                    VStack(alignment: .leading, spacing: 6) {
-                        VStack (spacing: 0) {
-                            Text("Transkrip Asli: ")
-                                .font(.body)
-                                .bold()
-                                .foregroundColor(.baseColorBrown)
-                            +
-                            Text(transcript)
-                                .font(.body)
-                                .foregroundColor(.baseColorBrown)
-                        }
-                       
-                        VStack (spacing: 0) {
-                            Text("Koreksi: ")
-                                .font(.body)
-                                .bold()
-                                .foregroundColor(.baseColorBrown)
-                            +
-                            Text(analysisText)
-                                .font(.body)
-                                .foregroundColor(.baseColorBrown)
-                        }
+                    if !diffComponents.isEmpty {
+                        DiffRenderView(components: diffComponents)
+                    } else {
+                        Text("\(transcript)")
+                            .font(.body)
+                            .foregroundColor(.baseColorBrown)
+                            .padding()
                     }
                 }
             }
-            .padding(.bottom, 60)
+            .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, minHeight: 240)
@@ -332,9 +314,9 @@ struct EvaluationSectionView<Content: View>: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
-//        .onAppear {
-//            diffComponents = DiffComponent.generate(original: transcript, new: analysisText)
-//        }
+        .onAppear {
+            diffComponents = DiffComponent.generate(original: transcript, new: analysisText)
+        }
     }
     
     private var staticContent: some View {
@@ -401,9 +383,8 @@ struct DiffRenderView: View {
                         .foregroundColor(deletedColor)
                         .strikethrough(true, color: deletedColor)
                 case .added:
-                    return result + styledText
+                    return Text("\(result) \(styledText)")
                         .foregroundColor(addedColor)
-                    + Text(" ")
                 }
             }
             .fixedSize(horizontal: false, vertical: true)
