@@ -282,8 +282,6 @@ struct EvaluationSectionView<Content: View>: View {
     let guidance: [AttributedString]
     let showEmptyState: Bool
     let emptyStateMessage: String
-    //    @State private var diffComponents: [DiffComponent] = []
-    let guidance: [AttributedString]  // Add this
     @State private var diffComponents: [DiffComponent] = []
     
     init(
