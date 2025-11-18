@@ -39,7 +39,7 @@ struct NewEvaluationView: View {
                 .edgesIgnoringSafeArea(.all)
             VStack(spacing: 0) {
                 ScrollView {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 79) {
                         tabsAndPaperSection
                         bottomButtons
                     }
@@ -67,7 +67,8 @@ private extension NewEvaluationView {
             
             paperContent
         }.frame(maxWidth: .infinity)
-        .padding(.top, 16)
+        .padding(.top, 28)
+        .padding(.leading, 60)
     }
     
     var tabsView: some View {
