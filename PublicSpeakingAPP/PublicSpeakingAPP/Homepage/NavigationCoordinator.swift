@@ -13,6 +13,7 @@ enum Route: Hashable {
     case datePicker
     case settings
     case simulation(PracticeSettings)
+    case evaluationSummary(EvaluationModel, String, String, PracticeSettings)
     case newEvaluation(EvaluationModel, String, String, PracticeSettings)
     case modal(PracticeSettings)
     case notificationPrompt(Date)
@@ -43,6 +44,10 @@ class NavigationCoordinator: ObservableObject {
         path.append(.simulation(settings))
     }
     
+    func goToEvaluationSummary(result: EvaluationModel, transcript: String, analysisResult: String, settings: PracticeSettings) {
+        path.append(Route.evaluationSummary(result, transcript, analysisResult, settings))
+    }
+    
     func goToNewEvaluation(result: EvaluationModel, transcript: String, sentenceAnalysisResult: String, settings: PracticeSettings) {
         path.append(.newEvaluation(result, transcript, sentenceAnalysisResult, settings))
     }
@@ -61,13 +66,13 @@ class NavigationCoordinator: ObservableObject {
     }
     
     func retrySimulation(from settings: PracticeSettings) {
-        guard path.count >= 2 else {
-            print("Error: Path tidak cukup panjang untuk retry")
-            returnToHome()
-            return
+        if let lastSimulationIndex = path.lastIndex(where: {
+            if case .simulation = $0 { return true }
+            return false
+        }) {
+            path.removeSubrange(lastSimulationIndex...)
         }
         
-        path.removeLast(2)
         goToSimulation(settings)
     }
 }

@@ -322,3 +322,81 @@ extension String {
         })!
     }
 }
+
+extension NewEvaluationViewModel {
+    
+    func iconName(for tab: EvaluationTab) -> String {
+        switch tab {
+        case .tempo: return "AspectTempo"
+        case .intonasi: return "AspectIntonasi"
+        case .fillerWords: return "AspectFiller"
+        case .kontakMata: return "AspectEye"
+        case .artikulasi: return "AspectArtikulasi"
+        case .strukturKalimat: return "AspectStruktur"
+        }
+    }
+    
+    func getSummaryNote(for tab: EvaluationTab) -> AttributedString {
+        switch tab {
+        case .strukturKalimat:
+            let count = ineffectiveSentenceCount
+            return try! AttributedString(markdown: "Kamu ada **\(count)** kalimat yang terdeteksi kurang efektif.")
+            
+        case .artikulasi:
+            let count = articulationCount
+            let total = articulationTotal
+            return try! AttributedString(markdown: "Kamu ada **\(count)** dari **\(total)** kata yang tertangkap kurang jelas.")
+            
+        case .fillerWords:
+            let count = fillerWordCount
+            return try! AttributedString(markdown: "Kata seperti “eh”, “uh”, “hm” nyelip **\(count)** kali.")
+            
+        case .tempo:
+            let wpm = Int(result.tempoWPM)
+            switch result.tempoGrade {
+            case "A":
+                return try! AttributedString(markdown: "Tempo bicaramu paling sering berada di rentang **ideal**.")
+            case "B":
+                let status = wpm < 100 ? "tenang" : "energik"
+                return try! AttributedString(markdown: "Tempo bicaramu paling sering berada di rentang **\(status)**.")
+            case "C":
+                let status = wpm < 80 ? "lambat" : "cepat"
+                return try! AttributedString(markdown: "Tempo bicaramu paling sering berada di rentang **\(status)**.")
+            default:
+                return try! AttributedString(markdown: "Tempo bicaramu paling sering berada di rentang **kurang pas**.")
+            }
+            
+        case .intonasi:
+            switch result.intonationGrade {
+            case "A":
+                return try! AttributedString(markdown: "Intonasimu paling sering terdeteksi **dinamis**.")
+            case "B":
+                return try! AttributedString(markdown: "Intonasimu paling sering terdeteksi **cukup variatif**.")
+            case "C":
+                return try! AttributedString(markdown: "Intonasimu paling sering terdeteksi **cenderung datar**.")
+            default:
+                return try! AttributedString(markdown: "Intonasi perlu latihan.")
+            }
+            
+        case .kontakMata:
+            switch result.eyeContactGrade {
+            case "A":
+                return try! AttributedString(markdown: "Kontak mata **sangat baik**.")
+            case "B":
+                return try! AttributedString(markdown: "Kontak mata **cukup baik**.")
+            default:
+                return try! AttributedString(markdown: "Kontak mata **perlu fokus**.")
+            }
+        }
+    }
+
+    var summaryItems: [EvaluationSummaryItem] {
+        return availableTabs.map { tab in
+            EvaluationSummaryItem(
+                iconName: iconName(for: tab),
+                text: getSummaryNote(for: tab),
+                tab: tab
+            )
+        }
+    }
+}
