@@ -20,20 +20,17 @@ final class AudioPlayerService: ObservableObject {
     private var player: AVPlayer?
     private var timeObserverToken: Any?
     private var segmentEndTime: Double?
-
+    
     init() {
         do {
             let s = AVAudioSession.sharedInstance()
-            try s.setCategory(.playback, mode: .default, options: [.defaultToSpeaker])
+            try s.setCategory(.playback, mode: .default)
             try s.setActive(true)
         } catch {
             print("AVAudioSession error: \(error)")
         }
     }
 
-    // MARK: - Public API
-
-    /// Main case: play dari cursorTime (tanpa batas end)
     func play(from url: URL, startAt seconds: Double = 0) {
         playFromCursor(url: url, startAt: seconds)
     }
@@ -113,14 +110,13 @@ final class AudioPlayerService: ObservableObject {
         })
     }
 
-    // MARK: - Private helpers
-
+    // Private helpers
     private func playFromCursor(url: URL, startAt seconds: Double) {
         isPlayingPageID = nil
         setupAndPlay(url: url, startAt: seconds, endAt: nil, trackPageProgress: false)
     }
 
-    /// Helper tunggal yang meniru pola `playSegment` (seek → add timeObserver → play)
+    // Helper tunggal yang meniru pola `playSegment` (seek → add timeObserver → play)
     private func setupAndPlay(url: URL,
                               startAt: Double,
                               endAt: Double?,

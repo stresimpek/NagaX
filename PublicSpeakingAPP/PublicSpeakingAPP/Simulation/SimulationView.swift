@@ -11,7 +11,6 @@ import WhisperKit
 
 struct SimulationViewWrapper: View {
     @EnvironmentObject private var whisperKitVM: SpeechTranscriberViewModel
-    @EnvironmentObject private var textAnalyzerVM: TextFrequencyAnalyzerViewModel
     @EnvironmentObject private var intonationAnalyzerVM: IntonationAnalyzerViewModel
     @EnvironmentObject private var tempoVM: TempoViewModel
     @EnvironmentObject private var fillerWordVM: FillerWordViewModel
@@ -26,7 +25,6 @@ struct SimulationViewWrapper: View {
             viewModel: SimulationViewModel(
                 settings: settings,
                 whisperKitVM: whisperKitVM,
-                textAnalyzerVM: textAnalyzerVM,
                 intonationAnalyzerVM: intonationAnalyzerVM,
                 tempoVM: tempoVM,
                 fillerWordVM: fillerWordVM
@@ -207,46 +205,31 @@ struct SimulationView: View {
                 hasShownOvertimeBanner = false
             }
             .overlay {
-                if viewModel.whisperKitVM.showEarlyStopModal
-                {
-                                EarlyStopModalView(
-                                    onContinue: {
-                                        viewModel.resumeAfterEarlyStop()
-                                    },
-                                    onViewEvaluation: {
-                                        viewModel.whisperKitVM.proceedToEvaluationFromModal(loop: false)
-                                    }
-                                )
-                                .transition(.opacity)
-                                .zIndex(20)
-                            }
-// test the EmptyTranscriptModalView
-//                {
-//                    EmptyTranscriptModalView(
-//                        onRestart: {
-//                            viewModel.restartAfterEmptyTranscript()
-//                        },
-//                        onContinue: {
-//                            viewModel.resumeAfterEarlyStop()
-//                        }
-//                    )
-//                    .transition(.opacity)
-//                    .zIndex(20)
-//                }
-                
+                if viewModel.whisperKitVM.showEarlyStopModal {
+                    EarlyStopModalView(
+                        onContinue: {
+                            viewModel.resumeAfterEarlyStop()
+                        },
+                        onViewEvaluation: {
+                            viewModel.whisperKitVM.proceedToEvaluationFromModal(loop: false)
+                        }
+                    )
+                    .transition(.opacity)
+                    .zIndex(20)
+                }
                             
                 if viewModel.whisperKitVM.showEmptyTranscriptModal {
-                                EmptyTranscriptModalView(
-                                    onRestart: {
-                                        viewModel.restartAfterEmptyTranscript()
-                                    },
-                                    onContinue: {
-                                        viewModel.resumeAfterEarlyStop()
-                                    }
-                                )
-                                .transition(.opacity)
-                                .zIndex(20)
+                        EmptyTranscriptModalView(
+                            onRestart: {
+                                viewModel.restartAfterEmptyTranscript()
+                            },
+                            onContinue: {
+                                viewModel.resumeAfterEarlyStop()
                             }
+                        )
+                        .transition(.opacity)
+                        .zIndex(20)
+                    }
                 }
             .frame(width: geo.size.width, height: geo.size.height)
             .onDisappear { viewModel.cleanup() }
@@ -281,9 +264,9 @@ struct SimulationView: View {
             .navigationBarBackButtonHidden(true)
             .task {
                 viewModel.whisperKitVM.resetState()
-                viewModel.textAnalyzerVM.clearResults()
-                viewModel.intonationAnalyzerVM.clearResults()
                 viewModel.tempoVM.clearResults()
+                viewModel.fillerWordVM.clearResults()
+                viewModel.intonationAnalyzerVM.clearResults()
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") { viewModel.errorMessage = nil }

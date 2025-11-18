@@ -54,7 +54,7 @@ struct DatePickerView: View {
             ButtonComponent(
                 title: nil,
                 systemImage: "arrow.uturn.left",
-                size: .medium,
+                size: .largeIconCircle,
                 kind: .secondaryBlue,
                 action: onBack
             )

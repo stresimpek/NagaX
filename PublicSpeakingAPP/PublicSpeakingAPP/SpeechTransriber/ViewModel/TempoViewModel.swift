@@ -23,9 +23,9 @@ final class TempoViewModel: ObservableObject {
     @Published var tempoRating: Int = 0
     @Published var wpmHistory: [(timestamp: TimeInterval, wpm: Double)] = []
 
-    private let wpmIdealMin: Double = 110.0
+    private let wpmIdealMin: Double = 100.0
     private let wpmIdealMax: Double = 140.0
-    private let wpmCukupMin: Double = 90.0
+    private let wpmCukupMin: Double = 80.0
     private let wpmCukupMax: Double = 160.0
     
     private var wordHistory: [(endTime: TimeInterval, duration: TimeInterval)] = []

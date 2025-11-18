@@ -36,8 +36,15 @@ struct ArticulationTranscriptView: View {
             let finalHypo = lastAgreed + TranscriptionUtilities.findLongestDifferentSuffix(prev, hypothesis)
             let allWords = confirmed + finalHypo
             
+
             let isWeakArticulation: (WordTiming) -> Bool = { word in
-                return word.probability < 0.8
+                let cleanedWord = word.word.trimmingCharacters(in: .punctuationCharacters.union(.symbols).union(.whitespaces))
+                
+                if cleanedWord.isEmpty {
+                    return false
+                }
+                
+                return word.probability < 0.5
             }
             
             let (pages, maps) = TranscriptBuilder().buildPagesAndMaps(

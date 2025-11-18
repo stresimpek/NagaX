@@ -19,9 +19,9 @@ struct TempoResultChart: View {
     @State private var cursorTime: Double = 0.0
     @State private var isDragging: Bool = false
     
-    private let idealMin: Double = 110.0
+    private let idealMin: Double = 100.0
     private let idealMax: Double = 140.0
-    private let cukupMin: Double = 90.0
+    private let cukupMin: Double = 80.0
     private let cukupMax: Double = 160.0
     private let maxY: Double = 200.0
     
@@ -136,8 +136,7 @@ struct TempoResultChart: View {
             }
             .transaction { $0.animation = nil }
             .chartYAxis {
-                AxisMarks(position: .leading) {
-                    AxisGridLine()
+                AxisMarks {
                 }
             }
             .chartXAxis {
@@ -190,9 +189,9 @@ struct TempoResultChart: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Rekaman Audio")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
+                    .font(.custom("Nunito-Bold", size: 12))
+                    .foregroundStyle(Color(.baseColorBrown))
+                
                 HStack(spacing: 12) {
                     Button {
                         if let url = whisperKitVM.savedRecordingURL {
@@ -206,45 +205,47 @@ struct TempoResultChart: View {
                         Image(systemName: audioPlayerVM.isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 18, weight: .bold))
                             .padding(10)
-                            .background(Color.primary.opacity(0.08), in: Circle())
-                    }
+                            .foregroundColor(Color(.baseColorBrown))
 
-                    GeometryReader { geo in
-                        let width = geo.size.width
-                        let safeDuration = max(fixedDuration, 0.001)
-                        let progress = CGFloat(cursorTime / safeDuration)
-                        let clampedProgress = max(0, min(progress, 1.0))
-                        
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Color.secondary.opacity(0.25))
-                                .frame(height: 6)
+                    }
+                    ZStack{
+                        GeometryReader { geo in
+                            let width = geo.size.width
+                            let safeDuration = max(fixedDuration, 0.001)
+                            let progress = CGFloat(cursorTime / safeDuration)
+                            let clampedProgress = max(0, min(progress, 1.0))
                             
-                            Capsule()
-                                .fill(Color.brown)
-                                .frame(width: width * clampedProgress, height: 6)
-                        }
-                        .contentShape(Rectangle())
-                        .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { value in
-                                    isDragging = true
-                                    let percentage = value.location.x / width
-                                    let newTime = Double(percentage) * safeDuration
-                                    cursorTime = clampToDomain(newTime)
-                                }
-                                .onEnded { value in
-                                    isDragging = false
-                                    let percentage = value.location.x / width
-                                    let finalTime = clampToDomain(Double(percentage) * safeDuration)
-                                    cursorTime = finalTime
-                                    
-                                    if let url = whisperKitVM.savedRecordingURL {
-                                        audioPlayerVM.play(from: url, startAt: finalTime)
-                                        if !audioPlayerVM.isPlaying { audioPlayerVM.pause() }
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(Color.secondary.opacity(0.25))
+                                    .frame(height: 6)
+                                
+                                Capsule()
+                                    .fill(Color.brown)
+                                    .frame(width: width * clampedProgress, height: 6)
+                            }
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { value in
+                                        isDragging = true
+                                        let percentage = value.location.x / width
+                                        let newTime = Double(percentage) * safeDuration
+                                        cursorTime = clampToDomain(newTime)
                                     }
-                                }
-                        )
+                                    .onEnded { value in
+                                        isDragging = false
+                                        let percentage = value.location.x / width
+                                        let finalTime = clampToDomain(Double(percentage) * safeDuration)
+                                        cursorTime = finalTime
+                                        
+                                        if let url = whisperKitVM.savedRecordingURL {
+                                            audioPlayerVM.play(from: url, startAt: finalTime)
+                                            if !audioPlayerVM.isPlaying { audioPlayerVM.pause() }
+                                        }
+                                    }
+                            ).frame(maxHeight: .infinity, alignment: .center)
+                        }
                     }
                     .frame(height: 20)
                 }

@@ -21,10 +21,11 @@ class MicMonitorModal: ObservableObject {
     @Published var levels: [CGFloat] = Array(repeating: 5, count: 33)
     
     init() {
+        setupAudioSession()
         inputNode = audioEngine.inputNode
     }
     
-    static func setupAudioSession() {
+    private func setupAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
             // Use .record instead of .playAndRecord
@@ -59,6 +60,7 @@ class MicMonitorModal: ObservableObject {
         // Validate format
         guard format.sampleRate > 0, format.channelCount > 0 else {
             print("Invalid format - SR: \(format.sampleRate), Ch: \(format.channelCount)")
+            setupAudioSession()
             
             // Retry with increasing delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
@@ -94,13 +96,15 @@ class MicMonitorModal: ObservableObject {
             
             print("Retry \(retryAttempts)/\(maxRetryAttempts) - still invalid, trying again...")
             
+            setupAudioSession()
+            
             let delay = 0.3 * Double(retryAttempts)
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 self?.retryStartMonitoring()
             }
             return
         }
-        
+        stopMonitoring()
         inputNode.installTap(onBus: bus, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             self?.processAudioBuffer(buffer)
         }
@@ -115,6 +119,7 @@ class MicMonitorModal: ObservableObject {
             }
             
             print("Engine start failed, retrying...")
+            setupAudioSession()
             
             let delay = 0.3 * Double(retryAttempts)
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
@@ -140,4 +145,8 @@ class MicMonitorModal: ObservableObject {
             self.levels.append(normalized * 60)
         }
     }
+    
+    deinit {
+            stopMonitoring()
+        }
 }

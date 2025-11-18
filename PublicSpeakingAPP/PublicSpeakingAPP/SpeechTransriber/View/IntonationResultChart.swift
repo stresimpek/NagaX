@@ -71,7 +71,7 @@ struct IntonationResultChart: View {
                     )
                     .foregroundStyle(.shadowDisabled.opacity(0.1))
                     .annotation(position: .overlay, alignment: .center) {
-                        Text("TERLALU BERLEBIHAN")
+                        Text("MONOTON")
                             .font(.title3)
                             .fontWeight(.bold)
                             .foregroundStyle(Color.textGrey.opacity(0.9))
@@ -99,12 +99,22 @@ struct IntonationResultChart: View {
                     )
                     .foregroundStyle(.shadowDisabled.opacity(0.1))
                     .annotation(position: .overlay, alignment: .center) {
-                        Text("MONOTON")
+                        Text("AGAK BERLEBIHAN")
                             .font(.title3)
                             .fontWeight(.bold)
                             .foregroundStyle(Color.textGrey.opacity(0.9))
                     }
+                    
                 }
+                
+                
+                RuleMark(y: .value("Limit1", bandLow))
+                        .foregroundStyle(.gray.opacity(0.6))
+                        .lineStyle(.init(lineWidth: 1, dash: [4]))
+
+                RuleMark(y: .value("Limit2", bandHigh))
+                    .foregroundStyle(.gray.opacity(0.6))
+                    .lineStyle(.init(lineWidth: 1, dash: [4]))
                 
                 ForEach(processedSeries) { p in
                     LineMark(
@@ -126,8 +136,7 @@ struct IntonationResultChart: View {
             }
             .transaction { $0.animation = nil }
             .chartYAxis {
-                AxisMarks(position: .leading) {
-                    AxisGridLine()
+                AxisMarks {
                 }
             }
             .chartXAxis {
@@ -181,10 +190,10 @@ struct IntonationResultChart: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Rekaman Audio")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.custom("Nunito-Bold", size: 12))
+                    .foregroundStyle(Color(.baseColorBrown))
 
-                HStack(spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
                     Button {
                         if let url = whisperKitVM.savedRecordingURL {
                             if audioPlayerVM.isPlaying {
@@ -197,50 +206,51 @@ struct IntonationResultChart: View {
                         Image(systemName: audioPlayerVM.isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 18, weight: .bold))
                             .padding(10)
-                            .background(Color.primary.opacity(0.08), in: Circle())
+                            .foregroundColor(Color(.baseColorBrown))
                     }
-
-                    GeometryReader { geo in
-                        let width = geo.size.width
-                        let safeDuration = max(fixedDuration, 0.001)
-                        let progress = CGFloat(cursorTime / safeDuration)
-                        let clampedProgress = max(0, min(progress, 1.0))
-                        
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Color.secondary.opacity(0.25))
-                                .frame(height: 6)
+                    ZStack{
+                        GeometryReader { geo in
+                            let width = geo.size.width
+                            let safeDuration = max(fixedDuration, 0.001)
+                            let progress = CGFloat(cursorTime / safeDuration)
+                            let clampedProgress = max(0, min(progress, 1.0))
                             
-                            Capsule()
-                                .fill(Color.brown)
-                                .frame(width: width * clampedProgress, height: 6)
-                        }
-                        .contentShape(Rectangle())
-                        .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { value in
-                                    isDragging = true
-                                    
-                                    let percentage = value.location.x / width
-                                    let newTime = Double(percentage) * safeDuration
-                                    
-                                    cursorTime = clampToDomain(newTime)
-                                }
-                                .onEnded { value in
-                                    isDragging = false
-                                    
-                                    let percentage = value.location.x / width
-                                    let finalTime = clampToDomain(Double(percentage) * safeDuration)
-                                    cursorTime = finalTime
-                                    
-                                    if let url = whisperKitVM.savedRecordingURL {
-                                        audioPlayerVM.play(from: url, startAt: finalTime)
-                                        if !audioPlayerVM.isPlaying { audioPlayerVM.pause() }
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(Color.secondary.opacity(0.25))
+                                    .frame(height: 6)
+                                
+                                Capsule()
+                                    .fill(Color.brown)
+                                    .frame(width: width * clampedProgress, height: 6)
+                            }
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { value in
+                                        isDragging = true
+                                        
+                                        let percentage = value.location.x / width
+                                        let newTime = Double(percentage) * safeDuration
+                                        
+                                        cursorTime = clampToDomain(newTime)
                                     }
-                                }
-                        )
-                    }
-                    .frame(height: 20)
+                                    .onEnded { value in
+                                        isDragging = false
+                                        
+                                        let percentage = value.location.x / width
+                                        let finalTime = clampToDomain(Double(percentage) * safeDuration)
+                                        cursorTime = finalTime
+                                        
+                                        if let url = whisperKitVM.savedRecordingURL {
+                                            audioPlayerVM.play(from: url, startAt: finalTime)
+                                            if !audioPlayerVM.isPlaying { audioPlayerVM.pause() }
+                                        }
+                                    }
+                            ).frame(maxHeight: .infinity, alignment: .center)
+                        }
+                    }.frame(height: 40)
+                    
                 }
             }
             .padding(.horizontal, 16)

@@ -41,7 +41,6 @@ class SimulationViewModel: ObservableObject {
 
     
     let whisperKitVM: SpeechTranscriberViewModel
-    let textAnalyzerVM: TextFrequencyAnalyzerViewModel
     let intonationAnalyzerVM: IntonationAnalyzerViewModel
     let tempoVM: TempoViewModel
     let fillerWordVM: FillerWordViewModel
@@ -82,14 +81,12 @@ class SimulationViewModel: ObservableObject {
     init(
         settings: PracticeSettings,
         whisperKitVM: SpeechTranscriberViewModel,
-        textAnalyzerVM: TextFrequencyAnalyzerViewModel,
         intonationAnalyzerVM: IntonationAnalyzerViewModel,
         tempoVM: TempoViewModel,
         fillerWordVM: FillerWordViewModel
     ) {
         self.settings = settings
         self.whisperKitVM = whisperKitVM
-        self.textAnalyzerVM = textAnalyzerVM
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
         self.fillerWordVM = fillerWordVM
@@ -282,7 +279,6 @@ class SimulationViewModel: ObservableObject {
         let shouldStart = (whisperKitVM.recordingStatus == .stopped)
 
         if shouldStart {
-            MicMonitorModal.setupAudioSession()
             print("Requesting START recording...")
             startGame()
             whisperKitVM.toggleRecording(
@@ -299,7 +295,6 @@ class SimulationViewModel: ObservableObject {
             )
         }
     }
-
 
     private func processEvaluation() {
         guard !isRecording else { return }
@@ -327,8 +322,6 @@ class SimulationViewModel: ObservableObject {
         )
         isAnalysisComplete = true
     }
-
-
     
     private func startGame() {
         resetGame()
@@ -354,7 +347,6 @@ class SimulationViewModel: ObservableObject {
         whisperKitVM.resetState()
         tempoVM.clearResults()
         intonationAnalyzerVM.clearResults()
-        textAnalyzerVM.clearResults()
         fillerWordVM.clearResults()
         
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -399,17 +391,17 @@ class SimulationViewModel: ObservableObject {
            whisperKitVM.recordingStatus == .recording {
 
             hasScheduledAutoStop = true
-            print("⏰ Lebih dari 1 menit overtime – akan auto-stop dalam 5 detik")
+            print("Lebih dari 1 menit overtime – akan auto-stop dalam 5 detik")
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
                 guard let self = self else { return }
 
                 if self.whisperKitVM.recordingStatus == .recording {
-                    print("⏹ Auto-stopping recording setelah 5 detik > 1 menit overtime")
+                    print("Auto-stopping recording setelah 5 detik > 1 menit overtime")
                     self.stopGame()
                     toggleRecording()
                 } else {
-                    print("✅ Auto-stop dibatalkan, recording sudah berhenti lebih dulu")
+                    print("Auto-stop dibatalkan, recording sudah berhenti lebih dulu")
                 }
             }
         }
@@ -468,7 +460,7 @@ class SimulationViewModel: ObservableObject {
         if isOvertime {
             isOvertimeTrigger = true
             if !hasPlayedOvertimeSound {
-                print("🔔 Overtime mulai – play SFX waktuHabis")
+                print("Overtime mulai – play SFX waktuHabis")
                 playLocalSound(named: "waktuHabis")
                 hasPlayedOvertimeSound = true
             }
@@ -477,7 +469,7 @@ class SimulationViewModel: ObservableObject {
                 isOverOneMinuteTrigger = true
     
                 if !hasPlayedOverOneMinuteSound {
-                    print("⏰ Overtime > 1 menit – play SFX waktuHabisBanget")
+                    print("Overtime > 1 menit – play SFX waktuHabisBanget")
                     playLocalSound(named: "waktuHabisBanget")
                     hasPlayedOverOneMinuteSound = true
                 }
@@ -498,7 +490,7 @@ extension SimulationViewModel {
     
     private func playLocalSound(named name: String, ext: String = "MP3") {
         guard let url = Bundle.main.url(forResource: name, withExtension: ext) else {
-            print("⚠️ Sound file \(name).\(ext) tidak ditemukan di bundle")
+            print("Sound file \(name).\(ext) tidak ditemukan di bundle")
             return
         }
         
@@ -510,7 +502,7 @@ extension SimulationViewModel {
                     
             distractionPlayers.removeAll { !$0.isPlaying }
         } catch {
-            print("⚠️ Gagal play sound \(name): \(error)")
+            print("Gagal play sound \(name): \(error)")
         }
     }
 

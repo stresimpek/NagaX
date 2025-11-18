@@ -22,12 +22,16 @@ final class FillerWordViewModel: ObservableObject {
 
     private let fillerWordPatterns: [NSRegularExpression] = {
         let patterns = [
-            "e+h+",      // eh, eeh, ehh, eeeh, ehhh
-            "h+m+",      // hm, hmm, hmmm
-            "a+h+",      // ah, aah, ahh, aaah
-            "u+m+",      // um, umm, ummm
-            "u+h+",      // uh, uhh, uhhh
-            "a+n+u+"     // anu, anuu, annuu
+            "e+",
+            "e+m+",
+            "e+h+",
+            "e+h+m+",
+            "h+m+",
+            "a+h+",
+            "u+m+",
+            "u+h+",
+            "u+h+m+",
+            "a+n+u+"
         ]
         
         return patterns.compactMap {
