@@ -193,18 +193,18 @@ private extension NewEvaluationView {
     var bottomButtons: some View {
         HStack(spacing: 16) {
             ButtonComponent(
-                title: "SELESAI",
-                systemImage: nil,
-                size: .medium,
-                kind: .secondaryBlue,
-                action: onBack
-            )
-            ButtonComponent(
                 title: "LATIHAN LAGI",
                 systemImage: nil,
-                size: .medium,
-                kind: .primaryYellow,
+                size: .largeIconCircle,
+                kind: .secondaryBlue,
                 action: { onNext(viewModel.settings) }
+            )
+            ButtonComponent(
+                title: "SELESAI",
+                systemImage: nil,
+                size: .largeIconCircle,
+                kind: .primaryYellow,
+                action: onBack
             )
         }
         .padding(.top, 16)
