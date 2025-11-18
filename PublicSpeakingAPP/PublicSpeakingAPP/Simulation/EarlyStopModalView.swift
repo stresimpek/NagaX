@@ -35,14 +35,14 @@ struct EarlyStopModalView: View {
                     ButtonComponent(
                         title: "Lanjut Latihan",
                         systemImage: nil,
-                        size: .largeIconCircle,
+                        size: .medium,
                         kind: .secondaryBlue,
                         action: onContinue
                     )
                     ButtonComponent(
                         title: "Lihat Evaluasi",
                         systemImage: nil,
-                        size: .largeIconCircle,
+                        size: .medium,
                         kind: .primaryYellow,
                         action: onViewEvaluation
                     )
