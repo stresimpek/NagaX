@@ -61,6 +61,19 @@ struct NewEvaluationView: View {
         }
         .navigationBarBackButtonHidden(true)
     }
+    
+    private func shouldShowEmptyStateForCurrentTab() -> Bool {
+        switch viewModel.currentTab {
+        case .artikulasi:
+            return viewModel.articulationCount == 0
+        case .fillerWords:
+            return viewModel.fillerWordCount == 0
+        case .strukturKalimat:
+            return viewModel.ineffectiveSentenceCount == 0
+        default:
+            return false
+        }
+    }
 }
 
 private extension NewEvaluationView {
@@ -117,9 +130,24 @@ private extension NewEvaluationView {
             hasScrollableContent: viewModel.currentHasScrollableContent,
             analysisText: viewModel.sentenceAnalysisResult,
             transcript: viewModel.fullTranscript,
-            guidance: viewModel.currentGuidance
+            guidance: viewModel.currentGuidance,
+            showEmptyState: shouldShowEmptyStateForCurrentTab(),
+            emptyStateMessage: emptyStateMessageForCurrentTab()
         ) {
             contentForCurrentTab
+        }
+    }
+    
+    private func emptyStateMessageForCurrentTab() -> String {
+        switch viewModel.currentTab {
+        case .artikulasi:
+            return "TIDAK ADA ARTIKULASI KURANG JELAS YANG TERDETEKSI SELAMA KAMU PRESENTASI"
+        case .fillerWords:
+            return "TIDAK ADA KATA JEDA YANG TERDETEKSI SELAMA KAMU PRESENTASI"
+        case .strukturKalimat:
+            return "TIDAK ADA PEMBOROSAN KATA YANG TERDETEKSI DALAM PRESENTASIMU"
+        default:
+            return ""
         }
     }
     
@@ -240,6 +268,7 @@ struct GuidanceView: View {
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
     }
+    
 }
 
 struct EvaluationSectionView<Content: View>: View {
@@ -250,7 +279,9 @@ struct EvaluationSectionView<Content: View>: View {
     let content: Content
     let analysisText: String
     let transcript: String
-    let guidance: [AttributedString]  // Add this
+    let guidance: [AttributedString]
+    let showEmptyState: Bool
+    let emptyStateMessage: String
     //    @State private var diffComponents: [DiffComponent] = []
     
     init(
@@ -261,6 +292,8 @@ struct EvaluationSectionView<Content: View>: View {
         analysisText: String = "",
         transcript: String,
         guidance: [AttributedString] = [],
+        showEmptyState: Bool = false,
+        emptyStateMessage: String = "",
         @ViewBuilder content: () -> Content
     ) {
         self.evaluatorNote = evaluatorNote
@@ -270,6 +303,8 @@ struct EvaluationSectionView<Content: View>: View {
         self.analysisText = analysisText
         self.transcript = transcript
         self.guidance = guidance
+        self.showEmptyState = showEmptyState
+        self.emptyStateMessage = emptyStateMessage
         self.content = content()
     }
     
@@ -288,12 +323,13 @@ struct EvaluationSectionView<Content: View>: View {
                 .font(.footnoteBold)
                 .foregroundColor(Color.baseColorBrown)
             
-            if hasScrollableContent {
-                scrollableContentWithGradient
-            } else {
-                staticContent
-            }
-            
+            if showEmptyState {
+                            emptyStateContent
+                        } else if hasScrollableContent {
+                            scrollableContentWithGradient
+                        } else {
+                            staticContent
+                        }
             Text("Guidance:")
                 .font(.footnoteBold)
                 .foregroundColor(.baseColorBrown)
@@ -304,6 +340,24 @@ struct EvaluationSectionView<Content: View>: View {
         }
         .padding()
     }
+    
+    private var emptyStateContent: some View {
+            HStack(alignment: .center, spacing: 12) {
+                Text(emptyStateMessage)
+                    .font(.title3)
+                    .foregroundColor(Color.baseColorBrown.opacity(0.5))
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity, minHeight: 152.8125, maxHeight: 152.8125, alignment: .center)
+            .padding(.horizontal, 50)
+            .padding(.vertical, 53)
+            .background(Color.yellow2.opacity(0.2))
+            .cornerRadius(11.25)
+            .overlay(
+                RoundedRectangle(cornerRadius: 11.25)
+                    .stroke(Color.brown.opacity(0.4), lineWidth: 0.9375)
+            )
+        }
     
     private var scrollableContentWithGradient: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -368,6 +422,8 @@ struct EvaluationSectionView<Content: View>: View {
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
     }
+    
+    
 }
 
 struct StrukturKalimatFullScreenView: View {

@@ -171,15 +171,6 @@ class NewEvaluationViewModel: ObservableObject {
             }
         }
     
-    private var ineffectiveSentenceCount: Int {
-        let components = DiffComponent.generate(
-            original: fullTranscript,
-            new: sentenceAnalysisResult
-        )
-        // Count deleted/changed components as ineffective parts
-        return components.filter { $0.type == .deleted }.count
-    }
-    
     private var strukturKalimatEvaluatorNote: AttributedString {
         let count = ineffectiveSentenceCount
         let duration = settings.durationMinutes
@@ -311,6 +302,15 @@ class NewEvaluationViewModel: ObservableObject {
     func toggleFullScreen() {
         showFullScreen.toggle()
     }
+    
+    var ineffectiveSentenceCount: Int {
+        let components = DiffComponent.generate(
+            original: fullTranscript,
+            new: sentenceAnalysisResult
+        )
+        return components.filter { $0.type == .deleted }.count
+    }
+    
 }
 extension String {
     func splitByWord() -> [String] {
