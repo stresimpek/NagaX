@@ -65,9 +65,9 @@ struct NewEvaluationView: View {
     private func shouldShowEmptyStateForCurrentTab() -> Bool {
         switch viewModel.currentTab {
         case .artikulasi:
-            return viewModel.articulationCount == 0
+            return viewModel.articulationCalculated && viewModel.articulationCount == 0
         case .fillerWords:
-            return viewModel.fillerWordCount == 0
+            return viewModel.fillerWordCalculated && viewModel.fillerWordCount == 0
         case .strukturKalimat:
             return viewModel.ineffectiveSentenceCount == 0
         default:
@@ -166,6 +166,7 @@ private extension NewEvaluationView {
                 onMapsCalculated: { maps, total in
                     viewModel.articulationCount = maps.totalCount
                     viewModel.articulationTotal = total
+                    viewModel.articulationCalculated = true
                 }
             )
             .padding()
@@ -175,6 +176,7 @@ private extension NewEvaluationView {
                 fullTranscript: viewModel.fullTranscript,
                 onMapsCalculated: { maps in
                     viewModel.fillerWordCount = maps.totalCount
+                    viewModel.fillerWordCalculated = true
                 }
             ).padding()
         case .tempo:
@@ -221,18 +223,18 @@ private extension NewEvaluationView {
     var bottomButtons: some View {
         HStack(spacing: 16) {
             ButtonComponent(
-                title: "LATIHAN LAGI",
-                systemImage: nil,
-                size: .largeIconCircle,
-                kind: .secondaryBlue,
-                action: { onNext(viewModel.settings) }
-            )
-            ButtonComponent(
                 title: "SELESAI",
                 systemImage: nil,
                 size: .largeIconCircle,
-                kind: .primaryYellow,
+                kind: .secondaryBlue,
                 action: onBack
+            )
+            ButtonComponent(
+                title: "LATIHAN LAGI",
+                systemImage: nil,
+                size: .largeIconCircle,
+                kind: .primaryYellow,
+                action: { onNext(viewModel.settings) }
             )
         }
         .padding(.top, 16)

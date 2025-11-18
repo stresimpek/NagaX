@@ -28,7 +28,6 @@ struct AspectInfoView: View {
                         
                         Text("ASPEK PRESENTASI")
                             .font(.title3)
-                            .fontWeight(.bold)
                             .foregroundColor(Color("BaseColorBrown"))
                             .underline()
                             .padding(.top, 20)
