@@ -72,7 +72,7 @@ struct HomeView: View {
                     SimulationViewWrapper(
                         settings: settings,
                         onBack: {
-                            coordinator.goBack()
+                            coordinator.returnToHome()
                         },
                         onRestartPractice: {
                                 coordinator.retrySimulation(from: settings) 
