@@ -104,8 +104,12 @@ class NewEvaluationViewModel: ObservableObject {
     
     @Published var articulationCount: Int = 0
     @Published var articulationTotal: Int = 0  // Add total
+    @Published var articulationCalculated: Bool = false
+
 
     @Published var fillerWordCount: Int = 0
+    @Published var fillerWordCalculated: Bool = false
+
     
     var availableTabs: [EvaluationTab] {
         var tabs: [EvaluationTab] = []
