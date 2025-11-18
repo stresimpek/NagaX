@@ -176,7 +176,7 @@ class ModalViewModel: ObservableObject {
     
     func checkAndRequestMicPermission() {
         permissionStatus = AVAudioApplication.shared.recordPermission
-
+        
         switch permissionStatus {
         case .granted:
             permissionStatus = .granted
@@ -196,11 +196,9 @@ class ModalViewModel: ObservableObject {
             }
         case .denied:
             self.showPermissionAlert = true
-        @unknown default:
-            
         }
     }
-
+        
     func stopMonitoring() {
         micMonitor.stopMonitoring()
     }
