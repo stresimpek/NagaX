@@ -104,9 +104,7 @@ struct IntonationResultChart: View {
                             .fontWeight(.bold)
                             .foregroundStyle(Color.textGrey.opacity(0.9))
                     }
-                    
                 }
-                
                 
                 RuleMark(y: .value("Limit1", bandLow))
                         .foregroundStyle(.gray.opacity(0.6))
@@ -190,7 +188,8 @@ struct IntonationResultChart: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Rekaman Audio")
-                    .font(.custom("Nunito-Bold", size: 12))
+                    .font(.subheadline)
+                    .bold()
                     .foregroundStyle(Color(.baseColorBrown))
 
                 HStack(alignment: .center, spacing: 12) {

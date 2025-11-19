@@ -78,20 +78,20 @@ class ModalViewModel: ObservableObject {
         switch step {
         case .quietRoom:
             mainImageName = "InstructionQuiet"
-            buttonTitle = "LANJUT"
+            buttonTitle = "Lanjut"
             isButtonEnabled = true
             showMicVisualizer = false
             
         case .micCheck:
             mainImageName = "ProfessorEar_Angry"
-            buttonTitle = "LANJUT"
+            buttonTitle = "Lanjut"
             isButtonEnabled = false
             showMicVisualizer = true
             checkAndRequestMicPermission()
             
         case .cameraPosition:
             mainImageName = "InstructionDistance"
-            buttonTitle = "MULAI LATIHAN"
+            buttonTitle = "Mulai Latihan"
             isButtonEnabled = true
             showMicVisualizer = false
         }

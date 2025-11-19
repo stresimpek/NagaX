@@ -207,9 +207,9 @@ private extension NewEvaluationView {
     var disclaimerBanner: some View {
         VStack (alignment: .leading, spacing: 6){
             Text("⚠️ Feedback ini dibuat oleh machine learning")
-                .font(.custom("Nunito-Black", size: 13))
+                .font(.subheadlineBold)
             Text("Cako hanya ngasih insight sebagai alat bantu, tapi tetap kamu yang paling ngerti gaya presentasimu")
-                .font(.custom("Nunito-Medium", size: 11))
+                .font(.subheadline)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
@@ -223,14 +223,14 @@ private extension NewEvaluationView {
     var bottomButtons: some View {
         HStack(spacing: 16) {
             ButtonComponent(
-                title: "SELESAI",
+                title: "Selesai",
                 systemImage: nil,
                 size: .largeIconCircle,
                 kind: .secondaryBlue,
                 action: onBack
             )
             ButtonComponent(
-                title: "LATIHAN LAGI",
+                title: "Latihan Lagi",
                 systemImage: nil,
                 size: .largeIconCircle,
                 kind: .primaryYellow,
@@ -313,27 +313,31 @@ struct EvaluationSectionView<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Catatan Evaluator:")
-                .font(.footnoteBold)
+                .font(.subheadline)
+                .bold()
                 .foregroundColor(.baseColorBrown)
             
             Text(evaluatorNote)
                 .font(.body)
-                .foregroundColor(.darkBlue2)
+                .foregroundColor(.baseColorBrown)
                 .underline(true, color: Color.baseColorBrown)
             
             Text(sectionTitle)
-                .font(.footnoteBold)
+                .font(.subheadline)
+                .bold()
                 .foregroundColor(Color.baseColorBrown)
             
             if showEmptyState {
-                            emptyStateContent
-                        } else if hasScrollableContent {
-                            scrollableContentWithGradient
-                        } else {
-                            staticContent
-                        }
+                emptyStateContent
+            } else if hasScrollableContent {
+                scrollableContentWithGradient
+            } else {
+                staticContent
+            }
+            
             Text("Guidance:")
-                .font(.footnoteBold)
+                .font(.subheadline)
+                .bold()
                 .foregroundColor(.baseColorBrown)
             
             if !guidance.isEmpty {

@@ -287,19 +287,33 @@ struct DatePickerView: View {
                     Spacer()
                 }
 
-                ButtonComponent(
-                    title: "Pilih Deadline",
-                    systemImage: nil,
-                    size: .large,
-                    kind: .primaryYellow
-                ) {
-                    let selectedDate = createDate()
-                    saveOrUpdate(date: selectedDate)
-                    onComplete(selectedDate)
+                if !isSelectedDateTimeValid {
+                    ButtonComponent(
+                        title: "Tanggal Invalid",
+                        systemImage: nil,
+                        size: .large,
+                        kind: .primaryYellow
+                    ) {
+                        let selectedDate = createDate()
+                        saveOrUpdate(date: selectedDate)
+                        onComplete(selectedDate)
+                    }
+                    .disabled(!isSelectedDateTimeValid)
+                    .opacity(0.5)
+                    .padding(.horizontal)
+                } else {
+                    ButtonComponent(
+                        title: "Pilih Deadline",
+                        systemImage: nil,
+                        size: .large,
+                        kind: .primaryYellow
+                    ) {
+                        let selectedDate = createDate()
+                        saveOrUpdate(date: selectedDate)
+                        onComplete(selectedDate)
+                    }
+                    .padding(.horizontal)
                 }
-                .disabled(!isSelectedDateTimeValid)
-                .opacity(isSelectedDateTimeValid ? 1.0 : 0.5)
-                .padding(.horizontal)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(24)

@@ -62,7 +62,7 @@ struct HomeContentView: View {
                     Spacer()
                     
                     ButtonComponent(
-                        title: "MULAI LATIHAN",
+                        title: "Mulai Latihan",
                         systemImage: nil,
                         size: .large,
                         kind: .primaryYellow,
@@ -72,8 +72,6 @@ struct HomeContentView: View {
                 }
                 
                 SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
-                
-                
             }
             .padding(.leading, 200)
             .frame(alignment: .top)
@@ -91,7 +89,8 @@ struct SpeechBubble: View {
         ZStack(alignment: .bottomLeading) {
             // Main bubble background + text
             Text(text)
-                .font(.footnoteBold)
+                .font(.body)
+                .bold()
                 .foregroundColor(Color(.baseColorBrown))
                 .frame(width: 198, height: 86, alignment: .center)
                 .multilineTextAlignment(.center)
@@ -156,7 +155,8 @@ struct CountdownBox: View {
     var body: some View {
         Text(text)
             .font(.body)
-            .padding(4)
+            .padding(.vertical, 4)
+            .padding(.horizontal, 8)
             .background(Color.white)
             .cornerRadius(4)
             .foregroundStyle(Color.black)

@@ -4,7 +4,9 @@
 //
 //  Created by Regina Celine Adiwinata on 22/10/25.
 //
+
 import SwiftUI
+import AVFoundation
 
 struct SettingsView: View {
     
@@ -14,6 +16,7 @@ struct SettingsView: View {
     @State private var randomTopic: Bool = false
     
     @State private var showAspectInfo: Bool = false
+    @State private var showPermissionAlert: Bool = false
     
     let onBack: () -> Void
     let onNext: (PracticeSettings) -> Void
@@ -57,7 +60,7 @@ struct SettingsView: View {
                         }
 
                         HStack(alignment: .top, spacing: 40) {
-                            Text("Distraksi").font(.headline)
+                            Text("Distraksi simulasi").font(.headline)
                             
                             VStack(spacing: 4) {
                                 Slider(value: $distractionLevel, in: 0...2, step: 1)
@@ -69,7 +72,7 @@ struct SettingsView: View {
                                     VStack(alignment: .center) {
                                         Circle()
                                             .frame(width: 8, height: 8)
-                                        Text("Tidak Ada")
+                                        Text("Rendah")
                                     }
                                     
                                     Spacer()
@@ -77,7 +80,7 @@ struct SettingsView: View {
                                     VStack(alignment: .center) {
                                         Circle()
                                             .frame(width: 8, height: 8)
-                                        Text("Sedikit")
+                                        Text("Sedang")
                                     }
                                     
                                     Spacer()
@@ -85,10 +88,10 @@ struct SettingsView: View {
                                     VStack(alignment: .center) {
                                         Circle()
                                             .frame(width: 8, height: 8)
-                                        Text("Banyak")
+                                        Text("Tinggi")
                                     }
                                 }
-                                .font(.caption)
+                                .font(.subheadline)
                                 .foregroundStyle(.baseColorWhite)
                             }
                         }
@@ -105,7 +108,7 @@ struct SettingsView: View {
                                 }
                             }) {
                                 Image(systemName: "info.circle")
-                                    .font(.title3)
+                                    .font(.title2)
                                     .foregroundColor(Color.baseColorWhite)
                             }
                         }
@@ -118,39 +121,57 @@ struct SettingsView: View {
                                             option: opt,
                                             isSelected: Binding(
                                                 get: { selectedAspects.contains(opt) },
-                                                set: { newVal in
-                                                    if newVal { selectedAspects.insert(opt) }
-                                                    else { selectedAspects.remove(opt) }
+                                                set: { shouldSelect in
+                                                    if shouldSelect {
+                                                        handleAspectSelection(for: opt)
+                                                    } else {
+                                                        selectedAspects.remove(opt)
+                                                    }
                                                 }
                                             )
                                         )
                                     }
                                 }
                                 .padding(.vertical, 4)
-                                
-                                
                             }
                             Spacer()
                         }
                        
-                        
                         HStack {
                             Spacer()
-                            ButtonComponent(
-                                title: "Mulai Latihan",
-                                systemImage: nil,
-                                size: .medium,
-                                kind: .primaryYellow,
-                                isEnabled: !shouldDisableNext,
-                                action: {
-                                    let settings = PracticeSettings(
-                                        durationMinutes: durationMinutes,
-                                        distractionLevel: distractionLevel,
-                                        selectedAspects: selectedAspects
-                                    )
-                                    onNext(settings)
-                                }
-                            )
+                            if shouldDisableNext {
+                                ButtonComponent(
+                                    title: "Pilih Aspek",
+                                    systemImage: nil,
+                                    size: .medium,
+                                    kind: .primaryYellow,
+                                    isEnabled: !shouldDisableNext,
+                                    action: {
+                                        let settings = PracticeSettings(
+                                            durationMinutes: durationMinutes,
+                                            distractionLevel: distractionLevel,
+                                            selectedAspects: selectedAspects
+                                        )
+                                        onNext(settings)
+                                    }
+                                )
+                            } else {
+                                ButtonComponent(
+                                    title: "Mulai Latihan",
+                                    systemImage: nil,
+                                    size: .medium,
+                                    kind: .primaryYellow,
+                                    isEnabled: true,
+                                    action: {
+                                        let settings = PracticeSettings(
+                                            durationMinutes: durationMinutes,
+                                            distractionLevel: distractionLevel,
+                                            selectedAspects: selectedAspects
+                                        )
+                                        onNext(settings)
+                                    }
+                                )
+                            }
                         }
                         
                     }
@@ -189,6 +210,39 @@ struct SettingsView: View {
                 })
                 .transition(.opacity)
             }
+        }
+        .alert("Izin Mikrofon Diperlukan", isPresented: $showPermissionAlert) {
+                Button("Batal", role: .cancel) { }
+                Button("Buka Pengaturan") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+            } message: {
+                Text("Aspek yang kamu pilih memerlukan analisis suara. Harap izinkan akses mikrofon di Pengaturan.")
+            }
+    }
+    
+    private func handleAspectSelection(for option: AspectOption) {
+        let status = AVAudioApplication.shared.recordPermission
+        
+        switch status {
+        case .granted:
+            selectedAspects.insert(option)
+            
+        case .denied:
+            showPermissionAlert = true
+            
+        case .undetermined:
+            AVAudioApplication.requestRecordPermission { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self.selectedAspects.insert(option)
+                    }
+                }
+            }
+        @unknown default:
+            break
         }
     }
 }

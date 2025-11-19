@@ -44,7 +44,7 @@ struct OnboardingView: View {
                     .frame(height: 120)
 
                 ButtonComponent(
-                    title: "MULAI",
+                    title: "Mulai",
                     systemImage: nil,
                     size: .large,
                     kind: .primaryYellow,
