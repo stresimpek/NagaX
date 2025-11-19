@@ -156,7 +156,7 @@ struct CountdownBox: View {
     var body: some View {
         Text(text)
             .font(.body)
-            .frame(width: 28, height: 28)
+            .padding(4)
             .background(Color.white)
             .cornerRadius(4)
             .foregroundStyle(Color.black)

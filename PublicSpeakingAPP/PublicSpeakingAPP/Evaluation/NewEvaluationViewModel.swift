@@ -30,64 +30,40 @@ struct DiffComponent: Identifiable, Hashable {
     
     static func generate(original: String, new: String) -> [DiffComponent] {
         let words1 = original.splitByWord()
-        let newSpace = " " + new
-        let words2 = newSpace.splitByWord()
-        let diff = words2.difference(from: words1)
-        
-        var components: [DiffComponent] = []
-        var currentComponents = words1.map { DiffComponent(text: $0, type: .same) }
-
-        for change in diff.removals.reversed() {
-            switch change {
-            case .remove(let offset, _, _):
-                if currentComponents.indices.contains(offset) {
-                    currentComponents[offset].type = .deleted
-                }
-            case .insert:
-                break
-            }
-        }
-        
-        for change in diff.insertions.reversed() {
-            switch change {
-            case .insert(let offset, let element, _):
-                let newComponent = DiffComponent(text: element, type: .added)
-              
-                var targetInsertionIndex = 0
-                var postRemovalCounter = 0
-                var found = false
-                
-                for (index, component) in currentComponents.enumerated() {
-                    if postRemovalCounter == offset {
-                        targetInsertionIndex = index
-                        found = true
-                        break
-                    }
-                    if component.type != .deleted {
-                        postRemovalCounter += 1
-                    }
-                }
-                if !found {
-                    targetInsertionIndex = currentComponents.count
-                }
-                currentComponents.insert(newComponent, at: targetInsertionIndex)
-                
-            case .remove:
-                break
-            }
-        }
-        
-        if components.isEmpty {
-            for component in currentComponents {
-                if let last = components.last, last.type == component.type {
-                    let mergedComponent = DiffComponent(text: last.text + component.text, type: last.type)
-                    components[components.count - 1] = mergedComponent
+        let words2 = new.splitByWord()
+        let n = words1.count
+        let m = words2.count
+        // Build LCS table
+        var dp = Array(repeating: Array(repeating: 0, count: m + 1), count: n + 1)
+        for i in 0..<n {
+            for j in 0..<m {
+                if words1[i] == words2[j] {
+                    dp[i + 1][j + 1] = dp[i][j] + 1
                 } else {
-                    components.append(component)
+                    dp[i + 1][j + 1] = max(dp[i][j + 1], dp[i + 1][j])
                 }
             }
         }
-        
+        // Reconstruct diff path
+        var components: [DiffComponent] = []
+        var i = n, j = m
+        var ops: [(String, DiffType)] = []
+        while i > 0 || j > 0 {
+            if i > 0 && j > 0 && words1[i-1] == words2[j-1] {
+                ops.append((words1[i-1], .same))
+                i -= 1; j -= 1
+            } else if j > 0 && (i == 0 || dp[i][j-1] >= dp[i-1][j]) {
+                ops.append((words2[j-1], .added))
+                j -= 1
+            } else if i > 0 && (j == 0 || dp[i][j-1] < dp[i-1][j]) {
+                ops.append((words1[i-1], .deleted))
+                i -= 1
+            }
+        }
+        // Hasil ops di-reverse karena proses dari belakang
+        for (word, type) in ops.reversed() {
+            components.append(DiffComponent(text: word, type: type))
+        }
         return components
     }
 }
@@ -106,10 +82,8 @@ class NewEvaluationViewModel: ObservableObject {
     @Published var articulationTotal: Int = 0  // Add total
     @Published var articulationCalculated: Bool = false
 
-
-    @Published var fillerWordCount: Int = 0
+    @Published var fillerWordCount: Int = 0     
     @Published var fillerWordCalculated: Bool = false
-
     
     var availableTabs: [EvaluationTab] {
         var tabs: [EvaluationTab] = []
