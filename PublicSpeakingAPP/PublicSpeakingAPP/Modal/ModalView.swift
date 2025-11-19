@@ -26,6 +26,47 @@ struct ModalView: View {
                     Spacer().frame(height: geometry.size.height * 0.1)
 
                     ZStack(alignment: .top) {
+                    VStack(spacing: 0) {
+                        Spacer().frame(height: geometry.size.height * 0.005)
+                        
+                        TitleView()
+                        
+                        Spacer().frame(height: geometry.size.height * 0.01)
+                        
+                        VStack {
+                            switch viewModel.currentStep {
+                            case .quietRoom:
+                                MicroAnimation(artboardName: "Kondusif", stateMachineName: "SM_BlobFish")
+                                    .scaledToFit()
+                                    .frame(height: 100)
+                                
+                            case .micCheck:
+                                MicSetupView(
+                                    micMonitor: viewModel.micMonitor,
+                                    showMicWarning: viewModel.showMicWarning,
+                                    imageName: viewModel.mainImageName
+                                )
+                                
+                            case .cameraPosition:
+                                MicroAnimation(artboardName: "SepanjangLengan", stateMachineName: "SM_SepanjangLengan")
+                                    .scaledToFit()
+                                    .frame(height: 100)
+                            }
+                        }
+                        .frame(height: 150)
+                        .animation(.easeInOut, value: viewModel.currentStep)
+                        
+                        Spacer().frame(height: geometry.size.height * 0.01)
+                        
+                        InstructionTextView(
+                            message: viewModel.instructionText,
+                            geometry: geometry
+                        )
+                        
+                        Spacer().frame(height: geometry.size.height * 0.1)
+                    }
+                    .padding(.horizontal, geometry.size.width * 0.06)
+                    .frame(width: geometry.size.width * 0.85)
                         Image("SetupPaper")
                             .resizable()
                             .scaledToFill()

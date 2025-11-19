@@ -15,8 +15,7 @@ struct OnboardingView: View {
             Color("BaseColorBlue")
                 .ignoresSafeArea()
 
-            VStack(spacing: 30) {
-                Spacer()
+            VStack(spacing: 0) {
                 
                 VStack(spacing: 8) {
                     Text("Latihan dengan simulasi & review penyampaianmu")
@@ -36,13 +35,15 @@ struct OnboardingView: View {
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.top, 20)
+//                .padding(.top, 20)
                 
-                Image("LoadingImage")
-                    .resizable()
-                    .scaledToFit()
+                Spacer()
+                
+                MicroAnimation(artboardName: "Kondusif", stateMachineName: "SM_BlobFish")
                     .frame(height: 120)
-
+                
+                Spacer()
+                
                 ButtonComponent(
                     title: "MULAI",
                     systemImage: nil,
@@ -53,11 +54,8 @@ struct OnboardingView: View {
                     isEnabled: true,
                     action: onStartTapped
                 )
-                .frame(height: 80)
                 .padding(.horizontal, 250)
-                
-                Spacer()
-            }
+            }.padding(.vertical, 16)
         }
     }
 }
