@@ -82,7 +82,7 @@ class NewEvaluationViewModel: ObservableObject {
     @Published var articulationTotal: Int = 0  // Add total
     @Published var articulationCalculated: Bool = false
 
-    @Published var fillerWordCount: Int = 0     
+    @Published var fillerWordCount: Int = 0
     @Published var fillerWordCalculated: Bool = false
     
     var availableTabs: [EvaluationTab] {
@@ -133,35 +133,34 @@ class NewEvaluationViewModel: ObservableObject {
     }
     
     var currentEvaluatorNote: AttributedString {
-            switch currentTab {
-            case .strukturKalimat:
-                return strukturKalimatEvaluatorNote
-            case .artikulasi:
-                return articulationEvaluatorNote
-            case .fillerWords:
-                return fillerWordEvaluatorNote
-            case .tempo:
-                return tempoEvaluatorNote
-            case .intonasi:
-                return intonationEvaluatorNote
-            case .kontakMata:
-                return try! AttributedString(markdown: result.eyeContactFeedback)
-            }
+        switch currentTab {
+        case .strukturKalimat:
+            return strukturKalimatEvaluatorNote
+        case .artikulasi:
+            return articulationEvaluatorNote
+        case .fillerWords:
+            return fillerWordEvaluatorNote
+        case .tempo:
+            return tempoEvaluatorNote
+        case .intonasi:
+            return intonationEvaluatorNote
+        case .kontakMata:
+            // REVISI: Menggunakan logic baru untuk teks Kontak Mata
+            return eyeContactEvaluatorNote
         }
+    }
     
     private var strukturKalimatEvaluatorNote: AttributedString {
         let count = ineffectiveSentenceCount
-        let duration = settings.durationMinutes
-
+        
         return try! AttributedString(markdown: "Kamu ada **\(count)** kalimat yang ga efektif. Yuk cek rekomendasi perbaikannya! Kamu mungkin mau potong beberapa kata agar pesan lebih ringkas dan efektif.")
-
     }
     
     private var articulationEvaluatorNote: AttributedString {
         let count = articulationCount
         let total = articulationTotal > 0 ? articulationTotal : 100
         let clearWords = total - count
-        let percentage = total > 0 ? Int((Double(clearWords) / Double(total)) * 100) : 0
+        _ = total > 0 ? Int((Double(clearWords) / Double(total)) * 100) : 0
 
         return try! AttributedString(markdown: "Kamu ada **\(count)** dari **\(total)** kata tertangkap kurang jelas. Kamu bisa cek kata-kata yang kurang jelas, lalu coba ucap ulang untuk refleksi.")
     }
@@ -180,18 +179,18 @@ class NewEvaluationViewModel: ObservableObject {
             return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **zona aman**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
         case "B":
             if wpm < 100 {
-                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang agak lambat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
+                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang agak lambat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
             } else {
-                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang agak cepat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
+                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang agak cepat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
             }
         case "C":
             if wpm < 80 {
-                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang sangat lambat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
+                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang sangat lambat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
             } else {
-                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang sangat cepat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
+                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang sangat cepat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
             }
         default:
-            return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang ...**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
+            return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang ...**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
         }
     }
 
@@ -220,6 +219,18 @@ class NewEvaluationViewModel: ObservableObject {
         }
     }
     
+    // MARK: - REVISI TASK 1: Logic Text Kontak Mata
+    private var eyeContactEvaluatorNote: AttributedString {
+        // Mengambil data count yang sudah dihitung di backend (EvaluationModel)
+        let count = result.totalGazeIssues
+        
+        if count == 0 {
+            return try! AttributedString(markdown: "Tidak ada arah pandang melihat ke atap/lantai yang terdeteksi dalam presentasimu")
+        } else {
+            return try! AttributedString(markdown: "Kamu sempat melihat ke atap/lantai selama **\(count)** kali. Menyadari ini bisa membantu kamu menjaga fokus pandangan agar terlihat yakin")
+        }
+    }
+    
     var currentSectionTitle: String {
         switch currentTab {
         case .strukturKalimat:
@@ -229,7 +240,8 @@ class NewEvaluationViewModel: ObservableObject {
         case .tempo, .intonasi:
             return "Graph:"
         case .kontakMata:
-            return "Info:"
+            // Judul section untuk video playback
+            return "Simulation Recording (Gaze Highlights):"
         }
     }
     
@@ -290,6 +302,7 @@ class NewEvaluationViewModel: ObservableObject {
     }
     
 }
+
 extension String {
     func splitByWord() -> [String] {
         let regex = try? NSRegularExpression(pattern: "\\s+|\\S+")
@@ -357,13 +370,11 @@ extension NewEvaluationViewModel {
             }
             
         case .kontakMata:
-            switch result.eyeContactGrade {
-            case "A":
+            // REVISI: Mengupdate summary note juga agar konsisten
+            if result.totalGazeIssues == 0 {
                 return try! AttributedString(markdown: "Kontak mata **sangat baik**.")
-            case "B":
-                return try! AttributedString(markdown: "Kontak mata **cukup baik**.")
-            default:
-                return try! AttributedString(markdown: "Kontak mata **perlu fokus**.")
+            } else {
+                return try! AttributedString(markdown: "Terdeteksi **\(result.totalGazeIssues)** kali pandangan tidak fokus.")
             }
         }
     }

@@ -13,18 +13,22 @@ protocol SimulationARTrackerDelegate: AnyObject {
     func didUpdate(event: HeadGazeEvent)
 }
 
-class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
+// 1. Pastikan protokol ARSessionDelegate ada di sini
+class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private let logInterval: TimeInterval = 1.0
     private var lastLogTime: TimeInterval = 0.0
-    private var lastGazeLogTime: TimeInterval = 0
-
+    
     private let delegateInterval: TimeInterval = 0.5
     private var lastDelegateTime: TimeInterval = 0.0
     
     weak var delegate: SimulationARTrackerDelegate?
     private var arView: ARSCNView!
     
+    // Recorder
+    private let recorder = ARVideoRecorder()
+    
+    // Gaze Variables
     private let gazeSmoothness: Int = 30
     private let gazeLerpFactor: CGFloat = 0.1
     private let gazeSensitivity: Float = 3.0
@@ -33,20 +37,22 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
 
     let headPitchUpThreshold: Float = 0.08
     let headPitchDownThreshold: Float = -0.08
-    
     private let gazeThresholdVertical: CGFloat = 25.0
     
     private var latestFaceAnchor: ARFaceAnchor?
     private var gazeOrigin: CGPoint?
     private var headOriginEulerAngles: SCNVector3?
     private var screenCenter: CGPoint = .zero
-    
     private var lastSentEvent: HeadGazeEvent? = nil
 
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .clear
         setupARView()
+        
+        // Observer
+        NotificationCenter.default.addObserver(self, selector: #selector(handleStartRecording), name: NSNotification.Name("StartARRecording"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleStopRecording), name: NSNotification.Name("StopARRecording"), object: nil)
     }
     
     override func viewDidLayoutSubviews() {
@@ -57,12 +63,17 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        guard ARFaceTrackingConfiguration.isSupported else {
-            print("Peringatan: Pelacakan Wajah tidak didukung.")
-            return
-        }
+        guard ARFaceTrackingConfiguration.isSupported else { return }
+        
         let configuration = ARFaceTrackingConfiguration()
+        configuration.isLightEstimationEnabled = true
+        
+        // ⚠️ BAGIAN PALING PENTING: MENYAMBUNG PIPA DATA ⚠️
+        // Kalau ini tidak ada, recorder tidak akan pernah menerima gambar.
+        arView.session.delegate = self
+        
         arView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+        print("✅ ARSession Running & Delegate Set")
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -85,11 +96,39 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         ])
     }
     
-    func resetCalibration() {
-        self.gazeOrigin = nil
-        self.headOriginEulerAngles = nil
-        self.lastLerpedGazePoint = self.screenCenter
+    // --- FUNGSI UTAMA: PIPA PENYALUR GAMBAR ---
+    // Fungsi ini dipanggil ARKit 60 kali per detik
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        // Kirim setiap frame ke recorder
+        recorder.record(pixelBuffer: frame.capturedImage, timestamp: frame.timestamp)
     }
+    
+    // --- Handler Recording ---
+    @objc private func handleStartRecording() {
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileName = "SelfieRec_\(UUID().uuidString).mp4"
+        let url = tempDir.appendingPathComponent(fileName)
+        
+        print("🎥 ARVC: Start Recording -> \(fileName)")
+        recorder.start(outputURL: url)
+    }
+    
+    @objc private func handleStopRecording() {
+        print("🎥 ARVC: Stop Recording Request...")
+        recorder.stop { url in
+            if let url = url {
+                print("✅ ARVC: Video Berhasil Disimpan -> \(url.lastPathComponent)")
+                // Kirim balik ke ViewModel
+                NotificationCenter.default.post(name: NSNotification.Name("ARRecordingSaved"), object: nil, userInfo: ["url": url])
+            } else {
+                print("❌ ARVC: Video Gagal Disimpan (URL nil)")
+                // Kirim notifikasi gagal agar ViewModel tetap lanjut evaluasi
+                NotificationCenter.default.post(name: NSNotification.Name("ARRecordingSaved"), object: nil, userInfo: nil)
+            }
+        }
+    }
+    
+    // --- LOGIC GAZE TRACKING (TIDAK BERUBAH) ---
     
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         guard let frame = arView.session.currentFrame else { return }
@@ -128,17 +167,14 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         
         if self.gazeOrigin == nil && closestFaceAnchor.isTracked {
             if !calibratedGazePoint2D.x.isNaN && !calibratedGazePoint2D.y.isNaN {
-                
                 self.gazeOrigin = calibratedGazePoint2D
                 self.headOriginEulerAngles = currentHeadEulerAngles
-                
             }
         }
         
         var headEvent: HeadGazeEvent = .normal
         if let headOrigin = self.headOriginEulerAngles {
             let pitch = currentHeadEulerAngles.x - headOrigin.x
-            
             if pitch < headPitchDownThreshold {
                 headEvent = .headPitchDown
             } else if pitch > headPitchUpThreshold {
@@ -171,12 +207,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         
         let deltaY = lerpedGazePoint.y - self.screenCenter.y
         
-        let now = CACurrentMediaTime()
-        if now - lastGazeLogTime >= 1.0 {
-            print("⏱️ Vertical Gaze deltaY: \(deltaY)")
-            lastGazeLogTime = now
-        }
-        
         if deltaY < -self.gazeThresholdVertical {
             gazeEvent = .gazeUp
         } else if deltaY > self.gazeThresholdVertical {
@@ -193,9 +223,7 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         }
         
         if finalEvent != self.lastSentEvent || time - self.lastDelegateTime >= self.delegateInterval {
-            
             self.lastSentEvent = finalEvent
-            
             DispatchQueue.main.async {
                 self.delegate?.didUpdate(event: finalEvent)
             }
@@ -203,25 +231,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         }
         
         if time - self.lastLogTime >= self.logInterval {
-
-            if self.gazeOrigin != nil && self.lastLogTime == 0.0 {
-                if let headOrigin = self.headOriginEulerAngles {
-                    print("===> SIMULASI AR-TRACKER DIKALIBRASI <===")
-                    print("Head Origin: x=\(headOrigin.x), y=\(headOrigin.y), z=\(headOrigin.z)")
-                }
-            }
-
-            if let headOrigin = self.headOriginEulerAngles {
-                let currentPitch = currentHeadEulerAngles.x - headOrigin.x
-                print("Pitch: \(currentPitch) | Up: \(headPitchUpThreshold) | Down: \(headPitchDownThreshold)")
-
-                if headEvent == .headPitchDown {
-                    print("🔴 KEPALA MENUNDUK TERDETEKSI")
-                } else if headEvent == .headPitchUp {
-                    print("🔵 KEPALA MENDONGAK TERDETEKSI")
-                }
-            }
-
             self.lastLogTime = time
         }
     }
@@ -236,5 +245,4 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate {
         }
         return CGPoint(x: totalX / CGFloat(points.count), y: totalY / CGFloat(points.count))
     }
-    
 }

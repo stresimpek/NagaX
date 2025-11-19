@@ -7,6 +7,13 @@
 
 import Foundation
 
+// Struct sederhana untuk log event kontak mata (untuk fitur video playback)
+struct GazeLogItem: Hashable, Identifiable {
+    let id = UUID()
+    let timestamp: TimeInterval
+    let event: String // "Up" or "Down"
+}
+
 struct EvaluationModel: Identifiable, Hashable {
     let id: UUID
     let presentationDate: Date
@@ -35,10 +42,15 @@ struct EvaluationModel: Identifiable, Hashable {
     let pitchSeries: [PitchPoint]
     let tempoSeries: [TempoPoint]
 
-    // Kontak Mata (Dummy)
+    // Kontak Mata
     let eyeContactScore: Double
     let eyeContactGrade: String
     let eyeContactFeedback: String
+    
+    // --- NEW PROPERTIES FOR EYE CONTACT TASK ---
+    let totalGazeIssues: Int // Total Up + Down
+    let videoURL: URL?       // Lokasi file rekaman
+    let gazeEvents: [GazeLogItem] // Log detail untuk playback
 
     init(
         id: UUID = UUID(),
@@ -61,7 +73,11 @@ struct EvaluationModel: Identifiable, Hashable {
         tempoSeries: [TempoPoint] = [],
         eyeContactScore: Double = 0.0,
         eyeContactGrade: String = "D",
-        eyeContactFeedback: String = "N/A"
+        eyeContactFeedback: String = "N/A",
+        // Defaults
+        totalGazeIssues: Int = 0,
+        videoURL: URL? = nil,
+        gazeEvents: [GazeLogItem] = []
     ) {
         self.id = id
         self.presentationDate = presentationDate
@@ -84,6 +100,9 @@ struct EvaluationModel: Identifiable, Hashable {
         self.eyeContactScore = eyeContactScore
         self.eyeContactGrade = eyeContactGrade
         self.eyeContactFeedback = eyeContactFeedback
+        
+        self.totalGazeIssues = totalGazeIssues
+        self.videoURL = videoURL
+        self.gazeEvents = gazeEvents
     }
 }
-

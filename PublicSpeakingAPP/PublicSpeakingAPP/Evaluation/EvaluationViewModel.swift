@@ -14,7 +14,12 @@ struct EvaluationViewModel {
         tempoVM: TempoViewModel,
         intonationVM: IntonationAnalyzerViewModel,
         fillerWordVM: FillerWordViewModel,
-        duration: TimeInterval
+        duration: TimeInterval,
+        // ADDED PARAMETERS
+        gazeUpCount: Int,
+        gazeDownCount: Int,
+        videoURL: URL?,
+        gazeEvents: [GazeLogItem]
     ) -> EvaluationModel {
         
         let (tempoGrade, tempoFeedback, tempoScore) = gradeTempo(wpm: tempoVM.wpm)
@@ -34,17 +39,32 @@ struct EvaluationViewModel {
             .map { TempoPoint(time: $0.timestamp, wpm: $0.wpm) }
             .sorted { $0.time < $1.time }
         
-        // Dummy Data
-        let eyeContactScore = 0.5
-        let eyeContactGrade = "C"
-        let eyeContactFeedback = "Kontak mata belum dianalisis"
+        // Eye Contact Logic
+        // Simple grading logic based on count (Bisa disesuaikan)
+        let totalGazeIssues = gazeUpCount + gazeDownCount
+        let eyeContactScore: Double
+        let eyeContactGrade: String
+        let eyeContactFeedback: String
+        
+        if totalGazeIssues == 0 {
+            eyeContactScore = 1.0
+            eyeContactGrade = "A"
+            eyeContactFeedback = "Kontak mata sangat baik dan fokus."
+        } else if totalGazeIssues < 5 {
+            eyeContactScore = 0.75
+            eyeContactGrade = "B"
+            eyeContactFeedback = "Kontak mata cukup baik, namun ada beberapa distraksi."
+        } else {
+            eyeContactScore = 0.5
+            eyeContactGrade = "C"
+            eyeContactFeedback = "Perlu lebih fokus menjaga pandangan."
+        }
         
         // Rata-rata Nilai
-        let allScores = [tempoScore, fillerScore, intonationScore]
+        let allScores = [tempoScore, fillerScore, intonationScore, eyeContactScore]
         let overallScore = allScores.reduce(0, +) / Double(allScores.count)
         let overallGrade = percentageToGrade(overallScore * 100)
         
-        // Dummy AI Feedback
         let aiFeedback = "Secara keseluruhan, tempo Anda \(tempoFeedback.lowercased()) dan intonasi Anda \(intonationFeedback.lowercased()). Anda menggunakan \(fillerCount) kata pengisi."
         
         return EvaluationModel(
@@ -66,7 +86,11 @@ struct EvaluationViewModel {
             tempoSeries: tempoSeries,
             eyeContactScore: eyeContactScore * 100,
             eyeContactGrade: eyeContactGrade,
-            eyeContactFeedback: eyeContactFeedback
+            eyeContactFeedback: eyeContactFeedback,
+            // New Params
+            totalGazeIssues: totalGazeIssues,
+            videoURL: videoURL,
+            gazeEvents: gazeEvents
         )
     }
     
