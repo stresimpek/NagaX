@@ -33,9 +33,9 @@ class ModalViewModel: ObservableObject {
     private(set) var micMonitor = MicMonitorModal()
     private var cancellables = Set<AnyCancellable>()
     private let instructions: [InstructionStep: String] = [
-        .quietRoom: "Pastikan kamu di ruangan yang kondusif.\nGunakan headset untuk pengalaman yang lebih maksimal!",
-        .micCheck: "Nyalakan mikrofonmu, letakan HPmu, lalu cobalah berbicara!\nPastikan suaramu sudah bisa didengar Prof. Belagu!",
-        .cameraPosition: "Letakan HP di posisi sejajar dengan matamu dan\nnyalakan kameramu!"
+        .quietRoom: "Pastikan kamu di ruangan yang kondusif. Gunakan headset untuk pengalaman yang lebih maksimal!",
+        .micCheck: "Nyalakan mikrofonmu, letakan HPmu, lalu cobalah berbicara! Pastikan suaramu sudah bisa didengar Prof. Belagu!",
+        .cameraPosition: "Letakan HP di posisi sejajar dengan matamu dan nyalakan kameramu!"
     ]
     
     init() {

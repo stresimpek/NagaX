@@ -8,7 +8,7 @@
 import SwiftUI
 
 enum AppButtonSize {
-    case large, medium, small, largeIconCircle
+    case large, medium, small, largeIconCircle, largePill
     
     var cornerRadius: CGFloat {
         switch self {
@@ -16,6 +16,7 @@ enum AppButtonSize {
         case .medium: 16
         case .small: 14
         case .largeIconCircle: 25
+        case .largePill: 100
         }
     }
     var horizontalPadding: CGFloat {
@@ -24,6 +25,7 @@ enum AppButtonSize {
         case .medium: 16
         case .small: 12
         case .largeIconCircle: 14
+        case .largePill: 24
         }
     }
     var verticalPadding: CGFloat {
@@ -32,6 +34,7 @@ enum AppButtonSize {
         case .medium: 10
         case .small: 8
         case .largeIconCircle: 14
+        case .largePill: 14
         }
     }
     var font: Font {
@@ -40,6 +43,7 @@ enum AppButtonSize {
         case .medium: .system(size: 16, weight: .semibold)
         case .small: .system(size: 14, weight: .semibold)
         case .largeIconCircle: .system(size: 20, weight: .semibold)
+        case .largePill: .system(size: 20, weight: .semibold)
         }
     }
     var iconSize: CGFloat {
@@ -48,6 +52,7 @@ enum AppButtonSize {
         case .medium: 18
         case .small: 16
         case .largeIconCircle: 22
+        case .largePill: 22
         }
     }
 }

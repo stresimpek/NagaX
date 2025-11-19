@@ -25,54 +25,64 @@ struct ModalView: View {
                      
                     Spacer().frame(height: geometry.size.height * 0.1)
 
-                    VStack(spacing: 0) {
-                        Spacer().frame(height: geometry.size.height * 0.005)
-                        
-                        TitleView()
-                        
-                        Spacer().frame(height: geometry.size.height * 0.01)
-                        
-                        VStack {
-                            switch viewModel.currentStep {
-                            case .quietRoom:
-                                Image(viewModel.mainImageName)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(height: 100)
-                                
-                            case .micCheck:
-                                MicSetupView(
-                                    micMonitor: viewModel.micMonitor,
-                                    showMicWarning: viewModel.showMicWarning,
-                                    imageName: viewModel.mainImageName
-                                )
-                                
-                            case .cameraPosition:
-                                Image(viewModel.mainImageName)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(height: 100)
-                            }
-                        }
-                        .frame(height: 150)
-                        .animation(.easeInOut, value: viewModel.currentStep)
-                        
-                        Spacer().frame(height: geometry.size.height * 0.01)
-                        
-                        InstructionTextView(
-                            message: viewModel.instructionText,
-                            geometry: geometry
-                        )
-                        
-                        Spacer().frame(height: geometry.size.height * 0.1)
-                    }
-                    .padding(.horizontal, geometry.size.width * 0.06)
-                    .frame(width: geometry.size.width * 0.85)
-                    .background(
+                    ZStack(alignment: .top) {
                         Image("SetupPaper")
                             .resizable()
                             .scaledToFill()
-                    )
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                        
+                        VStack(spacing: 0) {
+                            VStack {
+                                Spacer().frame(height: geometry.size.height * 0.05)
+                                TitleView()
+                            }
+                            .background(Color.clear)
+                            
+                            Spacer().frame(height: geometry.size.height * 0.035)
+                            
+                            ScrollView(.vertical, showsIndicators: false) {
+                                VStack(spacing: 0) {
+                                    
+                                    Spacer().frame(height: geometry.size.height * 0.02)
+                                    
+                                    VStack {
+                                        switch viewModel.currentStep {
+                                        case .quietRoom:
+                                            Image(viewModel.mainImageName)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(height: 100)
+                                            
+                                        case .micCheck:
+                                            MicSetupView(
+                                                micMonitor: viewModel.micMonitor,
+                                                showMicWarning: viewModel.showMicWarning,
+                                                imageName: viewModel.mainImageName
+                                            )
+                                            
+                                        case .cameraPosition:
+                                            Image(viewModel.mainImageName)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(height: 100)
+                                        }
+                                    }
+                                    .frame(height: 150)
+                                    .animation(.easeInOut, value: viewModel.currentStep)
+                                    
+                                    Spacer().frame(height: geometry.size.height * 0.01)
+                                    
+                                    InstructionTextView(
+                                        message: viewModel.instructionText,
+                                        geometry: geometry
+                                    )
+                                    .padding(.bottom, 80)
+                                }
+                            }
+                        }
+                    }
+                    .frame(width: geometry.size.width * 0.85)
+                    .frame(maxHeight: geometry.size.height * 0.75)
                     .zIndex(0)
 
                     StartButtonView(
@@ -90,7 +100,7 @@ struct ModalView: View {
                     .offset(y: -geometry.size.height * 0.03)
                     .zIndex(1)
                        
-                    Spacer().frame(height: geometry.size.height * 0)
+                    Spacer().frame(height: 0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }

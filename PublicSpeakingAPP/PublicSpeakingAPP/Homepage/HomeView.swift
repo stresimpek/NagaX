@@ -78,6 +78,30 @@ struct HomeView: View {
                                 coordinator.retrySimulation(from: settings) 
                             },
                         onComplete: { result, transcript, analysisResult in
+                            coordinator.goToEvaluationSummary(
+                                result: result,
+                                transcript: transcript,
+                                analysisResult: analysisResult,
+                                settings: settings
+                            )
+                        }
+                    )
+                    .navigationBarBackButtonHidden(true)
+                    
+                case .evaluationSummary(let result, let transcript, let analysisResult, let settings):
+                    let viewModel = NewEvaluationViewModel(
+                        result: result,
+                        fullTranscript: transcript,
+                        sentenceAnalysisResult: analysisResult,
+                        settings: settings
+                    )
+                    
+                    EvaluationSummaryView(
+                        viewModel: viewModel,
+                        onPracticeAgain: {
+                            coordinator.retrySimulation(from: settings)
+                        },
+                        onViewDetails: {
                             coordinator.goToNewEvaluation(
                                 result: result,
                                 transcript: transcript,
