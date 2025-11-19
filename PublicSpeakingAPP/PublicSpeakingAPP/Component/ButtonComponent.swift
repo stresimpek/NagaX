@@ -91,9 +91,12 @@ struct AppButtonStyle: ButtonStyle {
     let isLoading: Bool
     let isEnabled: Bool
     let isIconOnly: Bool
+    var overrideCircleSize: CGFloat? = nil
     
     func makeBody(configuration: Configuration) -> some View {
         let isCircle = isIconOnly && (size == .largeIconCircle)
+        let defaultCircleSize = size.iconSize + size.horizontalPadding * 2
+        let circleSize = overrideCircleSize ?? defaultCircleSize
         
         return configuration.label
             .font(size.font)
@@ -101,8 +104,8 @@ struct AppButtonStyle: ButtonStyle {
             .padding(.horizontal, size.horizontalPadding)
             .padding(.vertical, size.verticalPadding)
             .frame(
-                width: isCircle ? (size.iconSize + size.horizontalPadding * 2) : nil,
-                height: isCircle ? (size.iconSize + size.verticalPadding * 2) : nil
+                width: isCircle ? circleSize : nil,
+                height: isCircle ? circleSize : nil
             )
             .background(
                 Group {
@@ -140,6 +143,7 @@ struct ButtonComponent: View {
     var fullWidth: Bool = false
     var isLoading: Bool = false
     var isEnabled: Bool = true
+    var customCircleSize: CGFloat? = nil
     var action: () -> Void
     
     var body: some View {
@@ -172,7 +176,8 @@ struct ButtonComponent: View {
                 kind: effectiveKind,
                 isLoading: isLoading,
                 isEnabled: isEnabled,
-                isIconOnly: isIconOnly
+                isIconOnly: isIconOnly,
+                overrideCircleSize: customCircleSize
             )
         )
         .disabled(!isEnabled || isLoading)

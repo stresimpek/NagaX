@@ -69,7 +69,7 @@ struct SettingsView: View {
                                     VStack(alignment: .center) {
                                         Circle()
                                             .frame(width: 8, height: 8)
-                                        Text("Tidak ada")
+                                        Text("Tidak Ada")
                                     }
                                     
                                     Spacer()
@@ -110,28 +110,34 @@ struct SettingsView: View {
                             }
                         }
 
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(aspectOptions) { opt in
-                                    AspectCheckTile(
-                                        option: opt,
-                                        isSelected: Binding(
-                                            get: { selectedAspects.contains(opt) },
-                                            set: { newVal in
-                                                if newVal { selectedAspects.insert(opt) }
-                                                else { selectedAspects.remove(opt) }
-                                            }
+                        HStack {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(aspectOptions) { opt in
+                                        AspectCheckTile(
+                                            option: opt,
+                                            isSelected: Binding(
+                                                get: { selectedAspects.contains(opt) },
+                                                set: { newVal in
+                                                    if newVal { selectedAspects.insert(opt) }
+                                                    else { selectedAspects.remove(opt) }
+                                                }
+                                            )
                                         )
-                                    )
+                                    }
                                 }
+                                .padding(.vertical, 4)
+                                
+                                
                             }
-                            .padding(.vertical, 4)
+                            Spacer()
                         }
+                       
                         
                         HStack {
                             Spacer()
                             ButtonComponent(
-                                title: "MULAI LATIHAN",
+                                title: "Mulai Latihan",
                                 systemImage: nil,
                                 size: .medium,
                                 kind: .primaryYellow,
@@ -148,12 +154,11 @@ struct SettingsView: View {
                         }
                         
                     }
-                    .padding(.horizontal, 20)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .padding(.top, 30)
+            .padding(.top, 24)
             .background(Color.baseColorBlue)
             .foregroundStyle(Color.baseColorWhite)
             .navigationBarBackButtonHidden(true)
@@ -166,7 +171,7 @@ struct SettingsView: View {
                 isEnabled: true,
                 action: onBack
             )
-            .padding(.top, 30)
+            .padding(.top, 16)
             
             if showAspectInfo {
                 Color.black.opacity(0.5)

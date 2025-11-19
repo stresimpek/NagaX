@@ -73,6 +73,7 @@ struct SimulationView: View {
     @State private var bannerQueue: [BannerItem] = []
     @State private var currentBanner: BannerItem? = nil
     @State private var hasShownOvertimeBanner = false
+    @State private var triggerResume: Bool = false
     
     var body: some View {
         GeometryReader { geo in
@@ -86,6 +87,24 @@ struct SimulationView: View {
                     }
 
                 VStack {
+                    
+                    if viewModel.isRecording {
+                        HStack {
+                            ButtonComponent(
+                                title: nil,
+                                systemImage: "pause.fill",
+                                size: .largeIconCircle,
+                                kind: .primaryYellow,
+                                action: {
+                                    triggerResume.toggle()
+                                }
+                            )
+                            .padding(.top, 16)
+                            
+                            Spacer()
+                        }
+                    }
+                    
                     Group {
                         if isOverOneMinutes {
                             Text("WAKTU HABIS!")
@@ -210,18 +229,29 @@ struct SimulationView: View {
                 }
                             
                 if viewModel.whisperKitVM.showEmptyTranscriptModal {
-                        EmptyTranscriptModalView(
-                            onRestart: {
-                                viewModel.restartAfterEmptyTranscript()
-                            },
-                            onContinue: {
-                                viewModel.resumeAfterEarlyStop()
-                            }
-                        )
-                        .transition(.opacity)
-                        .zIndex(20)
-                    }
+                    EmptyTranscriptModalView(
+                        onRestart: {
+                            viewModel.restartAfterEmptyTranscript()
+                        },
+                        onContinue: {
+                            viewModel.resumeAfterEarlyStop()
+                        }
+                    )
+                    .transition(.opacity)
+                    .zIndex(20)
                 }
+                
+                if triggerResume {
+                    BackModalView(
+                        onBackHome: {
+                            onBack()
+                            viewModel.toggleRecording()
+                        },
+                        onPause: {},
+                        onRetry: {}
+                    )
+                }
+            }
             .frame(width: geo.size.width, height: geo.size.height)
             .onDisappear { viewModel.cleanup() }
             .onReceive(viewModel.$isAnalysisComplete) { isComplete in
