@@ -34,7 +34,7 @@ struct AspectCheckTile: View {
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
-            .frame(width: 134, height: 98, alignment: .top)
+            .frame(width: 124, height: 98, alignment: .top)
             .foregroundColor(isSelected || !option.isEnabled ? .darkTurqoise : .baseColorWhite)
             .background(isSelected || !option.isEnabled ? Color.turqoise : Color.darkBlue2)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
