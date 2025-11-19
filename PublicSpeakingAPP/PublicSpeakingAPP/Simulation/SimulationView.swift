@@ -78,10 +78,19 @@ struct SimulationView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
+                let gridHeight = geo.size.height
+                
+                if viewModel.isTrackingEyeContact {
+                    SimulationARTrackerView(viewModel: viewModel)
+                        .edgesIgnoringSafeArea(.all)
+                        .zIndex(1)
+                }
+                
                 TeacherRiveView(sim: viewModel)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
+                    .zIndex(5)
                     .onChange(of: viewModel.isRecording) { _, newValue in
                         newValue ? micMonitor.startMonitoring() : micMonitor.stopMonitoring()
                     }
@@ -329,7 +338,7 @@ struct SimulationView: View {
 struct ComponentObjective: View {
     let text: String
     let isOvertime: Bool
-    var onFinished: (() -> Void)? = nil   // dipanggil setelah animasi selesai
+    var onFinished: (() -> Void)? = nil
 
     @State private var appear = false
 
@@ -348,7 +357,6 @@ struct ComponentObjective: View {
 
     var body: some View {
         ZStack {
-            // background gelap ikut animasi muncul/hilang
             Color.black
                 .opacity(appear ? 0.5 : 0.0)
                 .ignoresSafeArea()
@@ -367,17 +375,13 @@ struct ComponentObjective: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: appear)
         .onAppear {
-            // animasi masuk
             appear = true
 
-            // tampil 3 detik
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                // animasi keluar
                 withAnimation(.easeOut(duration: 0.25)) {
                     appear = false
                 }
 
-                // beri waktu animasi keluar
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                     onFinished?()
                 }

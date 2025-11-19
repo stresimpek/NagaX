@@ -10,21 +10,30 @@ import AVFoundation
 import Combine
 import SwiftUI
 
-enum InstructionStep {
-    case quietRoom
-    case micCheck
-    case cameraPosition
+enum CameraCheckState {
+    case preparing
+    case detecting
+    case holding
+    case failed
+    case success
 }
 
+enum InstructionStep {
+    case micCheck
+    case cameraSetup
+    case quietRoom
+    case distanceCheck
+}
+
+@MainActor
 class ModalViewModel: ObservableObject {
-    
     @Published var currentStep: InstructionStep = .micCheck
     @Published var permissionStatus: AVAudioApplication.recordPermission = .undetermined
     @Published var isAudioDetected: Bool = false
     @Published var showPermissionAlert: Bool = false
     
     @Published private(set) var showMicWarning: Bool = true
-    @Published private(set) var isButtonEnabled: Bool = false
+    @Published var isButtonEnabled: Bool = false
     @Published private(set) var instructionText: String = ""
     @Published private(set) var buttonTitle: String = ""
     @Published private(set) var mainImageName: String = ""
@@ -37,10 +46,25 @@ class ModalViewModel: ObservableObject {
         .micCheck: "Nyalakan mikrofonmu, letakan HPmu, lalu cobalah berbicara! Pastikan suaramu sudah bisa didengar Prof. Belagu!",
         .cameraPosition: "Letakan HP di posisi sejajar dengan matamu dan nyalakan kameramu!"
     ]
+    let needsCameraCheck: Bool
     
-    init() {
+    @Published var cameraCheckState: CameraCheckState = .preparing
+    @Published var gazeOnTarget: Bool = false
+    @Published var gazePoint: CGPoint = .zero
+    @Published var hasReceivedFirstGazePoint: Bool = false
+    @Published var eyeContactCountdown: Int = 3
+    @Published var resetARKit: Bool = false
+    
+    private var prepTask: DispatchWorkItem?
+    private var detectTask: DispatchWorkItem?
+    private var holdTask: DispatchWorkItem?
+    
+    init(practiceSettings: PracticeSettings) {
+        self.needsCameraCheck = practiceSettings.selectedAspects.contains(.kontakMata)
+        self.currentStep = .micCheck
+        
         setupBindings()
-        updateUIForCurrentStep(step: .micCheck)
+        updateUIForCurrentStep(step: self.currentStep)
     }
     
     private func setupBindings() {
@@ -76,22 +100,36 @@ class ModalViewModel: ObservableObject {
         instructionText = instructions[step] ?? ""
         
         switch step {
-        case .quietRoom:
-            mainImageName = "InstructionQuiet"
-            buttonTitle = "LANJUT"
-            isButtonEnabled = true
-            showMicVisualizer = false
-            
         case .micCheck:
+            stopAllTimers()
             mainImageName = "ProfessorEar_Angry"
             buttonTitle = "LANJUT"
             isButtonEnabled = false
             showMicVisualizer = true
             checkAndRequestMicPermission()
             
-        case .cameraPosition:
+        case .cameraSetup:
+            stopMonitoring()
+            mainImageName = ""
+            buttonTitle = ""
+            isButtonEnabled = false
+            showMicVisualizer = false
+            startPreparing()
+            
+        case .quietRoom:
+            stopAllTimers()
+            mainImageName = "InstructionQuiet"
+            buttonTitle = "LANJUT"
+            isButtonEnabled = true
+            showMicVisualizer = false
+            
+        case .distanceCheck:
             mainImageName = "InstructionDistance"
-            buttonTitle = "MULAI LATIHAN"
+            if needsCameraCheck {
+                buttonTitle = "LANJUT"
+            } else {
+                buttonTitle = "MULAI LATIHAN"
+            }
             isButtonEnabled = true
             showMicVisualizer = false
         }
@@ -118,9 +156,15 @@ class ModalViewModel: ObservableObject {
             currentStep = .quietRoom
             
         case .quietRoom:
-            currentStep = .cameraPosition
+            currentStep = .distanceCheck
             
-        case .cameraPosition:
+        case .distanceCheck:
+            if needsCameraCheck {
+                currentStep = .cameraSetup
+            } else {
+            }
+            
+        case .cameraSetup:
             break
         }
     }
@@ -128,10 +172,10 @@ class ModalViewModel: ObservableObject {
     private func startMonitoring() {
         micMonitor.startMonitoring()
     }
-
+    
     func checkAndRequestMicPermission() {
         permissionStatus = AVAudioApplication.shared.recordPermission
-
+        
         switch permissionStatus {
         case .granted:
             permissionStatus = .granted
@@ -151,12 +195,100 @@ class ModalViewModel: ObservableObject {
             }
         case .denied:
             self.showPermissionAlert = true
-        @unknown default:
-            print("Mic Access ???")
+        }
+    }
+        
+    func stopMonitoring() {
+        micMonitor.stopMonitoring()
+    }
+    
+    func stopAllTimers() {
+        prepTask?.cancel()
+        detectTask?.cancel()
+        holdTask?.cancel()
+    }
+    
+    func startPreparing() {
+        cameraCheckState = .preparing
+        instructionText = "Nyalakan kamera dan posisikan dirimu supaya terlihat dalam frame. Perhatikan titik merah ini selama 3 detik."
+        
+        stopAllTimers()
+        
+        func runCountdown(count: Int) {
+            if count > 0 {
+                self.eyeContactCountdown = count
+                let task = DispatchWorkItem { runCountdown(count: count - 1) }
+                self.prepTask = task
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: task)
+            } else {
+                startDetecting()
+            }
+        }
+        runCountdown(count: 3)
+    }
+    
+    func startDetecting() {
+        cameraCheckState = .detecting
+        instructionText = "Pencocokan..."
+        
+        stopAllTimers()
+        
+        let task = DispatchWorkItem {
+            if self.cameraCheckState == .detecting {
+                self.setFailed()
+            } else {
+                
+            }
+        }
+        self.detectTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0, execute: task)
+    }
+    
+    func handleGazeChange(isGazing: Bool) {
+        
+        if isGazing && cameraCheckState == .detecting {
+            stopAllTimers()
+            cameraCheckState = .holding
+            instructionText = "Good! Sekarang pertahankan posisimu..."
+            
+            func runHoldCountdown(count: Int) {
+                if count > 0 {
+                    self.eyeContactCountdown = count
+                    let task = DispatchWorkItem { runHoldCountdown(count: count - 1) }
+                    self.holdTask = task
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: task)
+                } else {
+                    setSuccess()
+                }
+            }
+            runHoldCountdown(count: 3)
+            
+        } else if !isGazing && cameraCheckState == .holding {
+            stopAllTimers()
+            startDetecting()
         }
     }
     
-    func stopMonitoring() {
-        micMonitor.stopMonitoring()
+    func setFailed() {
+        stopAllTimers()
+        cameraCheckState = .failed
+        instructionText = "Pencocokan gagal! Silahkan ulangi lagi"
+    }
+    
+    func setSuccess() {
+        stopAllTimers()
+        cameraCheckState = .success
+        instructionText = "Good! Sekarang pertahankan posisimu dan hindari berpindah-pindah untuk hasil yang lebih maksimal!"
+    }
+    
+    func resetFlow() {
+        stopAllTimers()
+        
+        self.gazeOnTarget = false
+        self.resetARKit = true
+        self.hasReceivedFirstGazePoint = false
+        self.gazePoint = .zero
+        
+        startPreparing()
     }
 }

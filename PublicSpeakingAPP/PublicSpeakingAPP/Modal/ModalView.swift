@@ -12,7 +12,12 @@ struct ModalView: View {
      
     let onStart: () -> Void
     
-    @StateObject private var viewModel = ModalViewModel()
+    @StateObject private var viewModel: ModalViewModel
+     
+    init(onStart: @escaping () -> Void, settings: PracticeSettings) {
+        self.onStart = onStart
+        self._viewModel = StateObject(wrappedValue: ModalViewModel(practiceSettings: settings))
+    }
      
     var body: some View {
         GeometryReader { geometry in
@@ -26,6 +31,64 @@ struct ModalView: View {
                     Spacer().frame(height: geometry.size.height * 0.1)
 
                     ZStack(alignment: .top) {
+                    VStack(spacing: 0) {
+                        Spacer().frame(height: geometry.size.height * 0.005)
+                        
+                        if viewModel.currentStep == .cameraSetup {
+                            Text("DETEKSI GERAKAN MATA")
+                                .font(.title2.weight(.black))
+                                .foregroundColor(.baseColorBrown)
+                                .underline(true, color: .baseColorBrown)
+                        } else {
+                            TitleView()
+                        }
+                        
+                        Spacer().frame(height: geometry.size.height * 0.01)
+                        
+                        VStack {
+                            switch viewModel.currentStep {
+                            
+                            case .cameraSetup:
+                                EyeContactMainView(viewModel: viewModel)
+                                
+                            case .quietRoom:
+                                Image(viewModel.mainImageName)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 100)
+                                
+                            case .micCheck:
+                                MicSetupView(
+                                    micMonitor: viewModel.micMonitor,
+                                    showMicWarning: viewModel.showMicWarning,
+                                    imageName: viewModel.mainImageName
+                                )
+                                .frame(height: 150)
+                                
+                            case .distanceCheck:
+                                Image(viewModel.mainImageName)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 100)
+                            }
+                        }
+                        .frame(minHeight: 150)
+                        .animation(.easeInOut, value: viewModel.currentStep)
+                        
+                        InstructionTextView(
+                            message: viewModel.instructionText,
+                            geometry: geometry
+                        )
+                        .foregroundColor(
+                            viewModel.currentStep == .cameraSetup && viewModel.cameraCheckState == .failed
+                            ? .baseColorRed
+                            : .baseColorBrown
+                        )
+                        .frame(height: 80, alignment: .center)
+                    }
+                    .padding(.horizontal, geometry.size.width * 0.06)
+                    .frame(width: geometry.size.width * 0.85)
+                    .background(
                         Image("SetupPaper")
                             .resizable()
                             .scaledToFill()
@@ -85,17 +148,43 @@ struct ModalView: View {
                     .frame(maxHeight: geometry.size.height * 0.75)
                     .zIndex(0)
 
-                    StartButtonView(
-                        title: viewModel.buttonTitle,
-                        isEnabled: viewModel.isButtonEnabled,
-                        action: {
-                            if viewModel.currentStep == .cameraPosition {
-                                onStart()
+                    VStack {
+                        if viewModel.currentStep == .cameraSetup {
+                            if viewModel.cameraCheckState == .success {
+                                ButtonComponent(
+                                    title: "MULAI LATIHAN",
+                                    systemImage: nil,
+                                    size: .large,
+                                    kind: .primaryYellow,
+                                    action: onStart
+                                )
+                            } else if viewModel.cameraCheckState == .failed {
+                                ButtonComponent(
+                                    title: "DETEKSI ULANG",
+                                    systemImage: nil,
+                                    size: .large,
+                                    kind: .primaryYellow,
+                                    action: viewModel.resetFlow
+                                )
                             } else {
-                                viewModel.nextStep()
+                                Rectangle()
+                                    .fill(Color.clear)
+                                    .frame(height: 60)
                             }
+                        } else {
+                            StartButtonView(
+                                title: viewModel.buttonTitle,
+                                isEnabled: viewModel.isButtonEnabled,
+                                action: {
+                                    if viewModel.currentStep == .distanceCheck && !viewModel.needsCameraCheck {
+                                        onStart()
+                                    } else {
+                                        viewModel.nextStep()
+                                    }
+                                }
+                            )
                         }
-                    )
+                    }
                     .frame(width: geometry.size.width * 0.3)
                     .offset(y: -geometry.size.height * 0.03)
                     .zIndex(1)
@@ -108,6 +197,10 @@ struct ModalView: View {
         }
         .onDisappear {
             viewModel.stopMonitoring()
+            viewModel.stopAllTimers()
+        }
+        .onChange(of: viewModel.gazeOnTarget) { _, newValue in
+            viewModel.handleGazeChange(isGazing: newValue)
         }
         .alert("Izin Mikrofon Ditolak", isPresented: $viewModel.showPermissionAlert) {
             Button("Batal") {}

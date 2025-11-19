@@ -50,6 +50,9 @@ class SimulationViewModel: ObservableObject {
     @Published var whisperModelState: ModelState = .unloaded
     @Published var finalTranscript: String = ""
     @Published var showNoTranscriptAlert: Bool = false
+    @Published private var eyeContactRating: Int = 0
+    
+    let isTrackingEyeContact: Bool
     
     let settings: PracticeSettings
     private var gameTimer: Timer?
@@ -65,6 +68,9 @@ class SimulationViewModel: ObservableObject {
     
     private var moodScoreEMA: Double = 0.0
     private let emaAlpha: Double = 0.4
+    
+    private var eyeContactViolationCount: Int = 0
+    private let eyeContactViolationThreshold: Int = 2
     
     var formattedTime: String {
         let minutes = timerSeconds / 60
@@ -84,13 +90,14 @@ class SimulationViewModel: ObservableObject {
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
         self.fillerWordVM = fillerWordVM
+        self.isTrackingEyeContact = settings.selectedAspects.contains(.kontakMata)
         self.whisperKitVM.$modelState
             .receive(on: DispatchQueue.main)
             .assign(to: &$whisperModelState)
          
         self.whisperKitVM.$publishedError
             .receive(on: DispatchQueue.main)
-            .compactMap { $0 } // Hanya teruskan jika tidak nil
+            .compactMap { $0 }
             .sink { [weak self] errorText in
                 self?.errorMessage = errorText
             }
@@ -122,21 +129,22 @@ class SimulationViewModel: ObservableObject {
     
     private func setupMoodAggregation() {
         intonationAnalyzerVM.$intonationRating
-            .combineLatest(tempoVM.$tempoRating, fillerWordVM.$fillerRating)
+            .combineLatest(tempoVM.$tempoRating, fillerWordVM.$fillerRating, $eyeContactRating)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] (intonation, tempo, filler) in
+            .sink { [weak self] (intonation, tempo, filler, eyeContact) in
                 guard let self = self else { return }
                 
                 self.updateAggregateMood(
                     intonationRating: intonation,
                     tempoRating: tempo,
-                    fillerRating: filler
+                    fillerRating: filler,
+                    eyeContactRating: eyeContact
                 )
             }
             .store(in: &cancellables)
     }
     
-    private func updateAggregateMood(intonationRating: Int, tempoRating: Int, fillerRating: Int) {
+    private func updateAggregateMood(intonationRating: Int, tempoRating: Int, fillerRating: Int, eyeContactRating: Int) {
         
         if isLockedOvertimeMood { return }
     
@@ -157,9 +165,9 @@ class SimulationViewModel: ObservableObject {
         if settings.selectedAspects.contains(.fillerWords) {
             activeRatings.append(fillerRating)
         }
-//            if settings.selectedAspects.contains(.kontakMata) {
-//                activeRatings.append(eyeContactRating)
-//            }
+        if settings.selectedAspects.contains(.kontakMata) {
+            activeRatings.append(eyeContactRating)
+        }
         
         let validRatings = activeRatings.filter { $0 > 0 }
         guard !validRatings.isEmpty else { return }
@@ -323,6 +331,7 @@ class SimulationViewModel: ObservableObject {
         self.finalTranscript = ""
         self.errorMessage = nil
         self.recordingStartTime  = nil
+        self.eyeContactRating = 0
         
         isLockedOvertimeMood = false
         moodScoreEMA = 0.0
@@ -407,6 +416,41 @@ class SimulationViewModel: ObservableObject {
         stopMoodTimer()
     }
     
+    func updateHeadGazeEvent(_ event: HeadGazeEvent) {
+        guard self.isTrackingEyeContact else { return }
+
+        if event == .normal {
+            if eyeContactViolationCount > 0 {
+                 print("ARKit Event: \(event) -> Violation CANCELLED (Count reset).")
+            }
+            eyeContactViolationCount = 0
+
+            let newRating = 3
+            if self.eyeContactRating != newRating {
+                self.eyeContactRating = newRating
+                print("ARKit Event: \(event) -> Rating set to \(newRating)")
+            }
+            return
+        }
+        eyeContactViolationCount += 1
+        print("ARKit Event: \(event) -> Violation Count: \(eyeContactViolationCount)")
+
+        if eyeContactViolationCount >= eyeContactViolationThreshold {
+            let newRating = 1
+            if self.eyeContactRating != newRating {
+                self.eyeContactRating = newRating
+                print("ARKit Event: \(event) -> Violation Confirmed! Rating set to \(newRating)")
+            }
+        } else {
+            let newRating = 2
+            if self.eyeContactRating != newRating {
+                self.eyeContactRating = newRating
+                print("ARKit Event: \(event) -> Warning! Rating set to \(newRating)")
+            }
+        }
+    }
+
+    
     private func applySmoothedMoodToUI() {
         if isLockedOvertimeMood {
             presentationScore = -1.0
@@ -437,7 +481,6 @@ class SimulationViewModel: ObservableObject {
             }
             return
         }
-
         let clamped = max(-1.0, min(1.0, moodScoreEMA))
         presentationScore = clamped
     }
