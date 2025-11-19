@@ -448,10 +448,8 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
     }
     
-    private func proceedToEvaluation(loop: Bool) {
-        // Ensure the latest tail is included
-        appendCurrentDeltaToSession()
-
+    func proceedToEvaluation(loop: Bool) {
+        // Save the final audio for playback
         Task(priority: .background) {
             let url = await saveSessionAudioAsWavFile()
             await MainActor.run {
@@ -461,8 +459,24 @@ final class SpeechTranscriberViewModel: ObservableObject {
 
         if loop {
             stopRealtimeTranscription()
-            finalizeText()
-            Task { await self.analyzeTranscriptSentence() }
+            
+            // Check if we need to re-transcribe for pause/resume case
+            if !sessionSamples.isEmpty {
+                // Pause/resume case: re-transcribe the full session
+                Task {
+                    do {
+                        try await transcribeFullSession()
+                        finalizeText()
+                        await self.analyzeTranscriptSentence()
+                    } catch {
+                        print("Error during full session transcription: \(error.localizedDescription)")
+                    }
+                }
+            } else {
+                // Normal case: use existing transcription
+                finalizeText()
+                Task { await self.analyzeTranscriptSentence() }
+            }
         } else {
             transcriptionTask?.cancel()
 
@@ -470,7 +484,14 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 await MainActor.run { isTranscribing = true }
 
                 do {
-                    try await transcribeCurrentBuffer()
+                    // Check if we need to re-transcribe for pause/resume case
+                    if !sessionSamples.isEmpty {
+                        // Pause/resume case: re-transcribe the full session
+                        try await transcribeFullSession()
+                    } else {
+                        // Normal case: just do one final transcription of current buffer
+                        try await transcribeCurrentBuffer()
+                    }
                 } catch {
                     print("Error during final transcription: \(error.localizedDescription)")
                 }
@@ -494,37 +515,138 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
     }
     
+    private func transcribeFullSession() async throws {
+        // Get the complete session audio
+        guard let whisperKit = whisperKit else { return }
+        let current = whisperKit.audioProcessor.audioSamples
+        
+        let completeAudio: [Float]
+        if !sessionSamples.isEmpty {
+            // Combine saved session + any remaining tail
+            let tailDelta: ArraySlice<Float> = current.suffix(from: min(lastSavedSampleIndexForSession, current.count))
+            completeAudio = sessionSamples + tailDelta
+            print("[FullSession] Transcribing session: \(sessionSamples.count) + tail: \(tailDelta.count) = \(completeAudio.count) samples (\(Double(completeAudio.count)/16000.0)s)")
+        } else {
+            completeAudio = Array(current)
+            print("[FullSession] Transcribing current buffer: \(completeAudio.count) samples")
+        }
+        
+        guard !completeAudio.isEmpty else {
+            print("[FullSession] No audio to transcribe")
+            return
+        }
+        
+        // Clear previous transcription state before final transcription
+        await MainActor.run {
+            confirmedText = ""
+            confirmedWords = []
+            confirmedSegments = []
+            hypothesisText = ""
+            hypothesisWords = []
+            unconfirmedSegments = []
+            lastAgreedSeconds = 0.0
+            lastAgreedWords = []
+            prevWords = []
+            prevResult = nil
+            eagerResults = []
+        }
+        
+        if enableEagerDecoding {
+            // For eager mode, transcribe the complete audio
+            let _ = try await transcribeEagerMode(completeAudio)
+        } else {
+            // For normal mode, transcribe the complete audio
+            let result = try await transcribeAudioSamples(completeAudio)
+            
+            await MainActor.run {
+                guard let segments = result?.segments else { return }
+                self.confirmedSegments = segments
+                self.unconfirmedSegments = []
+                
+                if let allWords = result?.allWords {
+                    self.confirmedWords = allWords
+                    self.confirmedText = allWords.map { $0.word }.joined()
+                }
+                
+                print("[FullSession] Final transcript: '\(self.confirmedText)'")
+            }
+        }
+    }
+    
     func stopRecording(_ loop: Bool, timerSeconds: Double, durationLimitSeconds: Int) {
         recordingStatus = .stopping
         isRecording = false
-        isPaused = true
         whisperKit?.audioProcessor.stopRecording()
 
         Task {
-//            await flushPendingTranscription(graceSeconds: 0.35)
+            // Wait for any pending transcription to complete
+            await flushPendingTranscription(graceSeconds: 0.5)
 
             let currentTranscript = confirmedText.trimmingCharacters(in: .whitespacesAndNewlines)
+            
             if currentTranscript.isEmpty && !hasSpokenInSession {
-                await MainActor.run { showEmptyTranscriptModal = true }
+                await MainActor.run {
+                    isPaused = true
+                    showEmptyTranscriptModal = true
+                }
                 return
             }
+            
             if timerSeconds < Double(durationLimitSeconds) {
-                // Persist A (or previous parts) before resuming
+                // Save current audio to session before showing modal
                 appendCurrentDeltaToSession()
-                await MainActor.run { showEarlyStopModal = true }
+                await MainActor.run {
+                    isPaused = true
+                    showEarlyStopModal = true
+                }
                 return
             }
+            
+            // Normal stop (no pause) - proceed directly to evaluation
             await MainActor.run { proceedToEvaluation(loop: loop) }
         }
     }
 
         
-        func continueRecording(shouldLoop: Bool) {
-            showEmptyTranscriptModal = false
-            showEarlyStopModal = false
-            isPaused = false
-            startRecording(shouldLoop)
+    func continueRecording(shouldLoop: Bool) {
+        showEmptyTranscriptModal = false
+        showEarlyStopModal = false
+        isPaused = false
+        
+        // Instead, resume recording while preserving state
+        resumeRecording(shouldLoop)
+    }
+    
+    private func resumeRecording(_ loop: Bool) {
+        guard let whisperKit = whisperKit else { return }
+        
+        self.recordingStatus = .starting
+        
+        Task(priority: .userInitiated) {
+            var deviceId: DeviceID?
+            
+            try? whisperKit.audioProcessor.startRecordingLive(inputDeviceID: deviceId) { _ in
+                DispatchQueue.main.async {
+                    self.bufferEnergy = whisperKit.audioProcessor.relativeEnergy
+                    self.bufferSeconds = Double(whisperKit.audioProcessor.audioSamples.count) / Double(WhisperKit.sampleRate)
+                }
+            }
+            
+            // The sessionSamples array already contains everything up to lastSavedSampleIndexForSession
+            // So we continue from where the audio processor currently is
+            self.lastSavedSampleIndexForSession = whisperKit.audioProcessor.audioSamples.count
+            
+            await MainActor.run {
+                isRecording = true
+                isTranscribing = true
+                recordingStatus = .recording
+            }
+            
+            if loop {
+                realtimeLoop()
+            }
         }
+    }
 
     func restartSession(shouldLoop: Bool) {
         showEmptyTranscriptModal = false
@@ -1034,20 +1156,40 @@ final class SpeechTranscriberViewModel: ObservableObject {
     private func appendCurrentDeltaToSession() {
         guard let whisperKit = whisperKit else { return }
         let samples = whisperKit.audioProcessor.audioSamples
-        guard samples.count > lastSavedSampleIndexForSession else { return }
+        
+        guard samples.count > lastSavedSampleIndexForSession else {
+            print("[Session] No new samples to append (count: \(samples.count), lastIndex: \(lastSavedSampleIndexForSession))")
+            return
+        }
+        
         let delta = samples[lastSavedSampleIndexForSession..<samples.count]
         sessionSamples.append(contentsOf: delta)
         lastSavedSampleIndexForSession = samples.count
+        
+        print("[Session] Appended \(delta.count) samples. Total session: \(sessionSamples.count) samples (\(Double(sessionSamples.count)/16000.0)s)")
     }
+
 
     // Save the aggregated session audio (all segments) to WAV and update duration
     private func saveSessionAudioAsWavFile() async -> URL? {
         guard let whisperKit = whisperKit else { return nil }
         let current = whisperKit.audioProcessor.audioSamples
-        let tailDelta: ArraySlice<Float> = current.suffix(from: min(lastSavedSampleIndexForSession, current.count))
-        let combined: [Float] = sessionSamples + tailDelta
+        
+        // Determine which audio to save
+        let audioToSave: [Float]
+        
+        if !sessionSamples.isEmpty {
+            // Pause/resume case: use aggregated session samples + any new tail
+            let tailDelta: ArraySlice<Float> = current.suffix(from: min(lastSavedSampleIndexForSession, current.count))
+            audioToSave = sessionSamples + tailDelta
+            print("[SaveAudio] Using session samples: \(sessionSamples.count) + tail: \(tailDelta.count)")
+        } else {
+            // Normal case: use the entire current buffer
+            audioToSave = Array(current)
+            print("[SaveAudio] Using current buffer: \(current.count)")
+        }
 
-        guard !combined.isEmpty else { return nil }
+        guard !audioToSave.isEmpty else { return nil }
 
         let fileManager = FileManager.default
         let docsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -1067,13 +1209,13 @@ final class SpeechTranscriberViewModel: ObservableObject {
 
         do {
             let audioFile = try AVAudioFile(forWriting: fileURL, settings: settings)
-            guard let buffer = makePCMBuffer(from: combined, sampleRate: Double(WhisperKit.sampleRate)) else {
+            guard let buffer = makePCMBuffer(from: audioToSave, sampleRate: Double(WhisperKit.sampleRate)) else {
                 print("Failed to build PCM buffer for session audio")
                 return nil
             }
             try audioFile.write(from: buffer)
 
-            let duration = Double(combined.count) / Double(WhisperKit.sampleRate)
+            let duration = Double(audioToSave.count) / Double(WhisperKit.sampleRate)
             await MainActor.run {
                 self.finalBufferDuration = duration
             }
@@ -1163,11 +1305,26 @@ extension SpeechTranscriberViewModel {
 }
 
 private extension SpeechTranscriberViewModel {
-    func flushPendingTranscription(graceSeconds: Double) async {
+    private func flushPendingTranscription(graceSeconds: Double) async {
+        // Give time for any in-flight transcription to complete
         try? await Task.sleep(nanoseconds: UInt64(graceSeconds * 1_000_000_000))
+        
+        // Process any remaining audio in the buffer
+        if enableEagerDecoding && isTranscribing {
+            guard let whisperKit = whisperKit else { return }
+            let currentBuffer = whisperKit.audioProcessor.audioSamples
+            
+            if !currentBuffer.isEmpty {
+                print("[Flush] Processing final buffer: \(currentBuffer.count) samples")
+                // Process one final time to capture any remaining speech
+                try? await transcribeEagerMode(Array(currentBuffer))
+            }
+        }
+        
         await MainActor.run {
-            finalizeText()              // not async
-            updateHasSpokenInSession()  // not async
+            finalizeText()
+            updateHasSpokenInSession()
+            print("[Flush] Finalized text: '\(confirmedText)'")
         }
     }
 }

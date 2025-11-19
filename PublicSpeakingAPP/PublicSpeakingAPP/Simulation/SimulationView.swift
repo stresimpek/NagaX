@@ -45,10 +45,6 @@ struct SimulationView: View {
     let onRestartPractice: () -> Void
     let onComplete: (EvaluationModel, String, String) -> Void
     
-//    private var isProcessing: Bool {
-//        return !viewModel.isRecording && viewModel.whisperKitVM.isTranscribing
-//    }
-    
     private var isProcessing: Bool {
         let status = viewModel.whisperKitVM.recordingStatus
         return !viewModel.isRecording
@@ -96,9 +92,12 @@ struct SimulationView: View {
                                 size: .largeIconCircle,
                                 kind: .primaryYellow,
                                 action: {
-                                    triggerResume.toggle()
+                                    // Stop recording first, then show modal
+                                    viewModel.toggleRecording()
+                                    triggerResume = true
                                 }
                             )
+                            .disabled(viewModel.whisperModelState != .loaded || isProcessing)
                             .padding(.top, 16)
                             
                             Spacer()
@@ -219,6 +218,7 @@ struct SimulationView: View {
                     EarlyStopModalView(
                         onContinue: {
                             viewModel.resumeAfterEarlyStop()
+                            viewModel.whisperKitVM.showEarlyStopModal = false
                         },
                         onViewEvaluation: {
                             viewModel.whisperKitVM.proceedToEvaluationFromModal(loop: false)
@@ -232,9 +232,11 @@ struct SimulationView: View {
                     EmptyTranscriptModalView(
                         onRestart: {
                             viewModel.restartAfterEmptyTranscript()
+                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
                         },
                         onContinue: {
                             viewModel.resumeAfterEarlyStop()
+                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
                         }
                     )
                     .transition(.opacity)
@@ -244,12 +246,19 @@ struct SimulationView: View {
                 if triggerResume {
                     BackModalView(
                         onBackHome: {
+                            triggerResume = false
                             onBack()
-                            viewModel.toggleRecording()
                         },
-                        onPause: {},
-                        onRetry: {}
+                        onPause: {
+                            triggerResume = false
+                            viewModel.resumeAfterEarlyStop()
+                        },
+                        onRetry: {
+                            triggerResume = false
+                            viewModel.restartAfterEmptyTranscript()
+                        }
                     )
+                    .zIndex(20)
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
@@ -329,7 +338,7 @@ struct SimulationView: View {
 struct ComponentObjective: View {
     let text: String
     let isOvertime: Bool
-    var onFinished: (() -> Void)? = nil   // dipanggil setelah animasi selesai
+    var onFinished: (() -> Void)? = nil
 
     @State private var appear = false
 
@@ -348,7 +357,6 @@ struct ComponentObjective: View {
 
     var body: some View {
         ZStack {
-            // background gelap ikut animasi muncul/hilang
             Color.black
                 .opacity(appear ? 0.5 : 0.0)
                 .ignoresSafeArea()
@@ -367,17 +375,13 @@ struct ComponentObjective: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: appear)
         .onAppear {
-            // animasi masuk
             appear = true
 
-            // tampil 3 detik
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                // animasi keluar
                 withAnimation(.easeOut(duration: 0.25)) {
                     appear = false
                 }
 
-                // beri waktu animasi keluar
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                     onFinished?()
                 }
