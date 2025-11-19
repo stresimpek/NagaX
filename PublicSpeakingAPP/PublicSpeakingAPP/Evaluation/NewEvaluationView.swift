@@ -60,6 +60,10 @@ struct NewEvaluationView: View {
             )
         }
         .navigationBarBackButtonHidden(true)
+        // MARK: - NEW: Trigger Delete on Disappear
+        .onDisappear {
+            viewModel.deleteVideoFile()
+        }
     }
     
     private func shouldShowEmptyStateForCurrentTab() -> Bool {
@@ -200,7 +204,9 @@ private extension NewEvaluationView {
             .frame(maxWidth: .infinity)
             .padding()
         case .kontakMata:
-            Text("")
+            // REVISI: Memanggil EyeContactEvaluationView
+            EyeContactEvaluationView(videoURL: viewModel.result.videoURL)
+                .padding()
         }
     }
     

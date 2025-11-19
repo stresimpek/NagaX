@@ -14,16 +14,15 @@ class ARVideoRecorder {
     private var pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor?
     
     private var isRecording = false
-    private var startTime: CMTime = .zero
+    private var sessionStartTime: CMTime? = nil
     private var outputURL: URL?
-    
-    // Gunakan resolusi standar 720p Portrait
-    private let frameSize = CGSize(width: 720, height: 1280)
+
+    private let frameSize = CGSize(width: 1300, height: 720)
     
     func start(outputURL: URL) {
         self.outputURL = outputURL
+        self.sessionStartTime = nil // Reset waktu mulai
         
-        // 1. PENTING: Hapus file lama jika ada. AVAssetWriter gagal jika file exist.
         if FileManager.default.fileExists(atPath: outputURL.path) {
             try? FileManager.default.removeItem(at: outputURL)
         }
@@ -31,7 +30,6 @@ class ARVideoRecorder {
         do {
             assetWriter = try AVAssetWriter(outputURL: outputURL, fileType: .mp4)
             
-            // 2. Setting Kompresi Video
             let videoSettings: [String: Any] = [
                 AVVideoCodecKey: AVVideoCodecType.h264,
                 AVVideoWidthKey: frameSize.width,
@@ -42,11 +40,8 @@ class ARVideoRecorder {
             videoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)
             videoInput?.expectsMediaDataInRealTime = true
             
-            // 3. Gunakan BGRA (Format standar ARKit di banyak device)
             let sourcePixelBufferAttributes: [String: Any] = [
-                kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA),
-                kCVPixelBufferWidthKey as String: frameSize.width,
-                kCVPixelBufferHeightKey as String: frameSize.height
+                kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)
             ]
             
             pixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(
@@ -57,19 +52,14 @@ class ARVideoRecorder {
             if let writer = assetWriter, let input = videoInput {
                 if writer.canAdd(input) {
                     writer.add(input)
-                } else {
-                    print("❌ ARVideoRecorder: Cannot add input to writer")
-                    return
                 }
                 
-                // Start writing
                 if writer.startWriting() {
-                    writer.startSession(atSourceTime: .zero)
+                    // HAPUS BARIS INI: writer.startSession(atSourceTime: .zero)
+                    // KITA JANGAN MULAI SESSION DI SINI.
+                    
                     isRecording = true
-                    startTime = .zero
-                    print("✅ ARVideoRecorder: Started writing to \(outputURL.lastPathComponent)")
-                } else {
-                    print("❌ ARVideoRecorder: Failed to start writing. Error: \(String(describing: writer.error))")
+                    print("✅ ARVideoRecorder: Writer ready (Waiting for first frame)")
                 }
             }
             
@@ -80,7 +70,6 @@ class ARVideoRecorder {
     
     func stop(completion: @escaping (URL?) -> Void) {
         guard isRecording, let writer = assetWriter, let input = videoInput else {
-            print("⚠️ ARVideoRecorder: Stop called but not recording.")
             completion(nil)
             return
         }
@@ -92,12 +81,16 @@ class ARVideoRecorder {
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 if writer.status == .completed {
-                    print("✅ ARVideoRecorder: Finished successfully. URL: \(self.outputURL?.absoluteString ?? "nil")")
+                    print("✅ Video Saved: \(self.outputURL?.absoluteString ?? "")")
                     completion(self.outputURL)
                 } else {
-                    print("❌ ARVideoRecorder: Failed to finish. Status: \(writer.status.rawValue), Error: \(String(describing: writer.error))")
+                    print("❌ Save Failed: \(writer.error?.localizedDescription ?? "Unknown error")")
                     completion(nil)
                 }
+                // Bersihkan resource
+                self.assetWriter = nil
+                self.videoInput = nil
+                self.pixelBufferAdaptor = nil
             }
         }
     }
@@ -109,24 +102,24 @@ class ARVideoRecorder {
               let adaptor = pixelBufferAdaptor else { return }
         
         if writer.status == .failed {
-            print("❌ Writer Failed while recording: \(String(describing: writer.error))")
+            print("❌ Writer Failed: \(writer.error?.localizedDescription ?? "")")
             isRecording = false
             return
         }
         
+        // Konversi timestamp dari ARKit ke CMTime
         let presentationTime = CMTime(seconds: timestamp, preferredTimescale: 600)
         
-        // Set start time pada frame pertama
-        if startTime == .zero {
-            startTime = presentationTime
+        // LOGIKA KUNCI: Mulai session saat frame PERTAMA datang
+        if sessionStartTime == nil {
+            sessionStartTime = presentationTime
             writer.startSession(atSourceTime: presentationTime)
+            print("🚀 ARVideoRecorder: Session Started at \(timestamp)")
         }
         
+        // Pastikan input siap
         if input.isReadyForMoreMediaData {
-            let success = adaptor.append(pixelBuffer, withPresentationTime: presentationTime)
-            if !success {
-                print("⚠️ Dropped frame at \(timestamp)")
-            }
+            adaptor.append(pixelBuffer, withPresentationTime: presentationTime)
         }
     }
 }

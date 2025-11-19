@@ -22,7 +22,7 @@ class EyeContactViewController: UIViewController, ARSCNViewDelegate {
     private let detectionRadius: CGFloat = 30
     private let gazeSmoothness: Int = 30
     private let gazeLerpFactor: CGFloat = 0.05
-    private let gazeSensitivity: Float = 2.0
+    private let gazeSensitivity: Float = 1.0
     private var recentGazePoints: [CGPoint] = []
     
     private var latestFaceAnchor: ARFaceAnchor?

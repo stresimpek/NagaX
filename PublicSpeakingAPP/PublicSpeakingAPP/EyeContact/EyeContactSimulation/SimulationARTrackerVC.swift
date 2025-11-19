@@ -82,19 +82,23 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
     }
     
     private func setupARView() {
-        arView = ARSCNView(frame: self.view.bounds)
-        self.view.addSubview(arView)
-        arView.delegate = self
-        arView.backgroundColor = .clear
-        arView.isHidden = true
-        arView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            arView.topAnchor.constraint(equalTo: self.view.topAnchor),
-            arView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
-            arView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-            arView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
-        ])
-    }
+            arView = ARSCNView(frame: self.view.bounds)
+            self.view.addSubview(arView)
+            arView.alpha = 0.01
+            self.view.sendSubviewToBack(arView)
+            // ----------------------
+            
+            arView.delegate = self
+            arView.backgroundColor = .clear
+            
+            arView.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                arView.topAnchor.constraint(equalTo: self.view.topAnchor),
+                arView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+                arView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
+                arView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
+            ])
+        }
     
     // --- FUNGSI UTAMA: PIPA PENYALUR GAMBAR ---
     // Fungsi ini dipanggil ARKit 60 kali per detik

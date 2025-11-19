@@ -301,6 +301,20 @@ class NewEvaluationViewModel: ObservableObject {
         return components.filter { $0.type == .deleted }.count
     }
     
+    // MARK: - NEW: Function to Delete Video
+    func deleteVideoFile() {
+        guard let url = result.videoURL else { return }
+        
+        if FileManager.default.fileExists(atPath: url.path) {
+            do {
+                try FileManager.default.removeItem(at: url)
+                print("🗑️ Video temporary berhasil dihapus dari memori: \(url.lastPathComponent)")
+            } catch {
+                print("⚠️ Gagal menghapus video: \(error)")
+            }
+        }
+    }
+    
 }
 
 extension String {
