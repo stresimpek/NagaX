@@ -25,17 +25,23 @@ class ModalViewModel: ObservableObject {
     
     @Published private(set) var showMicWarning: Bool = true
     @Published private(set) var isButtonEnabled: Bool = false
-    @Published private(set) var instructionText: String = ""
+    @Published private(set) var instructionText: AttributedString = ""
     @Published private(set) var buttonTitle: String = ""
     @Published private(set) var mainImageName: String = ""
     @Published private(set) var showMicVisualizer: Bool = false
     
     private(set) var micMonitor = MicMonitorModal()
     private var cancellables = Set<AnyCancellable>()
-    private let instructions: [InstructionStep: String] = [
-        .quietRoom: "Pastikan kamu di ruangan yang kondusif. Gunakan headset untuk pengalaman yang lebih maksimal!",
-        .micCheck: "Nyalakan mikrofonmu, letakan HPmu, lalu cobalah berbicara! Pastikan suaramu sudah bisa didengar Prof. Belagu!",
-        .cameraPosition: "Letakan HP di posisi sejajar dengan matamu dan nyalakan kameramu!"
+    private let instructions: [InstructionStep: AttributedString] = [
+        .quietRoom: try! AttributedString(
+            markdown: "Pastikan kamu di ruangan yang kondusif. Gunakan headset untuk pengalaman yang lebih maksimal!"
+        ),
+        .micCheck: try! AttributedString(
+            markdown: "Nyalakan mikrofonmu, lalu cobalah berbicara! Pastikan suaramu sudah bisa didengar Prof. Belagu!"
+        ),
+        .cameraPosition: try! AttributedString(
+            markdown: "Letakan HP di posisi stabil yang sejajar dengan matamu dengan **jarak maksimal satu lengan**."
+        )
     ]
     
     init() {
@@ -73,25 +79,25 @@ class ModalViewModel: ObservableObject {
     }
     
     private func updateUIForCurrentStep(step: InstructionStep) {
-        instructionText = instructions[step] ?? ""
+        instructionText = instructions[step] ?? AttributedString("")
         
         switch step {
         case .quietRoom:
             mainImageName = "InstructionQuiet"
-            buttonTitle = "LANJUT"
+            buttonTitle = "Lanjut"
             isButtonEnabled = true
             showMicVisualizer = false
             
         case .micCheck:
             mainImageName = "ProfessorEar_Angry"
-            buttonTitle = "LANJUT"
+            buttonTitle = "Lanjut"
             isButtonEnabled = false
             showMicVisualizer = true
             checkAndRequestMicPermission()
             
         case .cameraPosition:
             mainImageName = "InstructionDistance"
-            buttonTitle = "MULAI LATIHAN"
+            buttonTitle = "Mulai Latihan"
             isButtonEnabled = true
             showMicVisualizer = false
         }

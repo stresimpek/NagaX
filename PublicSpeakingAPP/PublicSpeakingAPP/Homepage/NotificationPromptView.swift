@@ -25,7 +25,7 @@ struct NotificationPromptView: View {
                     .foregroundStyle(Color.white)
                     .bold()
 
-                MicroAnimation(artboardName: "NotificationBell", stateMachineName: "SM_NotificationBell")
+                MicroAnimation(artboardName: "NotificationBell")
                     .frame(width: 200, height: 200)
 
                 HStack(spacing: 20) {

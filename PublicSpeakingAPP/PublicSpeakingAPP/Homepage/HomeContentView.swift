@@ -54,7 +54,7 @@ struct HomeContentView: View {
                     
                     NameBanner(name: "Si Cupu (Kamu)")
                     
-                    MicroAnimation(artboardName: "Home", stateMachineName: "SM_Home")
+                    MicroAnimation(artboardName: "Home")
                         .frame(height: 120)
                     
                     Spacer()

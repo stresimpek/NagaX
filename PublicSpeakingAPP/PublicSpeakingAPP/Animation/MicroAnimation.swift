@@ -13,11 +13,11 @@ struct MicroAnimation: View {
 
     init(
         artboardName: String? = nil,
-        stateMachineName: String? = nil
+//        stateMachineName: String? = nil
     ) {
         self.rive = RiveViewModel(
             fileName: "microAnimation",
-            stateMachineName: stateMachineName,
+//            stateMachineName: stateMachineName,
             autoPlay: true,
             artboardName: artboardName
         )

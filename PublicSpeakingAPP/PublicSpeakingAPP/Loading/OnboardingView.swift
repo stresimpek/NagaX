@@ -35,11 +35,10 @@ struct OnboardingView: View {
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-//                .padding(.top, 20)
                 
                 Spacer()
                 
-                MicroAnimation(artboardName: "Kondusif", stateMachineName: "SM_BlobFish")
+                MicroAnimation(artboardName: "Onboarding")
                     .frame(height: 120)
                 
                 Spacer()
