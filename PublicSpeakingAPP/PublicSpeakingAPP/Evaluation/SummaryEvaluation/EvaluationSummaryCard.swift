@@ -44,7 +44,6 @@ struct EvaluationSummaryCard: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        
         .background(
             GeometryReader { geometry in
                 Color.clear
@@ -52,7 +51,6 @@ struct EvaluationSummaryCard: View {
             }
         )
         .frame(height: fixedHeight)
-        
         .background(Color("BaseColorWhite"))
         .cornerRadius(12)
     }

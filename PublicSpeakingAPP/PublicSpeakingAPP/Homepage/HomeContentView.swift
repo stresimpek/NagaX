@@ -38,8 +38,8 @@ struct HomeContentView: View {
                 Button(action: onDatePicker) {
                     Image(systemName: "calendar")
                 }
-                .padding(.horizontal, 20)
-                .font(.system(size: 20))
+                .padding(.horizontal, 40)
+                .font(.title)
             }
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
@@ -48,7 +48,7 @@ struct HomeContentView: View {
             
             Spacer()
             
-            HStack(alignment: .top) {
+            ZStack {
                 VStack {
                     Spacer()
                     
@@ -70,9 +70,10 @@ struct HomeContentView: View {
                 }
                 
                 SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
+                    .frame(maxWidth: .infinity)
+                    .padding(.leading, 440)
+                    .padding(.bottom, 160)
             }
-            .padding(.leading, 200)
-            .frame(alignment: .top)
         }
         .ignoresSafeArea(edges: .horizontal)
         .background(Color(.baseColorBlue))
