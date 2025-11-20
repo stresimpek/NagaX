@@ -126,29 +126,29 @@ struct SimulationView: View {
 
                     Spacer()
 
-                    HStack {
+                    HStack(alignment: .bottom) {
                         if viewModel.isOvertime {
                             HStack (alignment: .center) {
-                                Image(systemName: "alarm")
+                                Image(systemName: "alarm.fill")
                                 Text(viewModel.formattedTime)
                             }
-                            .font(.system(size: 32, weight: .bold, design: .monospaced))
-                            .padding(8)
+                            .font(.title)
+                            .padding(12)
                             .foregroundColor(.baseColorRed)
                             .background(.coral)
                             .cornerRadius(24)
                             .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
                         } else {
                             HStack (alignment: .center) {
-                                Image(systemName: "alarm")
+                                Image(systemName: "alarm.fill")
                                 Text(viewModel.formattedTime)
                             }
-                            .font(.system(size: 32, weight: .bold, design: .monospaced))
-                            .padding(8)
-                            .foregroundColor(.baseColorBrown)
-                            .background(.baseColorWhite)
+                            .font(.title2)
+                            .padding(12)
+                            .foregroundColor(.baseColorWhite)
+                            .background(.darkBlue)
                             .cornerRadius(24)
-                            .shadow(color: .beige, radius: 0, x: 0, y: 4)
+                            .shadow(color: .darkBlue2, radius: 0, x: 0, y: 4)
                         }
                         Spacer()
                         if viewModel.isRecording {
@@ -167,9 +167,9 @@ struct SimulationView: View {
                         }
                         Spacer()
                         HStack(spacing: 5) {
-                            ButtonComponent(
+                            ButtonRecord(
                                 title: viewModel.isRecording ? "STOP REKAM" : "MULAI REKAM",
-                                systemImage: viewModel.isRecording ? "stop.circle.fill" : "record.circle",
+                                systemImage: viewModel.isRecording ? "stop.fill" : "play.fill",
                                 size: .large,
                                 kind: .primaryYellow,
                                 action: viewModel.toggleRecording
@@ -184,8 +184,8 @@ struct SimulationView: View {
                             }
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom)
+                    .padding(.bottom, 10)
+                    .frame(maxWidth: .infinity)
                 }
                 .zIndex(10)
 

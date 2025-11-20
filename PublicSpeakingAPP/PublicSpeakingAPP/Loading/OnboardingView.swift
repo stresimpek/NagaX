@@ -44,7 +44,7 @@ struct OnboardingView: View {
                 Spacer()
                 
                 ButtonComponent(
-                    title: "MULAI",
+                    title: "Mulai",
                     systemImage: nil,
                     size: .large,
                     kind: .primaryYellow,

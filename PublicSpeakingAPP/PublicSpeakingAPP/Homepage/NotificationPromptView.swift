@@ -30,7 +30,7 @@ struct NotificationPromptView: View {
 
                 HStack(spacing: 20) {
                     ButtonComponent(
-                        title: "Skip dulu.",
+                        title: "Skip Dulu.",
                         systemImage: nil,
                         size: .large,
                         kind: .secondaryBlue
@@ -39,7 +39,7 @@ struct NotificationPromptView: View {
                     }
                     
                     ButtonComponent(
-                        title: "Mau dong!",
+                        title: "Mau Dong!",
                         systemImage: nil,
                         size: .large,
                         kind: .primaryYellow
