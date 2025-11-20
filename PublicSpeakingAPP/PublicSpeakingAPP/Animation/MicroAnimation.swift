@@ -12,7 +12,7 @@ struct MicroAnimation: View {
     private let rive: RiveViewModel
 
     init(
-        artboardName: String? = nil,
+        artboardName: String? = nil
 //        stateMachineName: String? = nil
     ) {
         self.rive = RiveViewModel(
