@@ -54,15 +54,13 @@ struct HomeContentView: View {
                     
                     NameBanner(name: "Si Cupu (Kamu)")
                     
-                    
-                    
-                    RiveViewModel(fileName:"noob cako new").view()
-                        .frame(width: 200, height: 120)
+                    MicroAnimation(artboardName: "Home")
+                        .frame(height: 120)
                     
                     Spacer()
                     
                     ButtonComponent(
-                        title: "MULAI LATIHAN",
+                        title: "Mulai Latihan",
                         systemImage: nil,
                         size: .large,
                         kind: .primaryYellow,

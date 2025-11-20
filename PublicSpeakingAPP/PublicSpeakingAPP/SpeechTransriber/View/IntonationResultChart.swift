@@ -27,10 +27,11 @@ struct IntonationResultChart: View {
     @State private var cursorTime: Double = 0.0
     @State private var isDragging: Bool = false
     @State private var processedSeries: [PitchPoint] = []
+    
+    private let bandLow: Double = 2.0
+    private let bandHigh: Double = 5.0
+    private let maxY: Double = 7.0
 
-    private let bandLow: Double = 18.0
-    private let bandHigh: Double = 35.0
-    private let maxY: Double = 50.0
     private let windowSeconds: Double = 10.0
     
     init(pitchSeries: [PitchPoint], fixedDuration: Double = 0) {
@@ -277,33 +278,31 @@ struct IntonationResultChart: View {
             return
         }
         
+        // Normalisasi waktu mulai dari 0
         let t0 = pitchSeries.first?.time ?? 0
-        let normalized = pitchSeries.map { PitchPoint(time: $0.time - t0, pitch: $0.pitch) }
+        let normalized = pitchSeries.map {
+            PitchPoint(time: $0.time - t0, pitch: $0.pitch) // pitch = std dev (semitone)
+        }
         
         var out: [PitchPoint] = []
         let step = 0.5
         var t = 0.0
         
         while t <= fixedDuration {
-            let windowStart = max(0.0, t - windowSeconds)
-            let window = normalized.filter { $0.time >= windowStart && $0.time <= t }.map(\.pitch)
-
-            if window.count >= 2 {
-                let mean = window.reduce(0,+) / Double(window.count)
-                let varSum = window.reduce(0) { $0 + pow($1 - mean, 2) }
-                let std = sqrt(varSum / Double(window.count))
-                
-                let prev = out.last?.pitch ?? std
-                let smoothed = (prev * 0.7) + (std * 0.3)
-                
-                out.append(PitchPoint(time: t, pitch: min(smoothed, maxY)))
-            } else if let last = out.last {
-                out.append(PitchPoint(time: t, pitch: last.pitch))
-            } else {
-                out.append(PitchPoint(time: t, pitch: 0))
-            }
+            // Ambil nilai std terakhir sebelum / sama dengan t
+            let currentStd = normalized.last(where: { $0.time <= t })?.pitch
+                ?? out.last?.pitch
+                ?? 0.0
+            
+            // Smoothing ringan biar garis nggak “gerigi”
+            let prev = out.last?.pitch ?? currentStd
+            let smoothed = (prev * 0.7) + (currentStd * 0.3)
+            
+            out.append(PitchPoint(time: t, pitch: min(smoothed, maxY)))
             t += step
         }
+        
         self.processedSeries = out
     }
+
 }

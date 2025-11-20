@@ -48,9 +48,7 @@ struct ModalView: View {
                                     VStack {
                                         switch viewModel.currentStep {
                                         case .quietRoom:
-                                            Image(viewModel.mainImageName)
-                                                .resizable()
-                                                .scaledToFit()
+                                            MicroAnimation(artboardName: "Kondusif")
                                                 .frame(height: 100)
                                             
                                         case .micCheck:
@@ -61,9 +59,7 @@ struct ModalView: View {
                                             )
                                             
                                         case .cameraPosition:
-                                            Image(viewModel.mainImageName)
-                                                .resizable()
-                                                .scaledToFit()
+                                            MicroAnimation(artboardName: "ArmLength")
                                                 .frame(height: 100)
                                         }
                                     }
