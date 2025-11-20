@@ -28,9 +28,9 @@ struct IntonationResultChart: View {
     @State private var isDragging: Bool = false
     @State private var processedSeries: [PitchPoint] = []
     
-    private let bandLow: Double = 2.0
-    private let bandHigh: Double = 5.0
-    private let maxY: Double = 7.0
+    private let bandLow: Double = 1.5
+    private let bandHigh: Double = 4.5
+    private let maxY: Double = 6.0
 
     private let windowSeconds: Double = 10.0
     
