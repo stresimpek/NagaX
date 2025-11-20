@@ -54,9 +54,9 @@ struct SettingsView: View {
                             .pickerStyle(.menu)
                             .foregroundColor(.white)
                             .padding(.horizontal, 8)
-                            .background(Color.darkBlue)
+                            .background(Color.darkBlue2)
                             .cornerRadius(24)
-                            .shadow(color: Color.darkBlue2, radius: 0, x: 0, y: 4)
+                            .shadow(color: Color.darkBlue3, radius: 0, x: 0, y: 4)
                         }
 
                         HStack(alignment: .top, spacing: 40) {
@@ -107,7 +107,7 @@ struct SettingsView: View {
                                     showAspectInfo = true
                                 }
                             }) {
-                                Image(systemName: "info.circle")
+                                Image(systemName: "info.circle.fill")
                                     .font(.title2)
                                     .foregroundColor(Color.baseColorWhite)
                             }

@@ -169,7 +169,7 @@ struct SimulationView: View {
                         HStack(spacing: 5) {
                             ButtonRecord(
                                 title: viewModel.isRecording ? "STOP REKAM" : "MULAI REKAM",
-                                systemImage: viewModel.isRecording ? "stop.fill" : "play.fill",
+                                systemImage: viewModel.isRecording ? "stop.fill" : "circle.fill",
                                 size: .large,
                                 kind: .primaryYellow,
                                 action: viewModel.toggleRecording

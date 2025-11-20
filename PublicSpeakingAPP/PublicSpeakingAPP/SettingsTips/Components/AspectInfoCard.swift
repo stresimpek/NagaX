@@ -26,17 +26,11 @@ struct AspectInfoCard: View {
                 .frame(width: 30)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.title)
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(Color("BaseColorBrown"))
-                
                 Text(item.description)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(Color("BaseColorBrown"))
                     .lineSpacing(4)
             }
-            
             Spacer()
         }
         .padding(.vertical, 10)
