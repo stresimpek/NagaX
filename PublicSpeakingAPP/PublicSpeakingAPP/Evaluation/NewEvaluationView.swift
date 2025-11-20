@@ -60,7 +60,7 @@ struct NewEvaluationView: View {
             )
         }
         .navigationBarBackButtonHidden(true)
-        // MARK: - NEW: Trigger Delete on Disappear
+        // MARK: - Trigger Delete on Disappear
         .onDisappear {
             viewModel.deleteVideoFile()
         }
@@ -203,10 +203,15 @@ private extension NewEvaluationView {
             }
             .frame(maxWidth: .infinity)
             .padding()
+            
         case .kontakMata:
-            // REVISI: Memanggil EyeContactEvaluationView
-            EyeContactEvaluationView(videoURL: viewModel.result.videoURL)
-                .padding()
+            // MARK: - FIX DI SINI
+            // Mempassing parameter gazeEvents agar fitur 'Jump' berfungsi
+            EyeContactEvaluationView(
+                videoURL: viewModel.result.videoURL,
+                gazeEvents: viewModel.result.gazeEvents
+            )
+            .padding()
         }
     }
     

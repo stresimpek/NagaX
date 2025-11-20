@@ -2,173 +2,185 @@
 //  EyeContactEvaluationView.swift
 //  PublicSpeakingAPP
 //
-//  Created by Gemini on 19/11/25.
 //
 
 import SwiftUI
 import AVKit
-import Combine
 
 struct EyeContactEvaluationView: View {
-    
     let videoURL: URL?
-    var gazeEvents: [GazeLogItem] = []
+    let gazeEvents: [GazeLogItem]
     
-    @StateObject private var audioPlayerVM = AudioPlayerService()
-    @State private var currentIndex: Int = 0
+    @State private var player: AVPlayer?
+    @State private var currentIssueIndex: Int = 0
+    
+    var issues: [GazeLogItem] {
+        return gazeEvents.sorted { $0.timestamp < $1.timestamp }
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(spacing: 16) {
             
-            // MARK: - 1. Video Player Area
-            if let url = videoURL {
-                ZStack {
-                    if let player = audioPlayerVM.player {
-                        // Jika video masih bermasalah, mutekan player sebagai langkah pencegahan audio
-                        VideoPlayer(player: player)
-                    } else {
-                        Rectangle()
-                            .fill(Color.black.opacity(0))
-                            .overlay(ProgressView())
+            HStack {
+                if !issues.isEmpty {
+                    let currentTimestamp = issues[currentIssueIndex].timestamp
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                        Text(formatTime(currentTimestamp))
                     }
-                }
-                .frame(height: 220)
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color("BaseColorBrown").opacity(0.2), lineWidth: 1)
-                )
-            } else {
-                // Empty State
-                VStack(spacing: 12) {
-                    Image(systemName: "video.slash")
-                        .font(.largeTitle)
-                        .foregroundColor(.gray)
-                    Text("Rekaman simulasi tidak tersedia.")
-                        .font(.footnote)
+                    .font(.footnote.bold())
+                    .foregroundColor(Color("BaseColorBrown"))
+                } else {
+                    Text("00:00")
+                        .font(.footnote.bold())
                         .foregroundColor(.gray)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 220)
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(12)
-            }
-            
-            Divider()
-                .padding(.vertical, 8) // Pembatas antara Video dan Event Controls
-            
-            // MARK: - 2. CONTROLS NAVIGASI EVENT
-            // Teks "Tidak ada isu..." sudah dihapus.
-            // Jika tidak ada event, bagian ini tidak akan merender apa-apa.
-            if !gazeEvents.isEmpty, let url = videoURL {
-                eventNavigationControlCard(url: url)
-            }
-        }
-        .onAppear {
-            if let url = videoURL {
-                audioPlayerVM.setupForVideo(url: url)
-            }
-        }
-        .onDisappear {
-            audioPlayerVM.stopPlayback()
-        }
-    }
-}
-
-// MARK: - Subviews & Logic
-private extension EyeContactEvaluationView {
-    
-    // UI Kontrol Navigasi Event (SEGMENT PLAYBACK)
-    @ViewBuilder
-    private func eventNavigationControlCard(url: URL) -> some View {
-        let currentEvent = gazeEvents[currentIndex]
-        
-        VStack(alignment: .leading, spacing: 12) {
-            
-            // --- INFO EVENT ---
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Titik Isu: Event \(currentIndex + 1) dari \(gazeEvents.count)")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                
-                HStack {
-                    Image(systemName: currentEvent.event == "Up" ? "arrow.up.circle.fill" : "arrow.down.circle.fill")
-                        .font(.title3)
-                    Text(currentEvent.event == "Up" ? "Mata Lihat Atas (\(formatTimestamp(seconds: currentEvent.timestamp)))" : "Mata Lihat Bawah (\(formatTimestamp(seconds: currentEvent.timestamp)))")
-                        .font(.body)
-                        .fontWeight(.medium)
-                }
-                .foregroundColor(currentEvent.event == "Up" ? .orange : .red)
-            }
-            
-            // --- PLAYBACK CONTROLS SEGMENT (Tombol & Progress) ---
-            HStack(spacing: 12) {
-                // Tombol Navigasi Chevron
-                Group {
-                    Button(action: { jumpToEvent(index: currentIndex - 1) }) {
-                        Image(systemName: "chevron.left.circle.fill")
-                    }
-                    .disabled(currentIndex <= 0)
-                    
-                    Button(action: { jumpToEvent(index: currentIndex + 1) }) {
-                        Image(systemName: "chevron.right.circle.fill")
-                    }
-                    .disabled(currentIndex >= gazeEvents.count - 1)
-                }
-                .font(.title2)
-                .foregroundColor(Color("BaseColorBrown"))
                 
                 Spacer()
                 
-                // Tombol Play Segmen
-                Button(action: {
-                    playSegmentForEvent(event: currentEvent, url: url)
-                }) {
-                    let isPlayingThisSegment = audioPlayerVM.isPlaying && (audioPlayerVM.isPlayingPageID != nil)
+                HStack(spacing: 12) {
+                    Button(action: { jumpToIssue(index: currentIssueIndex - 1) }) {
+                        Image(systemName: "chevron.left")
+                            .font(.body)
+                            .padding(8)
+                            .background(Circle().fill(Color.white))
+                            .overlay(Circle().stroke(Color("BaseColorBrown").opacity(0.3), lineWidth: 1))
+                    }
+                    .disabled(currentIssueIndex <= 0 || issues.isEmpty)
+                    .opacity(currentIssueIndex <= 0 || issues.isEmpty ? 0.5 : 1.0)
                     
-                    Image(systemName: isPlayingThisSegment ? "stop.circle.fill" : "play.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(Color("BaseColorBrown"))
-                        .frame(width: 44, height: 44)
+                    // Indikator Posisi (e.g., 1 / 5)
+                    if !issues.isEmpty {
+                        Text("**\(currentIssueIndex + 1)** / \(issues.count)")
+                            .font(.footnote.bold())
+                            .foregroundColor(Color("BaseColorBrown"))
+                            .monospacedDigit()
+                    } else {
+                        Text("- / -")
+                            .font(.footnote.bold())
+                            .foregroundColor(.gray)
+                    }
+                    
+                    // Tombol Next
+                    Button(action: { jumpToIssue(index: currentIssueIndex + 1) }) {
+                        Image(systemName: "chevron.right")
+                            .font(.body)
+                            .padding(8)
+                            .background(Circle().fill(Color.white))
+                            .overlay(Circle().stroke(Color("BaseColorBrown").opacity(0.3), lineWidth: 1))
+                    }
+                    .disabled(currentIssueIndex >= issues.count - 1 || issues.isEmpty)
+                    .opacity(currentIssueIndex >= issues.count - 1 || issues.isEmpty ? 0.5 : 1.0)
+                }
+                .foregroundColor(Color("BaseColorBrown"))
+            }
+            .padding(.horizontal, 4)
+            
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.black.opacity(0.1))
+                    .frame(height: 400) // Tinggi Video
+                
+                if let player = player {
+                    VideoPlayer(player: player)
+                        .frame(height: 400)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color("BaseColorBrown").opacity(0.5), lineWidth: 1)
+                        )
+                } else {
+                    VStack {
+                        Image(systemName: "video.slash")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray)
+                        Text("Video tidak tersedia")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
                 }
                 
-                // Progress Bar Segmen
-                ProgressView(value: audioPlayerVM.isPlaying ? audioPlayerVM.playbackProgress : 0.0)
-                    .tint(Color("BaseColorBrown"))
+            
+                if !issues.isEmpty {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            let type = issues[currentIssueIndex].event // "Up" or "Down"
+                            Text(type == "Up" ? "Melihat ke Atas" : "Melihat ke Bawah")
+                                .font(.caption).bold()
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .background(Color.red.opacity(0.8))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                                .padding(.bottom, 16)
+                                .padding(.leading, 16)
+                            Spacer()
+                        }
+                    }
+                }
+            }
+            
+
+            if issues.isEmpty {
+                Text("Hebat! Kontak matamu sangat terjaga.")
+                    .font(.subheadline)
+                    .foregroundColor(.green)
+                    .padding()
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(8)
+            } else {
+                Text("Tekan tombol panah di atas untuk melompat ke momen saat pandanganmu teralihkan.")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Spacer()
+        }
+        .onAppear {
+            setupPlayer()
+        }
+        .onDisappear {
+            player?.pause()
+        }
+    }
+    
+    
+    private func setupPlayer() {
+        guard let url = videoURL else { return }
+        let avPlayer = AVPlayer(url: url)
+        self.player = avPlayer
+        
+        if !issues.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                jumpToIssue(index: 0)
             }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
     
-    // MARK: - Logic Functions
-    
-    func jumpToEvent(index: Int) {
-        guard index >= 0 && index < gazeEvents.count else { return }
+    private func jumpToIssue(index: Int) {
+        guard issues.indices.contains(index), let player = player else { return }
+   
         withAnimation {
-            audioPlayerVM.stopPlayback()
-            currentIndex = index
+            currentIssueIndex = index
+        }
+        
+        let issue = issues[index]
+        let timestamp = issue.timestamp
+        
+        let seekTime = max(0, timestamp - 1.5)
+        let cmTime = CMTime(seconds: seekTime, preferredTimescale: 600)
+        
+        player.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
+        if player.timeControlStatus != .playing {
+            player.play()
         }
     }
     
-    func playSegmentForEvent(event: GazeLogItem, url: URL) {
-        let clipStart = max(0, event.timestamp - 1.5)
-        let clipEnd = event.timestamp + 1.5
-        
-        let dummyPage = TranscriptPage(
-            attributedString: AttributedString("Gaze Event"),
-            startTime: clipStart,
-            endTime: clipEnd
-        )
-        
-        audioPlayerVM.playSegment(url: url, page: dummyPage)
-    }
-    
-    func formatTimestamp(seconds: Double) -> String {
-        let m = Int(seconds) / 60
-        let s = Int(seconds) % 60
-        return String(format: "%02d:%02d", m, s)
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let min = Int(seconds) / 60
+        let sec = Int(seconds) % 60
+        return String(format: "%02d:%02d", min, sec)
     }
 }

@@ -145,7 +145,6 @@ class NewEvaluationViewModel: ObservableObject {
         case .intonasi:
             return intonationEvaluatorNote
         case .kontakMata:
-            // REVISI: Menggunakan logic baru untuk teks Kontak Mata
             return eyeContactEvaluatorNote
         }
     }
@@ -219,15 +218,13 @@ class NewEvaluationViewModel: ObservableObject {
         }
     }
     
-    // MARK: - REVISI TASK 1: Logic Text Kontak Mata
     private var eyeContactEvaluatorNote: AttributedString {
-        // Mengambil data count yang sudah dihitung di backend (EvaluationModel)
         let count = result.totalGazeIssues
         
         if count == 0 {
-            return try! AttributedString(markdown: "Tidak ada arah pandang melihat ke atap/lantai yang terdeteksi dalam presentasimu")
+            return try! AttributedString(markdown: "Tidak ada arah pandang melihat ke atap/lantai yang terdeteksi dalam presentasimu.")
         } else {
-            return try! AttributedString(markdown: "Kamu sempat melihat ke atap/lantai selama **\(count)** kali. Menyadari ini bisa membantu kamu menjaga fokus pandangan agar terlihat yakin")
+            return try! AttributedString(markdown: "Kamu terdeteksi melihat ke atap/lantai sebanyak **\(count)** kali. Menyadari ini bisa membantu kamu menjaga fokus pandangan agar terlihat lebih yakin.")
         }
     }
     
@@ -240,7 +237,6 @@ class NewEvaluationViewModel: ObservableObject {
         case .tempo, .intonasi:
             return "Graph:"
         case .kontakMata:
-            // Judul section untuk video playback
             return "Simulation Recording (Gaze Highlights):"
         }
     }
@@ -301,7 +297,6 @@ class NewEvaluationViewModel: ObservableObject {
         return components.filter { $0.type == .deleted }.count
     }
     
-    // MARK: - NEW: Function to Delete Video
     func deleteVideoFile() {
         guard let url = result.videoURL else { return }
         
@@ -384,11 +379,10 @@ extension NewEvaluationViewModel {
             }
             
         case .kontakMata:
-            // REVISI: Mengupdate summary note juga agar konsisten
             if result.totalGazeIssues == 0 {
-                return try! AttributedString(markdown: "Kontak mata **sangat baik**.")
+                return try! AttributedString(markdown: "Tidak ada kontak mata menatap ke atap/lantai yang terdeteksi selama presentasi.")
             } else {
-                return try! AttributedString(markdown: "Terdeteksi **\(result.totalGazeIssues)** kali pandangan tidak fokus.")
+                return try! AttributedString(markdown: "Kamu menatap ke atap/lantai selama **\(result.totalGazeIssues)** . Menyadari ini dapat membantu menjaga fokus pandangan")
             }
         }
     }
