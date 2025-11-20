@@ -15,6 +15,7 @@ struct RoomPreview: View {
                 .frame(width: 208, height: 144)
             Text("Ruang Kelas")
                 .font(.title2)
+                .bold()
                 .foregroundStyle(Color.baseColorWhite)
         }
     }

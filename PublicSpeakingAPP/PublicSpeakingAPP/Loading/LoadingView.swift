@@ -50,7 +50,7 @@ struct LoadingView: View {
                 VStack(spacing: 8) {
                     Text(statusText)
                         .foregroundColor(.white)
-                        .font(.footnote)
+                        .font(.headline)
                         .frame(maxWidth: .infinity, alignment: .leading)
                          
                     let progress = whisperKitVM.loadingProgressValue

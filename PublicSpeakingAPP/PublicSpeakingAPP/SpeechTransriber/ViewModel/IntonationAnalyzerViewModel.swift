@@ -26,7 +26,9 @@ enum IntonationError: Error, LocalizedError {
 
 @MainActor
 final class IntonationAnalyzerViewModel: ObservableObject {
-     
+    private let minHumanPitchHz: Double = 70.0
+    private let maxHumanPitchHz: Double = 500.0
+
     @Published var intonationLabel: String = "Speak to begin..."
     @Published var standardDeviation: Double = 0.0
     @Published var intonationRating: Int = 0
@@ -35,6 +37,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
     @Published var pitchHistory: [(timestamp: TimeInterval, pitch: Double)] = []
     @Published var allPitchHistory: [(timestamp: TimeInterval, pitch: Double)] = []
     private let windowSize: TimeInterval = 10.0
+    @Published var stdTimeline: [(time: TimeInterval, value: Double)] = []
     
     private var interpreter: Interpreter?
     private let requiredSampleRate = 16000.0
@@ -125,67 +128,111 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         let cqtBin = p * PT_SLOPE + PT_OFFSET
         return FMIN * powf(2.0, cqtBin / BINS_PER_OCT)
     }
+    
+    private func hzToSemitoneRelative(_ f0: Double, refHz: Double) -> Double {
+        guard f0 > 0, refHz > 0 else { return 0 }
+        return 12.0 * log2(f0 / refHz)
+    }
+
 
     private func updatePitchHistory(with newPitches: [Double], at time: TimeInterval) {
-        let valid = newPitches.filter { $0 > 0 }
+        let valid = newPitches.filter { pitch in
+            pitch >= minHumanPitchHz && pitch <= maxHumanPitchHz
+        }
         guard !valid.isEmpty else { return }
 
         let newEntries = valid.map { (timestamp: time, pitch: $0) }
+
         pitchHistory.append(contentsOf: newEntries)
         pitchHistory = pitchHistory.filter { (timestamp, _) in
             (time - timestamp) <= windowSize
         }
 
-        // untuk hasil akhir & chart (tidak difilter)
         allPitchHistory.append(contentsOf: newEntries)
         
-        // Kirim `currentTime` untuk proses filter window
         calculateStatistics(at: time)
     }
-     
-    // Ubah untuk mem-filter berdasarkan `windowSize` 10 detik
+    
     private func calculateStatistics(at currentTime: TimeInterval) {
- 
-        // Ekstrak nilai pitch dari data yang sudah di-filter
-        let pitchesInWindow = pitchHistory.map { $0.pitch }
+        // Pitch sudah: window 10 detik & 70–500 Hz
+        let pitchesHz = pitchHistory.map { $0.pitch }
         
-        guard pitchesInWindow.count > 1 else {
+        guard pitchesHz.count > 1 else {
             self.standardDeviation = 0.0
-            self.intonationLabel = "..."
+            self.intonationLabel = "Speak to begin..."
             self.intonationRating = 0
             return
         }
         
-        let mean = pitchesInWindow.reduce(0, +) / Double(pitchesInWindow.count)
-        let sumOfSquaredDiffs = pitchesInWindow.map { pow($0 - mean, 2) }.reduce(0, +)
-        self.standardDeviation = sqrt(sumOfSquaredDiffs / Double(pitchesInWindow.count))
-         
-        if standardDeviation < 18.0 {
+        // Mean di Hz → jadi referensi semitone
+        let meanHz = pitchesHz.reduce(0, +) / Double(pitchesHz.count)
+        guard meanHz > 0 else {
+            self.standardDeviation = 0.0
+            self.intonationLabel = "Speak to begin..."
+            self.intonationRating = 0
+            return
+        }
+        
+        // Konversi ke semitone relatif mean
+        let semitones = pitchesHz.map { hzToSemitoneRelative($0, refHz: meanHz) }
+        
+        let meanST = semitones.reduce(0, +) / Double(semitones.count)
+        let sumOfSquaredDiffs = semitones
+            .map { pow($0 - meanST, 2) }
+            .reduce(0, +)
+        
+        let stdSemitone = sqrt(sumOfSquaredDiffs / Double(semitones.count))
+        
+        // Simpan ke published property (sekarang unit = semitone)
+        self.standardDeviation = stdSemitone
+        
+        // === NEW: simpan timeline untuk chart ===
+        stdTimeline.append((time: currentTime, value: stdSemitone))
+        
+        // === Threshold sementara, nanti bisa kamu tuning dari data real ===
+        if stdSemitone < 1.5 {
             self.intonationLabel = "Intonasi Cenderung Datar"
             self.intonationRating = 1
-        } else if standardDeviation >= 22.0 && standardDeviation <= 35.0 {
+        } else if stdSemitone <= 2.5 {
+            self.intonationLabel = "Intonasi Cukup Bervariasi"
+            self.intonationRating = 2
+        } else if stdSemitone <= 4.5 {
             self.intonationLabel = "Intonasi Sangat Bervariasi!"
             self.intonationRating = 3
-        } else if (standardDeviation >= 18.0 && standardDeviation < 22.0) || standardDeviation > 35.0 {
-            self.intonationLabel = "Intonasi Cukup Dinamis"
+        } else {
+            self.intonationLabel = "Intonasi Agak Berlebihan"
             self.intonationRating = 2
         }
     }
+
+
     
     func calculateFinalStandardDeviation() -> Double {
-        let allPitches = allPitchHistory.map { $0.pitch }
+        // allPitchHistory sudah hanya berisi pitch manusia (70–500 Hz)
+        let allPitchesHz = allPitchHistory.map { $0.pitch }
         
-        guard allPitches.count > 1 else {
+        guard allPitchesHz.count > 1 else {
             print("[IntonationVM Final] GUARD FAILED (total pitches <= 1). Returning 0.0")
             return 0.0
         }
         
-        let mean = allPitches.reduce(0, +) / Double(allPitches.count)
-        let sumOfSquaredDiffs = allPitches.map { pow($0 - mean, 2) }.reduce(0, +)
-        let finalStdDev = sqrt(sumOfSquaredDiffs / Double(allPitches.count))
+        let meanHz = allPitchesHz.reduce(0, +) / Double(allPitchesHz.count)
+        guard meanHz > 0 else {
+            print("[IntonationVM Final] meanHz <= 0. Returning 0.0")
+            return 0.0
+        }
         
-        print("[IntonationVM Final] Total Pitches=\(allPitches.count), Final StdDev=\(finalStdDev)")
-        return finalStdDev
+        let semitones = allPitchesHz.map { hzToSemitoneRelative($0, refHz: meanHz) }
+        
+        let meanST = semitones.reduce(0, +) / Double(semitones.count)
+        let sumOfSquaredDiffs = semitones
+            .map { pow($0 - meanST, 2) }
+            .reduce(0, +)
+        
+        let finalStdSemitone = sqrt(sumOfSquaredDiffs / Double(semitones.count))
+        
+        print("[IntonationVM Final] Total Pitches=\(allPitchesHz.count), Final StdDev(semitone)=\(finalStdSemitone)")
+        return finalStdSemitone
     }
      
     private func convertAudio(buffer: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
@@ -209,6 +256,7 @@ final class IntonationAnalyzerViewModel: ObservableObject {
     }
 
     func clearResults() {
+        allPitchHistory.removeAll()
         pitchHistory.removeAll()
         audioBuffer.removeAll()
         intonationLabel = "Speak to begin..."

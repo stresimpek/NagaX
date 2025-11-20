@@ -83,12 +83,12 @@ struct TempoResultChart: View {
                     xStart: .value("s0", 0), xEnd: .value("s1", lastT),
                     yStart: .value("y0", idealMin), yEnd: .value("y1", idealMax)
                 )
-                .foregroundStyle(.lightCoral.opacity(0.5))
+                .foregroundStyle(.shadowTurqoise2)
                 .annotation(position: .overlay, alignment: .center) {
-                    Text("IDEAL")
+                    Text("NORMAL")
                         .font(.headline)
                         .fontWeight(.bold)
-                        .foregroundStyle(Color.textGrey.opacity(0.9))
+                        .foregroundStyle(Color.darkTurqoise.opacity(0.8))
                 }
 
                 RectangleMark(
@@ -189,7 +189,8 @@ struct TempoResultChart: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Rekaman Audio")
-                    .font(.custom("Nunito-Bold", size: 12))
+                    .font(.subheadline)
+                    .bold()
                     .foregroundStyle(Color(.baseColorBrown))
                 
                 HStack(spacing: 12) {

@@ -98,13 +98,13 @@ class ModalViewModel: ObservableObject {
     }
     
     private func updateUIForCurrentStep(step: InstructionStep) {
-        instructionText = instructions[step] ?? ""
+        instructionText = instructions[step] ?? AttributedString("")
         
         switch step {
         case .micCheck:
             stopAllTimers()
             mainImageName = "ProfessorEar_Angry"
-            buttonTitle = "LANJUT"
+            buttonTitle = "Lanjut"
             isButtonEnabled = false
             showMicVisualizer = true
             checkAndRequestMicPermission()

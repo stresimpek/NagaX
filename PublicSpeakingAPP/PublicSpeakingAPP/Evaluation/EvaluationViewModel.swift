@@ -31,9 +31,11 @@ struct EvaluationViewModel {
         let finalStd = intonationVM.calculateFinalStandardDeviation()
         let (intonationGrade, intonationFeedback, intonationScore) = gradeIntonation(stdDev: finalStd)
         
-        let pitchSeries: [PitchPoint] = intonationVM.allPitchHistory
-            .map { PitchPoint(time: $0.timestamp, pitch: $0.pitch) }
-            .sorted { $0.time < $1.time }
+        let stdSeries = intonationVM.stdTimeline.map {
+            PitchPoint(time: $0.time, pitch: $0.value) // pitch = std dev (semitone)
+        }
+        
+        let pitchSeries: [PitchPoint] = stdSeries
         
         let tempoSeries: [TempoPoint] = tempoVM.wpmHistory
             .map { TempoPoint(time: $0.timestamp, wpm: $0.wpm) }
@@ -128,10 +130,10 @@ struct EvaluationViewModel {
     }
 
     private static func gradeIntonation(stdDev: Double) -> (String, String, Double) {
-        if stdDev >= 22.0 && stdDev <= 35.0 {
+        if stdDev >= 2.5 && stdDev <= 4.5 {
             return ("A", "Sangat Dinamis", 1.0)
-        } else if (stdDev >= 18.0 && stdDev < 22.0) || stdDev > 35.0 {
-            let feedback = (stdDev > 35.0) ? "Agak Berlebihan" : "Cukup Dinamis"
+        } else if (stdDev >= 1.5 && stdDev < 2.5) || stdDev > 4.5 {
+            let feedback = (stdDev > 4.5) ? "Agak Berlebihan" : "Cukup Dinamis"
             return ("B", feedback, 0.75)
         } else {
             return ("C", "Sangat Datar", 0.5)

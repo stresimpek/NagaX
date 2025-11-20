@@ -25,16 +25,12 @@ struct NotificationPromptView: View {
                     .foregroundStyle(Color.white)
                     .bold()
 
-                Image(systemName: "bell.fill")
-                    .font(.system(size: 100))
-                    .foregroundStyle(Color.yellow)
+                MicroAnimation(artboardName: "NotificationBell")
                     .frame(width: 200, height: 200)
-                    .background(.baseColorBlue)
-                    .cornerRadius(12)
 
                 HStack(spacing: 20) {
                     ButtonComponent(
-                        title: "Skip dulu.",
+                        title: "Skip Dulu.",
                         systemImage: nil,
                         size: .large,
                         kind: .secondaryBlue
@@ -43,7 +39,7 @@ struct NotificationPromptView: View {
                     }
                     
                     ButtonComponent(
-                        title: "Mau dong!",
+                        title: "Mau Dong!",
                         systemImage: nil,
                         size: .large,
                         kind: .primaryYellow
@@ -58,7 +54,7 @@ struct NotificationPromptView: View {
             ButtonComponent(
                 title: nil,
                 systemImage: "arrow.uturn.left",
-                size: .medium,
+                size: .largeIconCircle,
                 kind: .secondaryBlue,
                 action: onBack
             )
