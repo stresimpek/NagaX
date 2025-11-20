@@ -69,7 +69,7 @@ struct SimulationView: View {
     @State private var bannerQueue: [BannerItem] = []
     @State private var currentBanner: BannerItem? = nil
     @State private var hasShownOvertimeBanner = false
-    @State private var triggerResume: Bool = false
+    @State private var showPauseModal: Bool = false
     
     var body: some View {
         GeometryReader { geo in
@@ -84,7 +84,7 @@ struct SimulationView: View {
 
                 VStack {
                     
-                    if viewModel.isRecording {
+                    if viewModel.isRecording && !showPauseModal {
                         HStack {
                             ButtonComponent(
                                 title: nil,
@@ -92,9 +92,13 @@ struct SimulationView: View {
                                 size: .largeIconCircle,
                                 kind: .primaryYellow,
                                 action: {
-                                    // Stop recording first, then show modal
                                     viewModel.toggleRecording()
-                                    triggerResume = true
+                                    // Clear any modal flags that might have been triggered
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                        viewModel.whisperKitVM.showEarlyStopModal = false
+                                        viewModel.whisperKitVM.showEmptyTranscriptModal = false
+                                        showPauseModal = true
+                                    }
                                 }
                             )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing)
@@ -185,7 +189,7 @@ struct SimulationView: View {
                 }
                 .zIndex(10)
 
-                if isProcessing {
+                if isProcessing && !showPauseModal {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
                         .zIndex(11)
@@ -214,11 +218,10 @@ struct SimulationView: View {
                 hasShownOvertimeBanner = false
             }
             .overlay {
-                if viewModel.whisperKitVM.showEarlyStopModal {
+                if viewModel.whisperKitVM.showEarlyStopModal && !showPauseModal {
                     EarlyStopModalView(
                         onContinue: {
                             viewModel.resumeAfterEarlyStop()
-                            viewModel.whisperKitVM.showEarlyStopModal = false
                         },
                         onViewEvaluation: {
                             viewModel.whisperKitVM.proceedToEvaluationFromModal(loop: false)
@@ -228,33 +231,36 @@ struct SimulationView: View {
                     .zIndex(20)
                 }
                             
-                if viewModel.whisperKitVM.showEmptyTranscriptModal {
+                if viewModel.whisperKitVM.showEmptyTranscriptModal && !showPauseModal {
                     EmptyTranscriptModalView(
                         onRestart: {
                             viewModel.restartAfterEmptyTranscript()
-                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
                         },
                         onContinue: {
                             viewModel.resumeAfterEarlyStop()
-                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
                         }
                     )
                     .transition(.opacity)
                     .zIndex(20)
                 }
                 
-                if triggerResume {
+                if showPauseModal {
                     BackModalView(
                         onBackHome: {
-                            triggerResume = false
+                            showPauseModal = false
                             onBack()
                         },
                         onPause: {
-                            triggerResume = false
+                            showPauseModal = false
+                            // Prevent any pending modal flags from showing
+                            viewModel.whisperKitVM.showEarlyStopModal = false
+                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
                             viewModel.resumeAfterEarlyStop()
                         },
                         onRetry: {
-                            triggerResume = false
+                            showPauseModal = false
+                            viewModel.whisperKitVM.showEarlyStopModal = false
+                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
                             viewModel.restartAfterEmptyTranscript()
                         }
                     )
