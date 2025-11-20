@@ -190,13 +190,13 @@ final class IntonationAnalyzerViewModel: ObservableObject {
         stdTimeline.append((time: currentTime, value: stdSemitone))
         
         // === Threshold sementara, nanti bisa kamu tuning dari data real ===
-        if stdSemitone < 2.0 {
+        if stdSemitone < 1.5 {
             self.intonationLabel = "Intonasi Cenderung Datar"
             self.intonationRating = 1
-        } else if stdSemitone <= 3.0 {
+        } else if stdSemitone <= 2.5 {
             self.intonationLabel = "Intonasi Cukup Bervariasi"
             self.intonationRating = 2
-        } else if stdSemitone <= 5.0 {
+        } else if stdSemitone <= 4.5 {
             self.intonationLabel = "Intonasi Sangat Bervariasi!"
             self.intonationRating = 3
         } else {
