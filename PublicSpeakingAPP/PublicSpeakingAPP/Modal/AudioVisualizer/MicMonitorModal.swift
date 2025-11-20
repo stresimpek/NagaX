@@ -33,7 +33,7 @@ class MicMonitorModal: ObservableObject {
             try session.setCategory(
                 .playAndRecord,
                 mode: .default,
-                options: [.mixWithOthers, .defaultToSpeaker]
+                options: [.mixWithOthers, .allowBluetooth, .defaultToSpeaker]
             )
             try session.setActive(true)
             print("Audio session configured")
