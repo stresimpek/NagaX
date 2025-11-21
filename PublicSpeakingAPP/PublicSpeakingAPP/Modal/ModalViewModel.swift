@@ -98,7 +98,7 @@ class ModalViewModel: ObservableObject {
     }
     
     private func updateUIForCurrentStep(step: InstructionStep) {
-        instructionText = instructions[step] ?? AttributedString("")
+        instructionText = instructions[step] ?? ""
         
         switch step {
         case .micCheck:

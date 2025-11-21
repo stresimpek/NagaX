@@ -79,7 +79,7 @@ struct MicIconButton: View {
 }
 
 struct InstructionTextView: View {
-    let message: AttributedString
+    let message: String
     let geometry: GeometryProxy
     
     var body: some View {
