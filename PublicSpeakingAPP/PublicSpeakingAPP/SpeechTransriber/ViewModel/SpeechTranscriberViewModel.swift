@@ -457,32 +457,24 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
         }
 
-        if loop {
-            stopRealtimeTranscription()
-            
-            // Check if we need to re-transcribe for pause/resume case
-            if !sessionSamples.isEmpty {
-                // Pause/resume case: re-transcribe the full session
-                Task {
-                    do {
-                        try await transcribeFullSession()
-                        finalizeText()
-                        await self.analyzeTranscriptSentence()
-                    } catch {
-                        print("Error during full session transcription: \(error.localizedDescription)")
-                    }
+        Task {
+            await MainActor.run { isTranscribing = true }
+
+            if loop {
+                stopRealtimeTranscription()
+                
+                // Check if we need to re-transcribe for pause/resume case
+                if !sessionSamples.isEmpty {
+                    try? await transcribeFullSession()
                 }
+                
+                await finalizeText()
+                await self.analyzeTranscriptSentence()
+                
             } else {
-                // Normal case: use existing transcription
-                finalizeText()
-                Task { await self.analyzeTranscriptSentence() }
-            }
-        } else {
-            transcriptionTask?.cancel()
-
-            transcribeTask = Task {
-                await MainActor.run { isTranscribing = true }
-
+                transcriptionTask?.cancel()
+                
+                // Lakukan transkripsi terakhir
                 do {
                     // Check if we need to re-transcribe for pause/resume case
                     if !sessionSamples.isEmpty {
@@ -495,22 +487,16 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 } catch {
                     print("Error during final transcription: \(error.localizedDescription)")
                 }
-                finalizeText()
+                
+                await finalizeText()
+                
                 await self.analyzeTranscriptSentence()
-
-                await MainActor.run {
-                    isTranscribing = false
-                }
             }
-        }
 
-        Task {
-            try? await Task.sleep(nanoseconds: 100_000_000)
             await MainActor.run {
-                if !self.isTranscribing {
-                    self.recordingStatus = .stopped
-                    print("[SpeechTranscriber] Status -> .stopped")
-                }
+                self.isTranscribing = false
+                self.recordingStatus = .stopped
+                print("[SpeechTranscriber] Analysis Done. Status -> .stopped")
             }
         }
     }
@@ -661,28 +647,26 @@ final class SpeechTranscriberViewModel: ObservableObject {
         startRecording(shouldLoop)
     }
 
-        func proceedToEvaluationFromModal(loop: Bool) {
-            showEmptyTranscriptModal = false
-            showEarlyStopModal = false
-            isPaused = false
-            proceedToEvaluation(loop: loop)
-        }
+    func proceedToEvaluationFromModal(loop: Bool) {
+        showEmptyTranscriptModal = false
+        showEarlyStopModal = false
+        isPaused = false
+        proceedToEvaluation(loop: loop)
+    }
 
-    func finalizeText() {
-        Task {
-            await MainActor.run {
-                if hypothesisText != "" {
-                    confirmedText += hypothesisText
-                    hypothesisText = ""
-                }
-
-                if !unconfirmedSegments.isEmpty {
-                    confirmedSegments.append(contentsOf: unconfirmedSegments)
-                    unconfirmedSegments = []
-                }
-                
-                self.updateFinalizedStyledTranscript()
+    func finalizeText() async {
+        await MainActor.run {
+            if hypothesisText != "" {
+                confirmedText += hypothesisText
+                hypothesisText = ""
             }
+
+            if !unconfirmedSegments.isEmpty {
+                confirmedSegments.append(contentsOf: unconfirmedSegments)
+                unconfirmedSegments = []
+            }
+            
+            self.updateFinalizedStyledTranscript()
         }
     }
     
@@ -1089,7 +1073,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
         } catch {
             print("[EagerMode] Error: \(error)")
-            finalizeText()
+            await finalizeText()
         }
 
         let mergedResult = TranscriptionUtilities.mergeTranscriptionResults(eagerResults, confirmedWords: confirmedWords)
@@ -1321,8 +1305,9 @@ private extension SpeechTranscriberViewModel {
             }
         }
         
+        await finalizeText()
+        
         await MainActor.run {
-            finalizeText()
             updateHasSpokenInSession()
             print("[Flush] Finalized text: '\(confirmedText)'")
         }
