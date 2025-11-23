@@ -23,6 +23,8 @@ enum RecordingStatus {
 
 @MainActor
 final class SpeechTranscriberViewModel: ObservableObject {
+    @Published var fillerAnalysisWords: [WordTiming] = []
+    
     // Sentence Analysis (LLM)
     @Published var sentenceAnalysisResult: String = ""
     @Published var isAnalyzingSentence: Bool = false
@@ -448,69 +450,67 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
     }
     
+    // Di dalam SpeechTranscriberViewModel.swift
+
     func proceedToEvaluation(loop: Bool) {
-        // Save the final audio for playback
-        Task(priority: .background) {
-            let url = await saveSessionAudioAsWavFile()
-            await MainActor.run {
-                self.savedRecordingURL = url
-            }
-        }
-
-        if loop {
-            stopRealtimeTranscription()
-            
-            // Check if we need to re-transcribe for pause/resume case
-            if !sessionSamples.isEmpty {
-                // Pause/resume case: re-transcribe the full session
-                Task {
-                    do {
-                        try await transcribeFullSession()
-                        finalizeText()
-                        await self.analyzeTranscriptSentence()
-                    } catch {
-                        print("Error during full session transcription: \(error.localizedDescription)")
-                    }
-                }
-            } else {
-                // Normal case: use existing transcription
-                finalizeText()
-                Task { await self.analyzeTranscriptSentence() }
-            }
-        } else {
-            transcriptionTask?.cancel()
-
-            transcribeTask = Task {
-                await MainActor.run { isTranscribing = true }
-
-                do {
-                    // Check if we need to re-transcribe for pause/resume case
-                    if !sessionSamples.isEmpty {
-                        // Pause/resume case: re-transcribe the full session
-                        try await transcribeFullSession()
-                    } else {
-                        // Normal case: just do one final transcription of current buffer
-                        try await transcribeCurrentBuffer()
-                    }
-                } catch {
-                    print("Error during final transcription: \(error.localizedDescription)")
-                }
-                finalizeText()
-                await self.analyzeTranscriptSentence()
-
-                await MainActor.run {
-                    isTranscribing = false
-                }
-            }
-        }
-
+        // 1. Stop Realtime
+        if loop { stopRealtimeTranscription() }
+        transcriptionTask?.cancel()
+        
         Task {
-            try? await Task.sleep(nanoseconds: 100_000_000)
-            await MainActor.run {
-                if !self.isTranscribing {
-                    self.recordingStatus = .stopped
-                    print("[SpeechTranscriber] Status -> .stopped")
+            await MainActor.run { isTranscribing = true }
+
+            // A. AMANKAN DATA LIVE (PENTING)
+            // Kita panggil finalizeText() dulu agar sisa hipotesis Eager (kata terakhir)
+            // masuk ke confirmedText. Ini memastikan Artikulasi & Struktur Kalimat dapat data Live yang utuh.
+            await MainActor.run { self.finalizeText() }
+
+            // 2. Save Audio
+            let url = await saveSessionAudioAsWavFile()
+            await MainActor.run { self.savedRecordingURL = url }
+
+            do {
+                if let audioURL = url {
+                    print("--- [Evaluation] Mulai Dual-Pass (KHUSUS FILLER) ---")
+                    
+                    // 3. RE-TRANSCRIBE (Hanya untuk Filler)
+                    // Kita tidak butuh 'finalWords' dari sini kalau Artikulasi pakai data Live.
+                    // Kita cuma butuh teks-nya untuk Filler VM.
+                    let (fillerText, fillerWords) = try await transcribeForEvaluation(audioURL: audioURL)
+                    
+                    await MainActor.run {
+                        // --- PERUBAHAN DISINI ---
+                        // JANGAN TIMPA self.confirmedText atau self.confirmedWords!
+                        // Biarkan mereka berisi data LIVE (Eager Mode).
+                        self.fillerAnalysisWords = fillerWords
+                        // 4. UPDATE FILLER WORD ANALYZER SAJA
+                        // Kita oper 'fillerText' (hasil re-transcribe akurat) ke FillerVM.
+                        if let asset = try? AVAudioFile(forReading: audioURL) {
+                            let duration = Double(asset.length) / asset.fileFormat.sampleRate
+                            self.fillerWordVM?.analyze(text: fillerText, duration: duration)
+                        }
+                    }
+                    print("--- [Evaluation] Selesai. Filler pakai Re-transcribe, sisanya pakai Live. ---")
+                    
+                } else {
+                    print("Warning: Gagal menyimpan audio, Filler menggunakan data live.")
                 }
+                
+                // 5. Analisis Sentence (Mistral)
+                // Fungsi ini membaca 'self.confirmedText'.
+                // Karena kita TIDAK menimpanya, Mistral akan menilai transkrip ASLI (Live).
+                await self.analyzeTranscriptSentence()
+                
+            } catch {
+                print("Error during final dual-pass transcription: \(error.localizedDescription)")
+                // Tidak perlu fallback finalizeText() di sini karena sudah dipanggil di awal (A).
+            }
+
+            // 6. Selesai
+            await MainActor.run {
+                isTranscribing = false
+                self.recordingStatus = .stopped
+                print("[SpeechTranscriber] Status -> .stopped (Ready for Result View)")
             }
         }
     }
