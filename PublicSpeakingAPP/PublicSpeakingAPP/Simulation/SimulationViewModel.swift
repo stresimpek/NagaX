@@ -327,7 +327,7 @@ class SimulationViewModel: ObservableObject {
         let weakWordsCount = allWords.filter { word in
             let cleaned = word.word.trimmingCharacters(in: .punctuationCharacters.union(.symbols).union(.whitespaces))
             
-            return !cleaned.isEmpty && word.probability < 0.6
+            return !cleaned.isEmpty && word.probability < 0.55
         }.count
         
         return (weakWordsCount, allWords.count)
