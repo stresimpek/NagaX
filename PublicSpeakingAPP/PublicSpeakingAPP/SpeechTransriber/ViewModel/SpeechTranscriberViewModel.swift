@@ -4,8 +4,6 @@
 //
 //  Created by Regina Celine Adiwinata on 30/09/25.
 //
-//  Refactored with Argmax logic and re-integrated analyzers on 22/10/25.
-//
 
 import Foundation
 import SwiftUI
@@ -449,23 +447,16 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
         }
     }
-    
-    // Di dalam SpeechTranscriberViewModel.swift
 
     func proceedToEvaluation(loop: Bool) {
-        // 1. Stop Realtime
         if loop { stopRealtimeTranscription() }
         transcriptionTask?.cancel()
         
         Task {
             await MainActor.run { isTranscribing = true }
 
-            // A. AMANKAN DATA LIVE (PENTING)
-            // Kita panggil finalizeText() dulu agar sisa hipotesis Eager (kata terakhir)
-            // masuk ke confirmedText. Ini memastikan Artikulasi & Struktur Kalimat dapat data Live yang utuh.
             await MainActor.run { self.finalizeText() }
 
-            // 2. Save Audio
             let url = await saveSessionAudioAsWavFile()
             await MainActor.run { self.savedRecordingURL = url }
 
@@ -473,18 +464,10 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 if let audioURL = url {
                     print("--- [Evaluation] Mulai Dual-Pass (KHUSUS FILLER) ---")
                     
-                    // 3. RE-TRANSCRIBE (Hanya untuk Filler)
-                    // Kita tidak butuh 'finalWords' dari sini kalau Artikulasi pakai data Live.
-                    // Kita cuma butuh teks-nya untuk Filler VM.
                     let (fillerText, fillerWords) = try await transcribeForEvaluation(audioURL: audioURL)
                     
                     await MainActor.run {
-                        // --- PERUBAHAN DISINI ---
-                        // JANGAN TIMPA self.confirmedText atau self.confirmedWords!
-                        // Biarkan mereka berisi data LIVE (Eager Mode).
                         self.fillerAnalysisWords = fillerWords
-                        // 4. UPDATE FILLER WORD ANALYZER SAJA
-                        // Kita oper 'fillerText' (hasil re-transcribe akurat) ke FillerVM.
                         if let asset = try? AVAudioFile(forReading: audioURL) {
                             let duration = Double(asset.length) / asset.fileFormat.sampleRate
                             self.fillerWordVM?.analyze(text: fillerText, duration: duration)
@@ -496,17 +479,12 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     print("Warning: Gagal menyimpan audio, Filler menggunakan data live.")
                 }
                 
-                // 5. Analisis Sentence (Mistral)
-                // Fungsi ini membaca 'self.confirmedText'.
-                // Karena kita TIDAK menimpanya, Mistral akan menilai transkrip ASLI (Live).
                 await self.analyzeTranscriptSentence()
                 
             } catch {
                 print("Error during final dual-pass transcription: \(error.localizedDescription)")
-                // Tidak perlu fallback finalizeText() di sini karena sudah dipanggil di awal (A).
             }
 
-            // 6. Selesai
             await MainActor.run {
                 isTranscribing = false
                 self.recordingStatus = .stopped
@@ -516,13 +494,11 @@ final class SpeechTranscriberViewModel: ObservableObject {
     }
     
     private func transcribeFullSession() async throws {
-        // Get the complete session audio
         guard let whisperKit = whisperKit else { return }
         let current = whisperKit.audioProcessor.audioSamples
         
         let completeAudio: [Float]
         if !sessionSamples.isEmpty {
-            // Combine saved session + any remaining tail
             let tailDelta: ArraySlice<Float> = current.suffix(from: min(lastSavedSampleIndexForSession, current.count))
             completeAudio = sessionSamples + tailDelta
             print("[FullSession] Transcribing session: \(sessionSamples.count) + tail: \(tailDelta.count) = \(completeAudio.count) samples (\(Double(completeAudio.count)/16000.0)s)")
