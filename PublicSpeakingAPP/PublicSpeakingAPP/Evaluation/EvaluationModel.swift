@@ -39,6 +39,9 @@ struct EvaluationModel: Identifiable, Hashable {
     let eyeContactScore: Double
     let eyeContactGrade: String
     let eyeContactFeedback: String
+    
+    let articulationCount: Int
+    let articulationTotal: Int
 
     init(
         id: UUID = UUID(),
@@ -61,7 +64,9 @@ struct EvaluationModel: Identifiable, Hashable {
         tempoSeries: [TempoPoint] = [],
         eyeContactScore: Double = 0.0,
         eyeContactGrade: String = "D",
-        eyeContactFeedback: String = "N/A"
+        eyeContactFeedback: String = "N/A",
+        articulationCount: Int = 0,
+        articulationTotal: Int = 0
     ) {
         self.id = id
         self.presentationDate = presentationDate
@@ -84,6 +89,8 @@ struct EvaluationModel: Identifiable, Hashable {
         self.eyeContactScore = eyeContactScore
         self.eyeContactGrade = eyeContactGrade
         self.eyeContactFeedback = eyeContactFeedback
+        self.articulationCount = articulationCount
+        self.articulationTotal = articulationTotal
     }
 }
 

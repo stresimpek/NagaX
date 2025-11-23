@@ -651,6 +651,11 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     confirmedText += hypothesisText
                     hypothesisText = ""
                 }
+                
+                if !hypothesisWords.isEmpty {
+                    confirmedWords.append(contentsOf: hypothesisWords)
+                    hypothesisWords = []
+                }
 
                 if !unconfirmedSegments.isEmpty {
                     confirmedSegments.append(contentsOf: unconfirmedSegments)
