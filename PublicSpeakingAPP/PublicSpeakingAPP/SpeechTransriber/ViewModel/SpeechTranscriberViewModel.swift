@@ -60,7 +60,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var enablePromptPrefill: Bool = true
     @Published var enableCachePrefill: Bool = true
     @Published var enableSpecialCharacters: Bool = false
-    @Published var enableEagerDecoding: Bool = true
+    @Published var enableEagerDecoding: Bool = false
     @Published var enableDecoderPreview: Bool = true
     @Published var temperatureStart: Double = 0
     @Published var fallbackCount: Double = 5
@@ -128,6 +128,8 @@ final class SpeechTranscriberViewModel: ObservableObject {
     
     private var sessionSamples: [Float] = []
     private var lastSavedSampleIndexForSession: Int = 0
+    
+    private let sileroVAD = SileroVAD()
     
     // Init
     init(mistralAPIKey: String = "rvxmDdHNzkeGxHrJ9hhrZhDJTvjYCV3i") {
@@ -214,6 +216,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         intonationAnalyzerVM?.clearResults()
         tempoVM?.clearResults()
         fillerWordVM?.clearResults()
+        sileroVAD.resetStates()
         
         showEmptyTranscriptModal = false
             showEarlyStopModal = false
@@ -557,15 +560,22 @@ final class SpeechTranscriberViewModel: ObservableObject {
         } else {
             // For normal mode, transcribe the complete audio
             let result = try await transcribeAudioSamples(completeAudio)
-            
+                
             await MainActor.run {
                 guard let segments = result?.segments else { return }
                 self.confirmedSegments = segments
                 self.unconfirmedSegments = []
                 
+                // [PENTING] Pastikan confirmedWords terisi penuh dari hasil final
                 if let allWords = result?.allWords {
                     self.confirmedWords = allWords
                     self.confirmedText = allWords.map { $0.word }.joined()
+                    
+                    // [PENTING] Bersihkan sisa-sisa variabel Eager
+                    self.hypothesisWords = []
+                    self.prevWords = []
+                    self.lastAgreedWords = []
+                    self.eagerResults = []
                 }
                 
                 print("[FullSession] Final transcript: '\(self.confirmedText)'")
@@ -784,16 +794,41 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
 
         if useVAD {
-            let voiceDetected = AudioProcessor.isVoiceDetected(
-                in: whisperKit.audioProcessor.relativeEnergy,
-                nextBufferInSeconds: nextBufferSeconds,
-                silenceThreshold: Float(silenceThreshold)
-            )
-            guard voiceDetected else {
-                await MainActor.run {
-                    if currentText.isEmpty { currentText = "Waiting for speech..." }
+            // 1. Ambil potongan audio BARU saja (delta)
+            let newSamplesCount = currentBuffer.count - lastBufferSize
+            
+            var isVoice = false
+            
+            // Hanya cek jika ada sample baru
+            if newSamplesCount > 512 {
+                let deltaSamples = Array(currentBuffer.suffix(newSamplesCount))
+                let probability = sileroVAD.detectVoice(in: deltaSamples)
+                
+                // Threshold Silero (Gerbang 1)
+                isVoice = probability > sileroVAD.threshold // Pastikan threshold di SileroVAD.swift sekitar 0.6
+                
+                // --- GERBANG 2: DURATION FILTER (BARU) ---
+                // Hitung durasi audio delta ini dalam detik
+                let durationSeconds = Double(newSamplesCount) / Double(WhisperKit.sampleRate)
+                
+                // Jika terdeteksi suara TAPI durasinya terlalu pendek (kurang dari 300ms)
+                // Kemungkinan besar itu cuma "click", "pop", atau napas pendek.
+                if isVoice && durationSeconds < 0.3 {
+                    // print("VAD True tapi durasi cuma \(durationSeconds)s -> DIBUANG")
+                    isVoice = false
                 }
-                try await Task.sleep(nanoseconds: 100_000_000)
+            } else {
+                isVoice = false
+            }
+
+            guard isVoice else {
+                await MainActor.run {
+                    if currentText.isEmpty { currentText = "..." }
+                }
+                
+                // Update buffer pointer & Sleep
+                lastBufferSize = currentBuffer.count
+                try await Task.sleep(nanoseconds: 50_000_000)
                 return
             }
         }
@@ -817,29 +852,56 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 effectiveSpeedFactor = totalAudio / Double(totalInferenceTime)
             }
         } else {
+            // 1. Lakukan transkripsi buffer audio saat ini sebagai "file utuh"
             let transcription = try await transcribeAudioSamples(Array(currentBuffer))
+            
+            // 2. Update Tempo (Logika ini sudah ada, kita pertahankan)
             if let allWords = transcription?.allWords, let tempoVM = self.tempoVM {
                 let totalDuration = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
                 tempoVM.updateTempo(from: allWords, totalDuration: totalDuration)
             }
+            
             await MainActor.run {
                 currentText = ""
+                
+                // 3. [SANGAT PENTING] Update Data Words untuk View
+                // View Anda (Articulation/Filler) bergantung pada 'confirmedWords'.
+                // Di mode Non-Eager, semua hasil adalah 'confirmed'.
+                if let words = transcription?.allWords {
+                    self.confirmedWords = words
+                    self.confirmedText = words.map { $0.word }.joined()
+                    
+                    // 4. [SANGAT PENTING] Kosongkan variabel Eager Mode
+                    // Ini mencegah View menggabungkan data lama/sampah dari Eager Mode
+                    self.hypothesisWords = []
+                    self.prevWords = []
+                    self.lastAgreedWords = []
+                    self.eagerResults = []
+                    self.prevResult = nil
+                }
+
+                // 5. Update Segments (Untuk tampilan live text biasa)
                 guard let segments = transcription?.segments else { return }
+                
                 tokensPerSecond = transcription?.timings.tokensPerSecond ?? 0
                 firstTokenTime = transcription?.timings.firstTokenTime ?? 0
                 modelLoadingTime = transcription?.timings.modelLoading ?? 0
                 pipelineStart = transcription?.timings.pipelineStart ?? 0
                 currentLag = transcription?.timings.decodingLoop ?? 0
                 currentEncodingLoops += Int(transcription?.timings.totalEncodingRuns ?? 0)
+                
                 let totalAudio = Double(currentBuffer.count) / Double(WhisperKit.sampleRate)
                 totalInferenceTime += transcription?.timings.fullPipeline ?? 0
                 effectiveRealTimeFactor = Double(totalInferenceTime) / totalAudio
                 effectiveSpeedFactor = totalAudio / Double(totalInferenceTime)
 
+                // Logika segmen (confirmed/unconfirmed) tetap dijalankan agar UI text biasa tetap update
+                let requiredSegmentsForConfirmation = 2
                 if segments.count > requiredSegmentsForConfirmation {
                     let numberToConfirm = segments.count - requiredSegmentsForConfirmation
                     let confirmedArray = Array(segments.prefix(numberToConfirm))
                     let remaining = Array(segments.suffix(requiredSegmentsForConfirmation))
+                    
                     if let lastConfirmed = confirmedArray.last,
                        lastConfirmed.end > lastConfirmedSegmentEndSeconds {
                         lastConfirmedSegmentEndSeconds = lastConfirmed.end
@@ -850,6 +912,11 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     unconfirmedSegments = remaining
                 } else {
                     unconfirmedSegments = segments
+                }
+                
+                // Trigger status "user sedang bicara"
+                if !segments.isEmpty {
+                    self.hasSpokenInSession = true
                 }
             }
         }
@@ -862,7 +929,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         
         let task: DecodingTask = selectedTask == "transcribe" ? .transcribe : .translate
         let seekClip: [Float] = [lastConfirmedSegmentEndSeconds]
-        let prompt = "Kalimat ini mungkin terpotong, jangan mengarang kata-kata untuk mengisi sisa kalimat."
+        let prompt = ""
         
         let myPromptTokenIDs: [Int]
         if let tokenizer = whisperKit.tokenizer {
@@ -878,13 +945,24 @@ final class SpeechTranscriberViewModel: ObservableObject {
             temperature: Float(temperatureStart),
             temperatureFallbackCount: Int(fallbackCount),
             sampleLength: Int(sampleLength),
-            usePrefillPrompt: enablePromptPrefill,
+            
+            usePrefillPrompt: false,
             usePrefillCache: enableCachePrefill,
             skipSpecialTokens: !enableSpecialCharacters,
             withoutTimestamps: false,
             wordTimestamps: true,
             clipTimestamps: seekClip,
-            promptTokens: myPromptTokenIDs,
+            
+            // 1. Logprob Threshold (Standar: -1.0).
+            // Naikkan ke -0.8 atau -0.5. Jika rata-rata logprob di bawah ini, dia akan skip.
+            compressionRatioThreshold: 2.0, logProbThreshold: -0.5,
+            
+            // 2. No Speech Threshold (Standar: 0.6).
+            // Naikkan ke 0.7 atau 0.8. Jika dia menduga ini "bukan omongan" > 0.8, dia akan diam.
+            noSpeechThreshold: 0.3,
+            
+//            promptTokens: myPromptTokenIDs,
+            
             chunkingStrategy: chunkingStrategy
         )
 

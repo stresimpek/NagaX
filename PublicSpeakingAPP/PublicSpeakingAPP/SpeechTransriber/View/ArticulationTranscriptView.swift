@@ -44,7 +44,7 @@ struct ArticulationTranscriptView: View {
                     return false
                 }
                 
-                return word.probability < 0.5
+                return word.probability < 0.99
             }
             
             let (pages, maps) = TranscriptBuilder().buildPagesAndMaps(
