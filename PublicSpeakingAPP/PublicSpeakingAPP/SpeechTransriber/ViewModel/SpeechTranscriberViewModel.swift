@@ -637,12 +637,12 @@ final class SpeechTranscriberViewModel: ObservableObject {
         startRecording(shouldLoop)
     }
 
-        func proceedToEvaluationFromModal(loop: Bool) {
-            showEmptyTranscriptModal = false
-            showEarlyStopModal = false
-            isPaused = false
-            proceedToEvaluation(loop: loop)
-        }
+    func proceedToEvaluationFromModal(loop: Bool) {
+        showEmptyTranscriptModal = false
+        showEarlyStopModal = false
+        isPaused = false
+        proceedToEvaluation(loop: loop)
+    }
 
     func finalizeText() {
         Task {
@@ -657,13 +657,12 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     hypothesisWords = []
                 }
 
-                if !unconfirmedSegments.isEmpty {
-                    confirmedSegments.append(contentsOf: unconfirmedSegments)
-                    unconfirmedSegments = []
-                }
-                
-                self.updateFinalizedStyledTranscript()
+            if !unconfirmedSegments.isEmpty {
+                confirmedSegments.append(contentsOf: unconfirmedSegments)
+                unconfirmedSegments = []
             }
+            
+            self.updateFinalizedStyledTranscript()
         }
     }
     
@@ -1070,7 +1069,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
         } catch {
             print("[EagerMode] Error: \(error)")
-            finalizeText()
+            await finalizeText()
         }
 
         let mergedResult = TranscriptionUtilities.mergeTranscriptionResults(eagerResults, confirmedWords: confirmedWords)
@@ -1302,8 +1301,9 @@ private extension SpeechTranscriberViewModel {
             }
         }
         
+        await finalizeText()
+        
         await MainActor.run {
-            finalizeText()
             updateHasSpokenInSession()
             print("[Flush] Finalized text: '\(confirmedText)'")
         }
