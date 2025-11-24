@@ -656,13 +656,14 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     confirmedWords.append(contentsOf: hypothesisWords)
                     hypothesisWords = []
                 }
-
-            if !unconfirmedSegments.isEmpty {
-                confirmedSegments.append(contentsOf: unconfirmedSegments)
-                unconfirmedSegments = []
+                
+                if !unconfirmedSegments.isEmpty {
+                    confirmedSegments.append(contentsOf: unconfirmedSegments)
+                    unconfirmedSegments = []
+                }
+                
+                self.updateFinalizedStyledTranscript()
             }
-            
-            self.updateFinalizedStyledTranscript()
         }
     }
     
