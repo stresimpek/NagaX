@@ -29,22 +29,13 @@ struct ArticulationTranscriptView: View {
             )
         }
         .onAppear {
-            let confirmed = whisperKitVM.confirmedWords
-            let prev = whisperKitVM.prevWords
-            let lastAgreed = whisperKitVM.lastAgreedWords
-            let hypothesis = whisperKitVM.hypothesisWords
-            let finalHypo = lastAgreed + TranscriptionUtilities.findLongestDifferentSuffix(prev, hypothesis)
-            let allWords = confirmed + finalHypo
-            
-
+            let allWords = whisperKitVM.confirmedWords
             let isWeakArticulation: (WordTiming) -> Bool = { word in
                 let cleanedWord = word.word.trimmingCharacters(in: .punctuationCharacters.union(.symbols).union(.whitespaces))
                 
-                if cleanedWord.isEmpty {
-                    return false
-                }
+                if cleanedWord.isEmpty { return false }
                 
-                return word.probability < 0.5
+                return word.probability < 0.55
             }
             
             let (pages, maps) = TranscriptBuilder().buildPagesAndMaps(
@@ -54,7 +45,8 @@ struct ArticulationTranscriptView: View {
             
             self.pages = pages
             self.maps = maps
-            onMapsCalculated(maps, allWords.count) 
+            
+            onMapsCalculated(maps, allWords.count)
         }
     }
 }
