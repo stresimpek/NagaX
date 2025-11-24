@@ -14,7 +14,10 @@ struct EvaluationViewModel {
         tempoVM: TempoViewModel,
         intonationVM: IntonationAnalyzerViewModel,
         fillerWordVM: FillerWordViewModel,
-        duration: TimeInterval
+        duration: TimeInterval,
+        fullTranscript: String,
+        articulationCount: Int,
+        articulationTotal: Int
     ) -> EvaluationModel {
         
         let (tempoGrade, tempoFeedback, tempoScore) = gradeTempo(wpm: tempoVM.wpm)
@@ -68,7 +71,9 @@ struct EvaluationViewModel {
             tempoSeries: tempoSeries,
             eyeContactScore: eyeContactScore * 100,
             eyeContactGrade: eyeContactGrade,
-            eyeContactFeedback: eyeContactFeedback
+            eyeContactFeedback: eyeContactFeedback,
+            articulationCount: articulationCount,
+            articulationTotal: articulationTotal
         )
     }
     

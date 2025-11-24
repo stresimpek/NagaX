@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct EvaluationSummaryView: View {
-    @StateObject var viewModel: NewEvaluationViewModel
+    @ObservedObject var viewModel: NewEvaluationViewModel
     
     @State private var maxCardHeight: CGFloat = 0
     
