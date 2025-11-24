@@ -45,6 +45,8 @@ struct SimulationView: View {
     let onRestartPractice: () -> Void
     let onComplete: (EvaluationModel, String, String) -> Void
     
+    @AppStorage("objectiveDontShowAgain") private var objectiveDontShowAgain = false
+    
     private var isProcessing: Bool {
         let status = viewModel.whisperKitVM.recordingStatus
         return !viewModel.isRecording
@@ -205,13 +207,17 @@ struct SimulationView: View {
                 if let banner = currentBanner {
                     ComponentObjective(
                         text: banner.text,
-                        isOvertime: banner.isOvertime
-                    ) {
-                        advanceBannerQueue()
-                    }
+                        isOvertime: banner.isOvertime,
+                        onFinished: {
+                            advanceBannerQueue()
+                        },
+                        dontShowAgain: $objectiveDontShowAgain,
+                        showDontShowAgain: banner.showDontShowAgain
+                    )
                     .id(banner.id)
                 }
             }
+
             .onAppear() {
                 setupInitialBanners()
                 isOverOneMinutes = false
@@ -293,7 +299,8 @@ struct SimulationView: View {
                     hasShownOvertimeBanner = true
                     enqueueBanner(
                         text: "Sudah lewat durasi. Cepat selesaikan presentasimu!",
-                        isOvertime: true
+                        isOvertime: true,
+                        showDontShowAgain: false
                     )
                 }
             }
@@ -311,20 +318,33 @@ struct SimulationView: View {
             }
         }
     }
-    
+}
+
+extension SimulationView {
     private func setupInitialBanners() {
+        guard objectiveDontShowAgain==false else { return }
         enqueueBanner(
             text: "Selama sesi latihan, audiens akan ikut merespon pada presentasimu.",
-            isOvertime: false
+            isOvertime: false,
+            showDontShowAgain: false
         )
         enqueueBanner(
             text: "Jadi, lakukan presentasi dengan baik. Jangan sampai mereka bosan!",
-            isOvertime: false
+            isOvertime: false,
+            showDontShowAgain: true
         )
     }
 
-    private func enqueueBanner(text: String, isOvertime: Bool) {
-        let item = BannerItem(text: text, isOvertime: isOvertime)
+    private func enqueueBanner(
+        text: String,
+        isOvertime: Bool,
+        showDontShowAgain: Bool = false
+    ) {
+        let item = BannerItem(
+            text: text,
+            isOvertime: isOvertime,
+            showDontShowAgain: showDontShowAgain
+        )
         bannerQueue.append(item)
         processQueueIfNeeded()
     }
@@ -338,67 +358,4 @@ struct SimulationView: View {
         currentBanner = nil
         processQueueIfNeeded()
     }
-
-}
-
-struct ComponentObjective: View {
-    let text: String
-    let isOvertime: Bool
-    var onFinished: (() -> Void)? = nil
-
-    @State private var appear = false
-
-    private var fadeMask: some View {
-        LinearGradient(
-            gradient: Gradient(stops: [
-                .init(color: .clear,  location: 0.0),
-                .init(color: .white,  location: 0.30),
-                .init(color: .white,  location: 0.70),
-                .init(color: .clear,  location: 1.0)
-            ]),
-            startPoint: .leading,
-            endPoint: .trailing
-        )
-    }
-
-    var body: some View {
-        ZStack {
-            Color.black
-                .opacity(appear ? 0.5 : 0.0)
-                .ignoresSafeArea()
-
-            Text(text)
-                .padding(.horizontal, 64)
-                .padding(.vertical, 10)
-                .foregroundColor(.white)
-                .background(
-                    (isOvertime ? Color.baseColorRed : Color.blue)
-                        .mask(fadeMask)
-                )
-                .frame(maxWidth: .infinity)
-                .offset(y: appear ? 0 : -20)
-                .opacity(appear ? 1 : 0)
-        }
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: appear)
-        .onAppear {
-            appear = true
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                withAnimation(.easeOut(duration: 0.25)) {
-                    appear = false
-                }
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    onFinished?()
-                }
-            }
-        }
-    }
-}
-
-
-struct BannerItem: Identifiable, Equatable {
-    let id = UUID()
-    let text: String
-    let isOvertime: Bool
 }
