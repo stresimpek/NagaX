@@ -77,8 +77,7 @@ struct EvaluationModel: Identifiable, Hashable {
         eyeContactGrade: String = "D",
         eyeContactFeedback: String = "N/A",
         articulationCount: Int = 0,
-        articulationTotal: Int = 0
-        // Defaults
+        articulationTotal: Int = 0,
         totalGazeIssues: Int = 0,
         videoURL: URL? = nil,
         gazeEvents: [GazeLogItem] = []

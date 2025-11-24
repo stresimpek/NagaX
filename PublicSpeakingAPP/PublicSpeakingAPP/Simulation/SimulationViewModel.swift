@@ -235,39 +235,36 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func processEvaluation() {
-        // Pastikan tidak ada modal yang menghalangi
         guard !isStopModalActive else { return }
-        
-        // Pastikan kita punya durasi atau teks
+       
         let finalDuration = whisperKitVM.finalBufferDuration
         let dur = finalDuration > 0 ? finalDuration : Double(timerSeconds)
-        
+       
         guard dur > 0 || !whisperKitVM.confirmedText.isEmpty else {
             errorMessage = "Tidak ada data audio yang direkam."
             isAnalysisComplete = true
             isSavingVideo = false
             return
         }
-        
+       
         finalTranscript = whisperKitVM.confirmedText
-        
+       
         let (weakCount, totalCount) = calculateArticulationStats()
-        
+       
         evaluationResult = EvaluationViewModel.process(
             tempoVM: tempoVM,
             intonationVM: intonationAnalyzerVM,
             fillerWordVM: fillerWordVM,
-            duration: finalDuration,
+            duration: dur,
             fullTranscript: finalTranscript,
             articulationCount: weakCount,
-            articulationTotal: totalCount
-            duration: dur,
-            gazeUpCount: gazeUpCount,      // Task 1 Data
-            gazeDownCount: gazeDownCount,  // Task 1 Data
-            videoURL: recordedVideoURL,    // Task 2 Data
-            gazeEvents: recordedGazeEvents // Task 1&2 Data
+            articulationTotal: totalCount,
+            gazeUpCount: gazeUpCount,
+            gazeDownCount: gazeDownCount,
+            videoURL: recordedVideoURL,
+            gazeEvents: recordedGazeEvents
         )
-        
+       
         recordingStartTime = nil
         isAnalysisComplete = true
         print("✅ Evaluation Processed. Video present: \(recordedVideoURL != nil)")

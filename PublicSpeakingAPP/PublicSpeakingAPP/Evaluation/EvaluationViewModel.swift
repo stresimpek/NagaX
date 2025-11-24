@@ -17,8 +17,7 @@ struct EvaluationViewModel {
         duration: TimeInterval,
         fullTranscript: String,
         articulationCount: Int,
-        articulationTotal: Int
-        // ADDED PARAMETERS
+        articulationTotal: Int,
         gazeUpCount: Int,
         gazeDownCount: Int,
         videoURL: URL?,
@@ -93,8 +92,7 @@ struct EvaluationViewModel {
             eyeContactGrade: eyeContactGrade,
             eyeContactFeedback: eyeContactFeedback,
             articulationCount: articulationCount,
-            articulationTotal: articulationTotal
-            // New Params
+            articulationTotal: articulationTotal,
             totalGazeIssues: totalGazeIssues,
             videoURL: videoURL,
             gazeEvents: gazeEvents
