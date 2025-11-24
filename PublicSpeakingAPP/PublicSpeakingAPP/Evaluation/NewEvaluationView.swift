@@ -60,6 +60,10 @@ struct NewEvaluationView: View {
             )
         }
         .navigationBarBackButtonHidden(true)
+        // MARK: - Trigger Delete on Disappear
+        .onDisappear {
+            viewModel.deleteVideoFile()
+        }
     }
     
     private func shouldShowEmptyStateForCurrentTab() -> Bool {
@@ -199,8 +203,15 @@ private extension NewEvaluationView {
             }
             .frame(maxWidth: .infinity)
             .padding()
+            
         case .kontakMata:
-            Text("")
+            // MARK: - FIX DI SINI
+            // Mempassing parameter gazeEvents agar fitur 'Jump' berfungsi
+            EyeContactEvaluationView(
+                videoURL: viewModel.result.videoURL,
+                gazeEvents: viewModel.result.gazeEvents
+            )
+            .padding()
         }
     }
     

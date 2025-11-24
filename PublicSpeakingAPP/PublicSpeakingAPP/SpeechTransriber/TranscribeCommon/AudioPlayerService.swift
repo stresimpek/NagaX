@@ -17,7 +17,9 @@ final class AudioPlayerService: ObservableObject {
     @Published private(set) var isPlayingPageID: UUID?
     @Published private(set) var playbackProgress: Double = 0.0
 
-    private var player: AVPlayer?
+    // REVISI: @Published agar bisa di-bind ke VideoPlayer SwiftUI
+    @Published var player: AVPlayer?
+    
     private var timeObserverToken: Any?
     private var segmentEndTime: Double?
     
@@ -29,6 +31,22 @@ final class AudioPlayerService: ObservableObject {
         } catch {
             print("AVAudioSession error: \(error)")
         }
+    }
+    
+    // Fungsi khusus untuk setup Video Player
+    func setupForVideo(url: URL) {
+        stopPlayback()
+        let item = AVPlayerItem(url: url)
+        player = AVPlayer(playerItem: item)
+        
+        // Observer untuk durasi video
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(itemReadyToPlay),
+                                               name: .AVPlayerItemNewAccessLogEntry,
+                                               object: item)
+        
+        // Observer untuk progress bar
+        attachTimeObserver(trackPageProgress: false)
     }
 
     func play(from url: URL, startAt seconds: Double = 0) {
@@ -116,13 +134,11 @@ final class AudioPlayerService: ObservableObject {
         setupAndPlay(url: url, startAt: seconds, endAt: nil, trackPageProgress: false)
     }
 
-    // Helper tunggal yang meniru pola `playSegment` (seek → add timeObserver → play)
     private func setupAndPlay(url: URL,
                               startAt: Double,
                               endAt: Double?,
                               trackPageProgress: Bool)
     {
-        // Reuse kalau URL sama
         if let player,
            let item = player.currentItem,
            let assetURL = (item.asset as? AVURLAsset)?.url,
@@ -139,19 +155,16 @@ final class AudioPlayerService: ObservableObject {
             return
         }
 
-        // Player baru
         stopPlayback()
         let item = AVPlayerItem(url: url)
         player = AVPlayer(playerItem: item)
         segmentEndTime = endAt
 
-        // Update duration begitu siap
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(itemReadyToPlay),
                                                name: .AVPlayerItemNewAccessLogEntry,
                                                object: item)
 
-        // Seek lalu play (meniru pola yang sudah jalan di playSegment)
         let startTime = CMTime(seconds: max(0, startAt), preferredTimescale: 600)
         player?.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] finished in
             guard let self, finished else { return }
@@ -168,7 +181,6 @@ final class AudioPlayerService: ObservableObject {
     }
 
     private func attachTimeObserver(trackPageProgress: Bool) {
-        // Bersihkan observer lama
         if let token = timeObserverToken {
             player?.removeTimeObserver(token)
             timeObserverToken = nil
@@ -181,23 +193,19 @@ final class AudioPlayerService: ObservableObject {
             let t = time.seconds
             self.currentTime = t
 
-            // Duration (fallback kalau sebelumnya indefinite)
             if let d = player.currentItem?.duration.seconds, d.isFinite {
                 self.duration = d
             }
 
-            // Hitung progress umum (berdasarkan duration file)
             if self.duration > 0 {
                 self.playbackProgress = min(1.0, max(0.0, t / self.duration))
             }
 
-            // Auto-stop saat mencapai endAt (untuk segmen)
             if let end = self.segmentEndTime, t >= end {
                 self.stopPlayback()
                 return
             }
 
-            // Auto-stop saat file selesai
             if let d = player.currentItem?.duration.seconds,
                d.isFinite, t >= d
             {

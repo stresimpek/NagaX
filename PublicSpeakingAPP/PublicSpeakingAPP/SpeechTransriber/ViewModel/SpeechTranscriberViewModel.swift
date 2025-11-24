@@ -156,15 +156,15 @@ final class SpeechTranscriberViewModel: ObservableObject {
     }
     
     private func resetSessionAggregation() {
-            sessionSamples.removeAll()
-            lastSavedSampleIndexForSession = 0
-            savedRecordingURL = nil
+        sessionSamples.removeAll()
+        lastSavedSampleIndexForSession = 0
+        savedRecordingURL = nil
 
-            if let docsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-                let fileURL = docsDir.appendingPathComponent("full_recording.wav")
-                try? FileManager.default.removeItem(at: fileURL)
-            }
+        if let docsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let fileURL = docsDir.appendingPathComponent("full_recording.wav")
+            try? FileManager.default.removeItem(at: fileURL)
         }
+    }
     
     func resetState() {
         transcribeTask?.cancel()
@@ -216,9 +216,9 @@ final class SpeechTranscriberViewModel: ObservableObject {
         fillerWordVM?.clearResults()
         
         showEmptyTranscriptModal = false
-            showEarlyStopModal = false
-            isPaused = false
-            hasSpokenInSession = false
+        showEarlyStopModal = false
+        isPaused = false
+        hasSpokenInSession = false
     }
 
     func fetchModels() {
@@ -449,9 +449,63 @@ final class SpeechTranscriberViewModel: ObservableObject {
     }
 
     func proceedToEvaluation(loop: Bool) {
-        if loop { stopRealtimeTranscription() }
-        transcriptionTask?.cancel()
-        
+        // Save the final audio for playback
+        Task(priority: .background) {
+            let url = await saveSessionAudioAsWavFile()
+            await MainActor.run {
+                self.savedRecordingURL = url
+            }
+        }
+
+        if loop {
+            stopRealtimeTranscription()
+            
+            // Check if we need to re-transcribe for pause/resume case
+            if !sessionSamples.isEmpty {
+                // Pause/resume case: re-transcribe the full session
+                Task {
+                    do {
+                        try await transcribeFullSession()
+                        finalizeText()
+                        await self.analyzeTranscriptSentence()
+                    } catch {
+                        print("Error during full session transcription: \(error.localizedDescription)")
+                    }
+                }
+            } else {
+                // Normal case: use existing transcription
+                finalizeText()
+                Task { await self.analyzeTranscriptSentence() }
+            }
+        } else {
+            transcriptionTask?.cancel()
+
+            transcribeTask = Task {
+                await MainActor.run { isTranscribing = true }
+
+                do {
+                    // Check if we need to re-transcribe for pause/resume case
+                    if !sessionSamples.isEmpty {
+                        // Pause/resume case: re-transcribe the full session
+                        try await transcribeFullSession()
+                    } else {
+                        // Normal case: just do one final transcription of current buffer
+                        try await transcribeCurrentBuffer()
+                    }
+                } catch {
+                    print("Error during final transcription: \(error.localizedDescription)")
+                }
+                finalizeText()
+                
+                // REVISI: Await analysis here, handled with fallback inside
+                await self.analyzeTranscriptSentence()
+
+                await MainActor.run {
+                    isTranscribing = false
+                }
+            }
+        }
+
         Task {
             await MainActor.run { isTranscribing = true }
 
@@ -687,7 +741,26 @@ final class SpeechTranscriberViewModel: ObservableObject {
             let analysis = try await mistralService.analyzeSentence(from: transcript)
             await MainActor.run { self.sentenceAnalysisResult = analysis }
         } catch {
-            await MainActor.run { self.sentenceAnalysisError = "Failed to analyze sentence: \(error.localizedDescription)" }
+            // REVISI: FALLBACK JIKA AI ERROR (QUOTA EXCEEDED / NETWORK ERROR)
+            // Agar evaluasi tetap jalan dan page tidak kosong/stuck
+            print("⚠️ Mistral API Error: \(error.localizedDescription). Using fallback data.")
+            
+            let dummyAnalysis = """
+            [Analisis AI Tidak Tersedia: Koneksi/Kuota]
+            
+            Transkrip Anda:
+            "\(transcript)"
+            
+            Saran Umum:
+            1. Perhatikan struktur S-P-O-K agar kalimat efektif.
+            2. Kurangi kata pengisi (filler words) seperti 'hmm', 'anu'.
+            3. Jaga tempo bicara agar audiens nyaman.
+            """
+            
+            await MainActor.run {
+                self.sentenceAnalysisResult = dummyAnalysis
+                self.sentenceAnalysisError = "AI Analysis Unavailable (Using Fallback): \(error.localizedDescription)"
+            }
         }
 
         await MainActor.run { self.isAnalyzingSentence = false }
@@ -971,7 +1044,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 let fallbacks = Int(progress.timings.totalDecodingFallbacks)
                 if progress.text.count < self.currentText.count {
                     if fallbacks != self.currentFallbacks {
-                         print("Fallback occured: \(fallbacks)")
+                        print("Fallback occured: \(fallbacks)")
                     }
                 }
                 self.currentText = progress.text
