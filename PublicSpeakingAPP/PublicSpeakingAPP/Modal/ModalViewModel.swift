@@ -60,9 +60,13 @@ class ModalViewModel: ObservableObject {
     private var detectTask: DispatchWorkItem?
     private var holdTask: DispatchWorkItem?
     
-    init(practiceSettings: PracticeSettings) {
+    init(practiceSettings: PracticeSettings, startAtCameraStep: Bool = false) {
         self.needsCameraCheck = practiceSettings.selectedAspects.contains(.kontakMata)
-        self.currentStep = .micCheck
+        if startAtCameraStep {
+            self.currentStep = .cameraSetup
+        } else {
+            self.currentStep = .micCheck
+        }
         
         setupBindings()
         updateUIForCurrentStep(step: self.currentStep)

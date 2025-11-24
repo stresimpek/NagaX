@@ -14,9 +14,14 @@ struct ModalView: View {
     
     @StateObject private var viewModel: ModalViewModel
      
-    init(onStart: @escaping () -> Void, settings: PracticeSettings) {
+    init(onStart: @escaping () -> Void, settings: PracticeSettings, startAtCameraStep: Bool = false) {
         self.onStart = onStart
-        self._viewModel = StateObject(wrappedValue: ModalViewModel(practiceSettings: settings))
+        self._viewModel = StateObject(
+            wrappedValue: ModalViewModel(
+                practiceSettings: settings,
+                startAtCameraStep: startAtCameraStep
+            )
+        )
     }
      
     var body: some View {
