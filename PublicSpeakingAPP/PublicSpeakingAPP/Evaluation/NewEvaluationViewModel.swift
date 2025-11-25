@@ -160,13 +160,13 @@ class NewEvaluationViewModel: ObservableObject {
         let count = ineffectiveSentenceCount
         let duration = settings.durationMinutes
 
-        return try! AttributedString(markdown: "Kamu ada **\(count)** kalimat yang ga efektif. Yuk cek rekomendasi perbaikannya! Kamu mungkin mau potong beberapa kata agar pesan lebih ringkas dan efektif.")
+        return try! AttributedString(markdown: "Kamu ada **\(count)** kata yang ga efektif. Yuk cek rekomendasi perbaikannya! Kamu mungkin mau potong beberapa kata agar pesan lebih ringkas dan efektif.")
 
     }
     
     private var articulationEvaluatorNote: AttributedString {
         let count = articulationCount
-        let total = articulationTotal > 0 ? articulationTotal : 100
+        let total = articulationTotal
         let clearWords = total - count
         let percentage = total > 0 ? Int((Double(clearWords) / Double(total)) * 100) : 0
 
@@ -291,10 +291,24 @@ class NewEvaluationViewModel: ObservableObject {
             original: fullTranscript,
             new: sentenceAnalysisResult
         )
-        return components.filter { $0.type == .deleted }.count
+        
+        // Filter out deleted words, excluding whitespace
+        let deletedCount = components.filter {
+            $0.type == .deleted && !$0.text.trimmingCharacters(in: .whitespaces).isEmpty
+        }.count
+        
+        // Debug print
+        print("=== DIFF DEBUG ===")
+        print("Original length: \(fullTranscript.count)")
+        print("New length: \(sentenceAnalysisResult.count)")
+        print("Total components: \(components.count)")
+        print("Deleted words: \(deletedCount)")
+        print("Deleted words: \(components.filter { $0.type == .deleted && !$0.text.trimmingCharacters(in: .whitespaces).isEmpty }.map { $0.text })")
+        
+        return deletedCount
     }
-    
 }
+
 extension String {
     func splitByWord() -> [String] {
         let regex = try? NSRegularExpression(pattern: "\\s+|\\S+")
@@ -323,7 +337,7 @@ extension NewEvaluationViewModel {
         switch tab {
         case .strukturKalimat:
             let count = ineffectiveSentenceCount
-            return try! AttributedString(markdown: "Kamu ada **\(count)** kalimat yang terdeteksi kurang efektif.")
+            return try! AttributedString(markdown: "Kamu ada **\(count)** kata yang terdeteksi kurang efektif.")
             
         case .artikulasi:
             let count = articulationCount

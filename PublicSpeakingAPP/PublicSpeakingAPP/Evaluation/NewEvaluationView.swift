@@ -341,28 +341,31 @@ struct EvaluationSectionView<Content: View>: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Catatan Evaluator:")
-                .font(.subheadline)
-                .bold()
-                .foregroundColor(.baseColorBrown)
-            
-            Text(evaluatorNote)
-                .font(.body)
-                .foregroundColor(.baseColorBrown)
-                .underline(true, color: Color.baseColorBrown)
-            
-            Text(sectionTitle)
-                .font(.subheadline)
-                .bold()
-                .foregroundColor(Color.baseColorBrown)
-            
-            if showEmptyState {
-                emptyStateContent
-            } else if hasScrollableContent {
-                scrollableContentWithGradient
-            } else {
-                staticContent
+        VStack(alignment: .leading, spacing: 24) {
+            VStack (alignment: .leading){
+                Text("Catatan Evaluator:")
+                    .font(.subheadline)
+                    .bold()
+                    .foregroundColor(.baseColorBrown)
+                
+                Text(evaluatorNote)
+                    .font(.body)
+                    .foregroundColor(.darkBlue)
+                    .underline(true, color: Color.baseColorBrown)
+            }
+            VStack (alignment: .leading){
+                Text(sectionTitle)
+                    .font(.subheadline)
+                    .bold()
+                    .foregroundColor(Color.baseColorBrown)
+                
+                if showEmptyState {
+                    emptyStateContent
+                } else if hasScrollableContent {
+                    scrollableContentWithGradient
+                } else {
+                    staticContent
+                }
             }
             
             if !guidance.isEmpty {
