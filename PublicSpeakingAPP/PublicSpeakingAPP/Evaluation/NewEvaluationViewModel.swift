@@ -115,6 +115,13 @@ class NewEvaluationViewModel: ObservableObject {
         self.fullTranscript = fullTranscript
         self.sentenceAnalysisResult = sentenceAnalysisResult
         self.settings = settings
+        self.fillerWordCount = result.fillerWordTotalCount
+        
+        self.articulationCount = result.articulationCount
+        self.articulationTotal = result.articulationTotal
+        
+        self.articulationCalculated = true
+        self.fillerWordCalculated = true
     }
     
     func selectTab(_ index: Int) {
@@ -333,12 +340,12 @@ extension NewEvaluationViewModel {
             let wpm = Int(result.tempoWPM)
             switch result.tempoGrade {
             case "A":
-                return try! AttributedString(markdown: "Tempo bicaramu paling sering berada di rentang **ideal**.")
+                return try! AttributedString(markdown: "Tempo bicaramu paling sering berada di **zona aman**.")
             case "B":
-                let status = wpm < 100 ? "tenang" : "energik"
+                let status = wpm < 100 ? "agak lambat" : "agak cepat"
                 return try! AttributedString(markdown: "Tempo bicaramu paling sering berada di rentang **\(status)**.")
             case "C":
-                let status = wpm < 80 ? "lambat" : "cepat"
+                let status = wpm < 80 ? "sangat lambat" : "sangat cepat"
                 return try! AttributedString(markdown: "Tempo bicaramu paling sering berada di rentang **\(status)**.")
             default:
                 return try! AttributedString(markdown: "Tempo bicaramu paling sering berada di rentang **kurang pas**.")
@@ -347,11 +354,11 @@ extension NewEvaluationViewModel {
         case .intonasi:
             switch result.intonationGrade {
             case "A":
-                return try! AttributedString(markdown: "Intonasimu paling sering terdeteksi **dinamis**.")
+                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **berdinamika**.")
             case "B":
-                return try! AttributedString(markdown: "Intonasimu paling sering terdeteksi **cukup variatif**.")
+                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cukup bervariasi**.")
             case "C":
-                return try! AttributedString(markdown: "Intonasimu paling sering terdeteksi **cenderung datar**.")
+                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cenderung datar**.")
             default:
                 return try! AttributedString(markdown: "Intonasi perlu latihan.")
             }

@@ -45,6 +45,8 @@ struct SimulationView: View {
     let onRestartPractice: () -> Void
     let onComplete: (EvaluationModel, String, String) -> Void
     
+    @AppStorage("objectiveDontShowAgain") private var objectiveDontShowAgain = false
+    
     private var isProcessing: Bool {
         let status = viewModel.whisperKitVM.recordingStatus
         return !viewModel.isRecording
@@ -213,10 +215,13 @@ struct SimulationView: View {
                 if let banner = currentBanner {
                     ComponentObjective(
                         text: banner.text,
-                        isOvertime: banner.isOvertime
-                    ) {
-                        advanceBannerQueue()
-                    }
+                        isOvertime: banner.isOvertime,
+                        onFinished: {
+                            advanceBannerQueue()
+                        },
+                        dontShowAgain: $objectiveDontShowAgain,
+                        showDontShowAgain: banner.showDontShowAgain
+                    )
                     .id(banner.id)
                 }
             }
@@ -301,7 +306,8 @@ struct SimulationView: View {
                     hasShownOvertimeBanner = true
                     enqueueBanner(
                         text: "Sudah lewat durasi. Cepat selesaikan presentasimu!",
-                        isOvertime: true
+                        isOvertime: true,
+                        showDontShowAgain: false
                     )
                 }
             }
@@ -319,20 +325,33 @@ struct SimulationView: View {
             }
         }
     }
-    
+}
+
+extension SimulationView {
     private func setupInitialBanners() {
+        guard objectiveDontShowAgain==false else { return }
         enqueueBanner(
             text: "Selama sesi latihan, audiens akan ikut merespon pada presentasimu.",
-            isOvertime: false
+            isOvertime: false,
+            showDontShowAgain: false
         )
         enqueueBanner(
             text: "Jadi, lakukan presentasi dengan baik. Jangan sampai mereka bosan!",
-            isOvertime: false
+            isOvertime: false,
+            showDontShowAgain: true
         )
     }
 
-    private func enqueueBanner(text: String, isOvertime: Bool) {
-        let item = BannerItem(text: text, isOvertime: isOvertime)
+    private func enqueueBanner(
+        text: String,
+        isOvertime: Bool,
+        showDontShowAgain: Bool = false
+    ) {
+        let item = BannerItem(
+            text: text,
+            isOvertime: isOvertime,
+            showDontShowAgain: showDontShowAgain
+        )
         bannerQueue.append(item)
         processQueueIfNeeded()
     }
@@ -402,11 +421,4 @@ struct ComponentObjective: View {
             }
         }
     }
-}
-
-
-struct BannerItem: Identifiable, Equatable {
-    let id = UUID()
-    let text: String
-    let isOvertime: Bool
 }

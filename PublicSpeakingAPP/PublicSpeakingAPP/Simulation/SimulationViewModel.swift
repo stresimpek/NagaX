@@ -306,13 +306,31 @@ class SimulationViewModel: ObservableObject {
         }
         
         finalTranscript = whisperKitVM.confirmedText
+        
+        let (weakCount, totalCount) = calculateArticulationStats()
+        
         evaluationResult = EvaluationViewModel.process(
             tempoVM: tempoVM,
             intonationVM: intonationAnalyzerVM,
             fillerWordVM: fillerWordVM,
-            duration: finalDuration
+            duration: finalDuration,
+            fullTranscript: finalTranscript,
+            articulationCount: weakCount,
+            articulationTotal: totalCount
         )
         isAnalysisComplete = true
+    }
+    
+    private func calculateArticulationStats() -> (count: Int, total: Int) {
+        let allWords = whisperKitVM.confirmedWords
+        
+        let weakWordsCount = allWords.filter { word in
+            let cleaned = word.word.trimmingCharacters(in: .punctuationCharacters.union(.symbols).union(.whitespaces))
+            
+            return !cleaned.isEmpty && word.probability < 0.55
+        }.count
+        
+        return (weakWordsCount, allWords.count)
     }
     
     private func startGame() {

@@ -4,8 +4,6 @@
 //
 //  Created by Regina Celine Adiwinata on 30/09/25.
 //
-//  Refactored with Argmax logic and re-integrated analyzers on 22/10/25.
-//
 
 import Foundation
 import SwiftUI
@@ -23,6 +21,8 @@ enum RecordingStatus {
 
 @MainActor
 final class SpeechTranscriberViewModel: ObservableObject {
+    @Published var fillerAnalysisWords: [WordTiming] = []
+    
     // Sentence Analysis (LLM)
     @Published var sentenceAnalysisResult: String = ""
     @Published var isAnalyzingSentence: Bool = false
@@ -447,68 +447,58 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
         }
     }
-    
-    func proceedToEvaluation(loop: Bool) {
-        // Save the final audio for playback
-        Task(priority: .background) {
-            let url = await saveSessionAudioAsWavFile()
-            await MainActor.run {
-                self.savedRecordingURL = url
-            }
-        }
 
+    func proceedToEvaluation(loop: Bool) {
+        if loop { stopRealtimeTranscription() }
+        transcriptionTask?.cancel()
+        
         Task {
             await MainActor.run { isTranscribing = true }
 
-            if loop {
-                stopRealtimeTranscription()
-                
-                // Check if we need to re-transcribe for pause/resume case
-                if !sessionSamples.isEmpty {
-                    try? await transcribeFullSession()
-                }
-                
-                await finalizeText()
-                await self.analyzeTranscriptSentence()
-                
-            } else {
-                transcriptionTask?.cancel()
-                
-                // Lakukan transkripsi terakhir
-                do {
-                    // Check if we need to re-transcribe for pause/resume case
-                    if !sessionSamples.isEmpty {
-                        // Pause/resume case: re-transcribe the full session
-                        try await transcribeFullSession()
-                    } else {
-                        // Normal case: just do one final transcription of current buffer
-                        try await transcribeCurrentBuffer()
+            await MainActor.run { self.finalizeText() }
+
+            let url = await saveSessionAudioAsWavFile()
+            await MainActor.run { self.savedRecordingURL = url }
+
+            do {
+                if let audioURL = url {
+                    print("--- [Evaluation] Mulai Dual-Pass (KHUSUS FILLER) ---")
+                    
+                    let (fillerText, fillerWords) = try await transcribeForEvaluation(audioURL: audioURL)
+                    
+                    await MainActor.run {
+                        self.fillerAnalysisWords = fillerWords
+                        if let asset = try? AVAudioFile(forReading: audioURL) {
+                            let duration = Double(asset.length) / asset.fileFormat.sampleRate
+                            self.fillerWordVM?.analyze(text: fillerText, duration: duration)
+                        }
                     }
-                } catch {
-                    print("Error during final transcription: \(error.localizedDescription)")
+                    print("--- [Evaluation] Selesai. Filler pakai Re-transcribe, sisanya pakai Live. ---")
+                    
+                } else {
+                    print("Warning: Gagal menyimpan audio, Filler menggunakan data live.")
                 }
                 
-                await finalizeText()
-                
                 await self.analyzeTranscriptSentence()
+                
+            } catch {
+                print("Error during final dual-pass transcription: \(error.localizedDescription)")
             }
 
             await MainActor.run {
-                self.isTranscribing = false
+                isTranscribing = false
                 self.recordingStatus = .stopped
-                print("[SpeechTranscriber] Analysis Done. Status -> .stopped")
+                print("[SpeechTranscriber] Status -> .stopped (Ready for Result View)")
             }
         }
     }
     
     private func transcribeFullSession() async throws {
-        // Get the complete session audio
         guard let whisperKit = whisperKit else { return }
         let current = whisperKit.audioProcessor.audioSamples
         
         let completeAudio: [Float]
         if !sessionSamples.isEmpty {
-            // Combine saved session + any remaining tail
             let tailDelta: ArraySlice<Float> = current.suffix(from: min(lastSavedSampleIndexForSession, current.count))
             completeAudio = sessionSamples + tailDelta
             print("[FullSession] Transcribing session: \(sessionSamples.count) + tail: \(tailDelta.count) = \(completeAudio.count) samples (\(Double(completeAudio.count)/16000.0)s)")
@@ -654,19 +644,26 @@ final class SpeechTranscriberViewModel: ObservableObject {
         proceedToEvaluation(loop: loop)
     }
 
-    func finalizeText() async {
-        await MainActor.run {
-            if hypothesisText != "" {
-                confirmedText += hypothesisText
-                hypothesisText = ""
+    func finalizeText() {
+        Task {
+            await MainActor.run {
+                if hypothesisText != "" {
+                    confirmedText += hypothesisText
+                    hypothesisText = ""
+                }
+                
+                if !hypothesisWords.isEmpty {
+                    confirmedWords.append(contentsOf: hypothesisWords)
+                    hypothesisWords = []
+                }
+                
+                if !unconfirmedSegments.isEmpty {
+                    confirmedSegments.append(contentsOf: unconfirmedSegments)
+                    unconfirmedSegments = []
+                }
+                
+                self.updateFinalizedStyledTranscript()
             }
-
-            if !unconfirmedSegments.isEmpty {
-                confirmedSegments.append(contentsOf: unconfirmedSegments)
-                unconfirmedSegments = []
-            }
-            
-            self.updateFinalizedStyledTranscript()
         }
     }
     

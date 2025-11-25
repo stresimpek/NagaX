@@ -31,12 +31,22 @@ struct FillerWordTranscriptView: View {
             )
         }
         .onAppear {
-            let confirmed = whisperKitVM.confirmedWords
-            let prev = whisperKitVM.prevWords
-            let lastAgreed = whisperKitVM.lastAgreedWords
-            let hypothesis = whisperKitVM.hypothesisWords
-            let finalHypo = lastAgreed + TranscriptionUtilities.findLongestDifferentSuffix(prev, hypothesis)
-            let allWords = confirmed + finalHypo
+            
+            let allWords: [WordTiming]
+            
+            if !whisperKitVM.fillerAnalysisWords.isEmpty {
+                print("✅ [FillerView] Menggunakan data Dual-Pass (fillerAnalysisWords)")
+                allWords = whisperKitVM.fillerAnalysisWords
+            } else {
+                print("⚠️ [FillerView] Fallback ke data Live (confirmedWords)")
+                let confirmed = whisperKitVM.confirmedWords
+                let prev = whisperKitVM.prevWords
+                let lastAgreed = whisperKitVM.lastAgreedWords
+                let hypothesis = whisperKitVM.hypothesisWords
+                let finalHypo = lastAgreed + TranscriptionUtilities.findLongestDifferentSuffix(prev, hypothesis)
+                
+                allWords = confirmed + finalHypo
+            }
                         
             let isFiller: (WordTiming) -> Bool = { word in
                 let cleanWord = word.word.lowercased().trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
@@ -50,7 +60,8 @@ struct FillerWordTranscriptView: View {
             
             self.pages = pages
             self.maps = maps
-            onMapsCalculated(maps) 
+            
+            onMapsCalculated(maps)
         }
     }
 }
