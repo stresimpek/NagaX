@@ -151,12 +151,16 @@ struct DatePickerView: View {
                                     Image(systemName: "chevron.up.chevron.down")
                                         .font(.body)
                                         .foregroundStyle(Color.white)
+                                        .accessibilityHidden(true)
                                 }
                                 .padding()
                                 .background(Color.darkBlue2)
                                 .cornerRadius(12)
                             }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityHint("Tap 2 kali untuk memilih hari")
                         }
+                        .accessibilityElement(children: .combine)
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Bulan")
@@ -181,12 +185,16 @@ struct DatePickerView: View {
                                     Image(systemName: "chevron.up.chevron.down")
                                         .font(.body)
                                         .foregroundStyle(Color.white)
+                                        .accessibilityHidden(true)
                                 }
                                 .padding()
                                 .background(Color.darkBlue2)
                                 .cornerRadius(12)
                             }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityHint("Tap 2 kali untuk memilih bulan")
                         }
+                        .accessibilityElement(children: .combine)
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Tahun")
@@ -210,12 +218,16 @@ struct DatePickerView: View {
                                     Image(systemName: "chevron.up.chevron.down")
                                         .font(.body)
                                         .foregroundStyle(Color.white)
+                                        .accessibilityHidden(true)
                                 }
                                 .padding()
                                 .background(Color.darkBlue2)
                                 .cornerRadius(12)
                             }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityHint("Tap 2 kali untuk memilih tahun")
                         }
+                        .accessibilityElement(children: .combine)
                     }
                     .frame(width: 400)
 
@@ -242,17 +254,22 @@ struct DatePickerView: View {
                                     Image(systemName: "chevron.up.chevron.down")
                                         .font(.body)
                                         .foregroundStyle(Color.white)
+                                        .accessibilityHidden(true)
                                 }
                                 .padding()
                                 .background(Color.darkBlue2)
                                 .cornerRadius(12)
                             }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityHint("Tap 2 kali untuk memilih jam")
                         }
+                        .accessibilityElement(children: .combine)
                         
                         Text(":")
                             .font(.title)
                             .foregroundStyle(Color.white)
                             .padding(.top, 20)
+                            .accessibilityHidden(true)
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Menit")
@@ -276,12 +293,16 @@ struct DatePickerView: View {
                                     Image(systemName: "chevron.up.chevron.down")
                                         .font(.body)
                                         .foregroundStyle(Color.white)
+                                        .accessibilityHidden(true)
                                 }
                                 .padding()
                                 .background(Color.darkBlue2)
                                 .cornerRadius(12)
                             }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityHint("Tap 2 kali untuk memilih menit")
                         }
+                        .accessibilityElement(children: .combine)
                     }
                     .frame(width: 200)
                     Spacer()

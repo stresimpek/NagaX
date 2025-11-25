@@ -24,6 +24,8 @@ struct AspectInfoCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 30)
+                .accessibilityRemoveTraits(.isImage)
+                .accessibilityLabel(item.title)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.description)
@@ -38,5 +40,6 @@ struct AspectInfoCard: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color("BaseColorWhite"))
         .cornerRadius(16)
+        .accessibilityElement(children: .combine)
     }
 }

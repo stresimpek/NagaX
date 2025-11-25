@@ -221,6 +221,7 @@ struct SettingsView: View {
                             showAspectInfo = false
                         }
                     }
+                    .accessibilityHidden(true)
                 
                 AspectInfoView(onDismiss: {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -228,6 +229,8 @@ struct SettingsView: View {
                     }
                 })
                 .transition(.opacity)
+                .zIndex(1)
+                .accessibilityAddTraits(.isModal)
             }
         }
         .alert("Izin Mikrofon Diperlukan", isPresented: $showPermissionAlert) {
