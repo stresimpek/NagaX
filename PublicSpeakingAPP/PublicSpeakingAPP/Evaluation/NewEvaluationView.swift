@@ -242,35 +242,65 @@ private extension NewEvaluationView {
     }
 }
 
+import SwiftUI
+
 struct GuidanceView: View {
     let items: [AttributedString]
+    @State private var isExpanded: Bool = false
     
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(.lightbulb)
-                .foregroundColor(.yellow)
-                .frame(width: 24, height: 24)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                    Text("\(index + 1). \(item)")
-                        .font(.body)
+        VStack(spacing: 0) {
+  
+            Button(action: {
+                isExpanded.toggle()
+            }) {
+                HStack(spacing: 0) {
+                    HStack(spacing: 8) {
+                        Image(.cakolightbulb)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 48, height: 48)
+                        
+                        Text("Tips dari CAKO")
+                            .font(.subheadline)
+                            .bold()
+                            .foregroundColor(.baseColorBrown)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: isExpanded ? "minus" : "plus")
                         .foregroundColor(.baseColorBrown)
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .font(.system(size: 16, weight: .bold))
                 }
+                .padding()
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                        Text("\(index + 1). \(item)")
+                            .font(.body)
+                            .foregroundColor(.baseColorBrown)
+                            .frame(maxWidth: .infinity, alignment: .topLeading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color.baseColorWhite.opacity(0.5))
         .cornerRadius(12)
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
-    
 }
 
 struct EvaluationSectionView<Content: View>: View {
@@ -334,11 +364,6 @@ struct EvaluationSectionView<Content: View>: View {
             } else {
                 staticContent
             }
-            
-            Text("Guidance:")
-                .font(.subheadline)
-                .bold()
-                .foregroundColor(.baseColorBrown)
             
             if !guidance.isEmpty {
                 GuidanceView(items: guidance)
