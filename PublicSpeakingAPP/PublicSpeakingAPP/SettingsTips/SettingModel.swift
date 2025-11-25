@@ -20,7 +20,7 @@ struct AspectOption: Identifiable, Hashable {
     static let fillerWords = AspectOption(id: "fillerWords", title: "Kata Jeda", systemImage: "AspectFiller", isEnabled: true)
     static let kontakMata = AspectOption(id: "kontakMata", title: "Kontak Mata", systemImage: "AspectEye", isEnabled: true)
     
-    static let allOptions: [AspectOption] = [.pemborosanKata, .artikulasi, .intonasi, .fillerWords, .tempo, .kontakMata]
+    static let allOptions: [AspectOption] = [.intonasi, .fillerWords, .tempo, .kontakMata]
 }
 
 struct PracticeSettings: Hashable {

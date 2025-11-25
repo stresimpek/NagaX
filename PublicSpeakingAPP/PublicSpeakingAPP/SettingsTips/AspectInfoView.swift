@@ -67,6 +67,7 @@ struct AspectInfoView: View {
                         Image("SetupPaper")
                             .resizable()
                             .scaledToFill()
+                            .accessibilityHidden(true)
                     )
                     HeaderBackButton(action: onDismiss)
                         .offset(x: -20, y: -20)

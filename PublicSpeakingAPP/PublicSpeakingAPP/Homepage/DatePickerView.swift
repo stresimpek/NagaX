@@ -328,6 +328,7 @@ struct DatePickerView: View {
             )
             .padding(.leading, 16)
             .padding(.top, 16)
+            .accessibilityLabel("Kembali")
         }
         .onAppear {
             initializeWithCurrentOrSavedDate()

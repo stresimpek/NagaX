@@ -103,6 +103,7 @@ struct SimulationView: View {
                             )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing)
                             .padding(.top, 16)
+                            .accessibilityLabel("Jeda")
                             
                             Spacer()
                         }
@@ -138,6 +139,7 @@ struct SimulationView: View {
                             .background(.coral)
                             .cornerRadius(24)
                             .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
+                            .accessibilityHidden(true)
                         } else {
                             HStack (alignment: .center) {
                                 Image(systemName: "alarm.fill")
@@ -149,8 +151,11 @@ struct SimulationView: View {
                             .background(.darkBlue)
                             .cornerRadius(24)
                             .shadow(color: .darkBlue2, radius: 0, x: 0, y: 4)
+                            .accessibilityHidden(true)
                         }
+                        
                         Spacer()
+                        
                         if viewModel.isRecording {
                             ZStack(alignment: .leading) {
                                 AudioVisualizerModalView(micMonitor: micMonitor)
@@ -164,8 +169,11 @@ struct SimulationView: View {
                                 
                                 MicIconButton(showMicWarning: false)
                             }
+                            .accessibilityHidden(true)
                         }
+                        
                         Spacer()
+                        
                         HStack(spacing: 5) {
                             ButtonRecord(
                                 title: viewModel.isRecording ? "STOP REKAM" : "MULAI REKAM",
@@ -212,7 +220,7 @@ struct SimulationView: View {
                     .id(banner.id)
                 }
             }
-            .onAppear() {
+            .onAppear {
                 setupInitialBanners()
                 isOverOneMinutes = false
                 hasShownOvertimeBanner = false
@@ -383,7 +391,7 @@ struct ComponentObjective: View {
         .onAppear {
             appear = true
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                 withAnimation(.easeOut(duration: 0.25)) {
                     appear = false
                 }

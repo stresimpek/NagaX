@@ -49,6 +49,7 @@ struct MicSetupView: View {
                 .scaledToFit()
                 .frame(height: 150)
         }
+        .accessibilityHidden(true)
     }
 }
 
