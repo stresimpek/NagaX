@@ -90,7 +90,7 @@ class ModalViewModel: ObservableObject {
             
         case .micCheck:
             mainImageName = "ProfessorEar_Angry"
-            buttonTitle = "Lanjut"
+            buttonTitle = "Test Mic"
             isButtonEnabled = false
             showMicVisualizer = true
             checkAndRequestMicPermission()
@@ -112,6 +112,7 @@ class ModalViewModel: ObservableObject {
         
         if isButtonEnabled {
             mainImageName = "ProfessorEar_Calm"
+            buttonTitle = "Lanjut"
         } else {
             mainImageName = "ProfessorEar_Angry"
         }
