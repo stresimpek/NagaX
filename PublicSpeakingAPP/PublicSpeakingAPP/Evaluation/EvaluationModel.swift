@@ -49,10 +49,10 @@ struct EvaluationModel: Identifiable, Hashable {
     
     let articulationCount: Int
     let articulationTotal: Int
-    // --- NEW PROPERTIES FOR EYE CONTACT TASK ---
-    let totalGazeIssues: Int // Total Up + Down
-    let videoURL: URL?       // Lokasi file rekaman
-    let gazeEvents: [GazeLogItem] // Log detail untuk playback
+    let totalGazeIssues: Int
+    let videoURL: URL?       // Untuk Video (AR)
+    let audioURL: URL?       // FIX: Tambahkan ini untuk Audio (WAV)
+    let gazeEvents: [GazeLogItem]
 
     init(
         id: UUID = UUID(),
@@ -80,6 +80,7 @@ struct EvaluationModel: Identifiable, Hashable {
         articulationTotal: Int = 0,
         totalGazeIssues: Int = 0,
         videoURL: URL? = nil,
+        audioURL: URL? = nil,
         gazeEvents: [GazeLogItem] = []
     ) {
         self.id = id
@@ -108,6 +109,7 @@ struct EvaluationModel: Identifiable, Hashable {
         
         self.totalGazeIssues = totalGazeIssues
         self.videoURL = videoURL
+        self.audioURL = audioURL
         self.gazeEvents = gazeEvents
     }
 }

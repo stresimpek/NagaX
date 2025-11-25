@@ -21,6 +21,7 @@ struct EvaluationViewModel {
         gazeUpCount: Int,
         gazeDownCount: Int,
         videoURL: URL?,
+        audioURL: URL?,
         gazeEvents: [GazeLogItem]
     ) -> EvaluationModel {
         
@@ -95,6 +96,7 @@ struct EvaluationViewModel {
             articulationTotal: articulationTotal,
             totalGazeIssues: totalGazeIssues,
             videoURL: videoURL,
+            audioURL: audioURL,
             gazeEvents: gazeEvents
         )
     }

@@ -144,24 +144,29 @@ class SimulationViewModel: ObservableObject {
     
     // MARK: - Video Recording Observer (Front Camera)
     private func setupVideoSaveObserver() {
-        // Mendengarkan notifikasi dari SimulationARTrackerVC bahwa video sudah disimpan
         NotificationCenter.default.addObserver(forName: NSNotification.Name("ARRecordingSaved"), object: nil, queue: .main) { [weak self] notification in
             guard let self = self else { return }
             
-            // Ambil URL dari userInfo notifikasi
             if let url = notification.userInfo?["url"] as? URL {
-                print("🎥 Video URL received in ViewModel: \(url)")
+                print("🎥 Video URL received: \(url)")
                 self.recordedVideoURL = url
-            } else {
-                print("⚠️ Video URL not found in notification or save failed.")
             }
             
-            // Reset flags
+            // Tandai video sudah selesai
             self.isSavingVideo = false
-            self.isProcessingToggle = false // BUKA KUNCI TOMBOL STOP
+            self.isProcessingToggle = false
             
-            // Lanjut ke Evaluasi
-            self.processEvaluation()
+            // FIX: Jangan langsung evaluasi! Cek apakah Audio masih sibuk?
+            let isAudioBusy = self.whisperKitVM.isRecording || self.whisperKitVM.isTranscribing
+            
+            if !isAudioBusy {
+                print("🎥 Video done & Audio done. Proceeding.")
+                self.processEvaluation()
+            } else {
+                print("🎥 Video done, but Audio is still busy. Waiting for Audio...")
+                // Kita diam saja di sini. Nanti setupRecordingObserver yang akan
+                // memanggil processEvaluation saat audio selesai.
+            }
         }
     }
     
@@ -169,18 +174,12 @@ class SimulationViewModel: ObservableObject {
     func toggleRecording() {
         self.errorMessage = nil
 
-        // 1. CEGAH SPAM TOMBOL (Anti-Double Click)
-        guard !isProcessingToggle else {
-            print("⚠️ Toggle ignored: Processing busy.")
-            return
-        }
-        
+        guard !isProcessingToggle else { return }
         guard whisperModelState == .loaded else {
             self.errorMessage = "Model belum siap, tidak bisa merekam."
             return
         }
         
-        // Kunci tombol sementara
         isProcessingToggle = true
 
         let shouldStart = (whisperKitVM.recordingStatus == .stopped)
@@ -188,8 +187,10 @@ class SimulationViewModel: ObservableObject {
         if shouldStart {
             print("Requesting START recording...")
             
-            // Kirim sinyal ke ARTrackerVC untuk mulai rekam kamera depan
-            NotificationCenter.default.post(name: NSNotification.Name("StartARRecording"), object: nil)
+            // FIX: Hanya kirim sinyal rekam video JIKA fitur kontak mata aktif
+            if isTrackingEyeContact {
+                NotificationCenter.default.post(name: NSNotification.Name("StartARRecording"), object: nil)
+            }
             
             startGame()
             whisperKitVM.toggleRecording(
@@ -198,7 +199,6 @@ class SimulationViewModel: ObservableObject {
                 durationLimitSeconds: durationLimitSeconds
             )
             
-            // Buka kunci tombol setelah delay singkat (agar state stabil)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 self.isProcessingToggle = false
             }
@@ -206,18 +206,15 @@ class SimulationViewModel: ObservableObject {
         } else {
             print("Requesting STOP recording...")
             
-            // Stop Game & Video Dulu
+            // Stop Game Logic
             stopGameAndProcessing()
             
-            // Stop Whisper
+            // Stop Whisper (Audio)
             whisperKitVM.toggleRecording(
                 shouldLoop: false,
                 timerSeconds: Double(timerSeconds),
                 durationLimitSeconds: durationLimitSeconds
             )
-            
-            // NOTE: Kita TIDAK membuka isProcessingToggle di sini.
-            // Kunci akan dibuka otomatis oleh `setupVideoSaveObserver` setelah video selesai disimpan.
         }
     }
     
@@ -227,11 +224,17 @@ class SimulationViewModel: ObservableObject {
         gameTimer?.invalidate()
         gameTimer = nil
         
-        // Set flag bahwa kita sedang menunggu video disimpan
-        self.isSavingVideo = true
-        
-        // Kirim sinyal ke ARTrackerVC untuk STOP rekam kamera depan
-        NotificationCenter.default.post(name: NSNotification.Name("StopARRecording"), object: nil)
+        // FIX BUG STUCK: Cek apakah kita memang sedang tracking mata?
+        if isTrackingEyeContact {
+            // Jika YA, set flag true dan tunggu notifikasi video
+            self.isSavingVideo = true
+            NotificationCenter.default.post(name: NSNotification.Name("StopARRecording"), object: nil)
+        } else {
+            // Jika TIDAK, jangan set isSavingVideo = true.
+            // Biarkan observer audio (setupRecordingObserver) yang memicu processEvaluation.
+            self.isSavingVideo = false
+            print("Mata tidak dilacak, skip menunggu video save.")
+        }
     }
     
     private func processEvaluation() {
@@ -249,7 +252,11 @@ class SimulationViewModel: ObservableObject {
        
         finalTranscript = whisperKitVM.confirmedText
        
+        // FIX: Memanggil fungsi helper yang sebelumnya hilang
         let (weakCount, totalCount) = calculateArticulationStats()
+        
+        // FIX: Ambil URL Audio dari WhisperKitVM untuk playback
+        let finalAudioURL = whisperKitVM.savedRecordingURL
        
         evaluationResult = EvaluationViewModel.process(
             tempoVM: tempoVM,
@@ -261,27 +268,33 @@ class SimulationViewModel: ObservableObject {
             articulationTotal: totalCount,
             gazeUpCount: gazeUpCount,
             gazeDownCount: gazeDownCount,
-            videoURL: recordedVideoURL,
+            videoURL: recordedVideoURL, // Bisa nil jika matikan kontak mata
+            audioURL: finalAudioURL,    // FIX: Masukkan Audio URL
             gazeEvents: recordedGazeEvents
         )
        
         recordingStartTime = nil
         isAnalysisComplete = true
-        print("✅ Evaluation Processed. Video present: \(recordedVideoURL != nil)")
+        
+        // Buka kunci toggle jika belum terbuka (fallback safety)
+        isProcessingToggle = false
+        
+        print("✅ Evaluation Processed. Video: \(recordedVideoURL != nil), Audio: \(finalAudioURL != nil)")
     }
     
+    // MARK: - Helper Artikulasi (CODE 1 Logic yang dikembalikan)
     private func calculateArticulationStats() -> (count: Int, total: Int) {
         let allWords = whisperKitVM.confirmedWords
         
         let weakWordsCount = allWords.filter { word in
             let cleaned = word.word.trimmingCharacters(in: .punctuationCharacters.union(.symbols).union(.whitespaces))
             
+            // Kata dianggap kurang jelas jika probability < 55%
             return !cleaned.isEmpty && word.probability < 0.55
         }.count
         
         return (weakWordsCount, allWords.count)
     }
-    
 
     // MARK: - Game Logic
     private func startGame() {
@@ -470,13 +483,21 @@ class SimulationViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] (isRec, isTrans) in
                 guard let self = self else { return }
+                
+                // Deteksi momen ketika audio processing BERHENTI
                 let justStopped = (prevRec != false || prevTrans != false) && (!isRec && !isTrans)
                 
-                // Safety Check: Jika audio berhenti tapi video sedang saving, JANGAN evaluasi dulu.
-                // Biarkan observer video yang trigger evaluasi.
-                if justStopped && self.recordingStartTime != nil && !self.isSavingVideo {
-                    print("Audio stopped. No video saving flag. Triggering fallback evaluation.")
-                    self.processEvaluation()
+                if justStopped && self.recordingStartTime != nil {
+                    // FIX LOGIC:
+                    // Jika Video SUDAH selesai (isSavingVideo == false) -> Jalan Evaluasi
+                    // Jika Video BELUM selesai (isSavingVideo == true) -> Tunggu (jangan ngapa-ngapain)
+                    
+                    if !self.isSavingVideo {
+                        print("🔊 Audio stopped & Video is ready. Triggering evaluation.")
+                        self.processEvaluation()
+                    } else {
+                        print("⏳ Audio stopped but waiting for VIDEO to finish saving...")
+                    }
                 }
                 
                 prevRec = isRec

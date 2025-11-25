@@ -205,8 +205,6 @@ private extension NewEvaluationView {
             .padding()
             
         case .kontakMata:
-            // MARK: - FIX DI SINI
-            // Mempassing parameter gazeEvents agar fitur 'Jump' berfungsi
             EyeContactEvaluationView(
                 videoURL: viewModel.result.videoURL,
                 gazeEvents: viewModel.result.gazeEvents
