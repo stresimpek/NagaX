@@ -132,7 +132,8 @@ private extension NewEvaluationView {
             transcript: viewModel.fullTranscript,
             guidance: viewModel.currentGuidance,
             showEmptyState: shouldShowEmptyStateForCurrentTab(),
-            emptyStateMessage: emptyStateMessageForCurrentTab()
+            emptyStateMessage: emptyStateMessageForCurrentTab(),
+            tabId: "\(viewModel.currentTab)"
         ) {
             contentForCurrentTab
         }
@@ -242,17 +243,16 @@ private extension NewEvaluationView {
     }
 }
 
-import SwiftUI
-
 struct GuidanceView: View {
     let items: [AttributedString]
     @State private var isExpanded: Bool = false
     
     var body: some View {
         VStack(spacing: 0) {
-  
             Button(action: {
-                isExpanded.toggle()
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isExpanded.toggle()
+                }
             }) {
                 HStack(spacing: 0) {
                     HStack(spacing: 8) {
@@ -315,6 +315,7 @@ struct EvaluationSectionView<Content: View>: View {
     let showEmptyState: Bool
     let emptyStateMessage: String
     @State private var diffComponents: [DiffComponent] = []
+    let tabId: String
     
     init(
         evaluatorNote: AttributedString,
@@ -326,6 +327,7 @@ struct EvaluationSectionView<Content: View>: View {
         guidance: [AttributedString] = [],
         showEmptyState: Bool = false,
         emptyStateMessage: String = "",
+        tabId: String = "",
         @ViewBuilder content: () -> Content
     ) {
         self.evaluatorNote = evaluatorNote
@@ -337,6 +339,7 @@ struct EvaluationSectionView<Content: View>: View {
         self.guidance = guidance
         self.showEmptyState = showEmptyState
         self.emptyStateMessage = emptyStateMessage
+        self.tabId = tabId
         self.content = content()
     }
     
@@ -370,6 +373,7 @@ struct EvaluationSectionView<Content: View>: View {
             
             if !guidance.isEmpty {
                 GuidanceView(items: guidance)
+                    .id(tabId)
             }
         }
         .padding()
