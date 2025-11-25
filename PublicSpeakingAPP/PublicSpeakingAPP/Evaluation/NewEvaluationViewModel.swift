@@ -227,6 +227,16 @@ class NewEvaluationViewModel: ObservableObject {
         }
     }
     
+    private var eyeContactEvaluatorNote: AttributedString {
+        let count = result.totalGazeIssues
+        
+        if count == 0 {
+            return try! AttributedString(markdown: "Tidak ada arah pandang melihat ke atap/lantai yang terdeteksi dalam presentasimu.")
+        } else {
+            return try! AttributedString(markdown: "Kamu terdeteksi melihat ke atap/lantai sebanyak **\(count)** kali. Menyadari ini bisa membantu kamu menjaga fokus pandangan agar terlihat lebih yakin.")
+        }
+    }
+    
     var currentSectionTitle: String {
         switch currentTab {
         case .strukturKalimat:
@@ -236,7 +246,7 @@ class NewEvaluationViewModel: ObservableObject {
         case .tempo, .intonasi:
             return "Graph:"
         case .kontakMata:
-            return "Info:"
+            return "Simulation Recording (Gaze Highlights):"
         }
     }
     
@@ -294,6 +304,10 @@ class NewEvaluationViewModel: ObservableObject {
             new: sentenceAnalysisResult
         )
         return components.filter { $0.type == .deleted }.count
+    }
+    
+    func deleteVideoFile() {
+        guard let url = result.videoURL else { return }
     }
     
 }

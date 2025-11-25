@@ -7,6 +7,12 @@
 
 import Foundation
 
+struct GazeLogItem: Hashable, Identifiable {
+    let id = UUID()
+    let timestamp: TimeInterval
+    let event: String
+}
+
 struct EvaluationModel: Identifiable, Hashable {
     let id: UUID
     let presentationDate: Date
@@ -42,6 +48,11 @@ struct EvaluationModel: Identifiable, Hashable {
     
     let articulationCount: Int
     let articulationTotal: Int
+    
+    let totalGazeIssues: Int
+    let videoURL: URL?
+    let audioURL: URL?
+    let gazeEvents: [GazeLogItem]
 
     init(
         id: UUID = UUID(),
@@ -66,7 +77,11 @@ struct EvaluationModel: Identifiable, Hashable {
         eyeContactGrade: String = "D",
         eyeContactFeedback: String = "N/A",
         articulationCount: Int = 0,
-        articulationTotal: Int = 0
+        articulationTotal: Int = 0,
+        totalGazeIssues: Int = 0,
+        videoURL: URL? = nil,
+        audioURL: URL? = nil,
+        gazeEvents: [GazeLogItem] = []
     ) {
         self.id = id
         self.presentationDate = presentationDate
@@ -91,6 +106,10 @@ struct EvaluationModel: Identifiable, Hashable {
         self.eyeContactFeedback = eyeContactFeedback
         self.articulationCount = articulationCount
         self.articulationTotal = articulationTotal
+        self.totalGazeIssues = totalGazeIssues
+        self.videoURL = videoURL
+        self.audioURL = audioURL
+        self.gazeEvents = gazeEvents
     }
 }
 

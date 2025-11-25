@@ -60,6 +60,9 @@ struct NewEvaluationView: View {
             )
         }
         .navigationBarBackButtonHidden(true)
+        .onDisappear {
+            viewModel.deleteVideoFile()
+        }
     }
     
     private func shouldShowEmptyStateForCurrentTab() -> Bool {
@@ -200,7 +203,11 @@ private extension NewEvaluationView {
             .frame(maxWidth: .infinity)
             .padding()
         case .kontakMata:
-            Text("")
+            EyeContactEvaluationView(
+                videoURL: viewModel.result.videoURL,
+                gazeEvents: viewModel.result.gazeEvents
+            )
+            .padding()
         }
     }
     

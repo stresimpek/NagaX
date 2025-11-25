@@ -76,10 +76,19 @@ struct SimulationView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
+                let gridHeight = geo.size.height
+                
+                if viewModel.isTrackingEyeContact {
+                    SimulationARTrackerView(viewModel: viewModel)
+                        .edgesIgnoringSafeArea(.all)
+                        .zIndex(1)
+                }
+                
                 TeacherRiveView(sim: viewModel)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
+                    .zIndex(5)
                     .onChange(of: viewModel.isRecording) { _, newValue in
                         newValue ? micMonitor.startMonitoring() : micMonitor.stopMonitoring()
                     }

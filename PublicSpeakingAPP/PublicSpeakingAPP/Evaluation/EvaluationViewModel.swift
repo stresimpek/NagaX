@@ -17,10 +17,16 @@ struct EvaluationViewModel {
         duration: TimeInterval,
         fullTranscript: String,
         articulationCount: Int,
-        articulationTotal: Int
+        articulationTotal: Int,
+        gazeUpCount: Int,
+        gazeDownCount: Int,
+        videoURL: URL?,
+        audioURL: URL?,
+        gazeEvents: [GazeLogItem]
     ) -> EvaluationModel {
         
         let (tempoGrade, tempoFeedback, tempoScore) = gradeTempo(wpm: tempoVM.wpm)
+        
         let (fillerGrade, fillerFeedback, fillerCount, fillerWPM, fillerScore) = gradeFillerWords(
             totalCount: fillerWordVM.totalFillerCount,
             duration: duration
@@ -29,27 +35,24 @@ struct EvaluationViewModel {
         let finalStd = intonationVM.calculateFinalStandardDeviation()
         let (intonationGrade, intonationFeedback, intonationScore) = gradeIntonation(stdDev: finalStd)
         
-        let stdSeries = intonationVM.stdTimeline.map {
-            PitchPoint(time: $0.time, pitch: $0.value) // pitch = std dev (semitone)
-        }
+        let (eyeContactGrade, eyeContactFeedback, eyeContactScore, totalGazeIssues) = gradeEyeContact(
+            gazeUpCount: gazeUpCount,
+            gazeDownCount: gazeDownCount
+        )
         
+        let stdSeries = intonationVM.stdTimeline.map {
+            PitchPoint(time: $0.time, pitch: $0.value)
+        }
         let pitchSeries: [PitchPoint] = stdSeries
         
         let tempoSeries: [TempoPoint] = tempoVM.wpmHistory
             .map { TempoPoint(time: $0.timestamp, wpm: $0.wpm) }
             .sorted { $0.time < $1.time }
         
-        // Dummy Data
-        let eyeContactScore = 0.5
-        let eyeContactGrade = "C"
-        let eyeContactFeedback = "Kontak mata belum dianalisis"
-        
-        // Rata-rata Nilai
-        let allScores = [tempoScore, fillerScore, intonationScore]
+        let allScores = [tempoScore, fillerScore, intonationScore, eyeContactScore]
         let overallScore = allScores.reduce(0, +) / Double(allScores.count)
         let overallGrade = percentageToGrade(overallScore * 100)
         
-        // Dummy AI Feedback
         let aiFeedback = "Secara keseluruhan, tempo Anda \(tempoFeedback.lowercased()) dan intonasi Anda \(intonationFeedback.lowercased()). Anda menggunakan \(fillerCount) kata pengisi."
         
         return EvaluationModel(
@@ -73,7 +76,11 @@ struct EvaluationViewModel {
             eyeContactGrade: eyeContactGrade,
             eyeContactFeedback: eyeContactFeedback,
             articulationCount: articulationCount,
-            articulationTotal: articulationTotal
+            articulationTotal: articulationTotal,
+            totalGazeIssues: totalGazeIssues,
+            videoURL: videoURL,
+            audioURL: audioURL,
+            gazeEvents: gazeEvents
         )
     }
     
@@ -84,7 +91,7 @@ struct EvaluationViewModel {
             return ("A", "Tempo Ideal", 1.0)
         } else if (roundedWPM >= 80.0 && roundedWPM < 100.0) ||
                   (roundedWPM > 140.0 && roundedWPM <= 160.0) {
-             let feedback = (roundedWPM >= 80.0 && roundedWPM < 100.0) ? "Tempo Agak Lambat" : "Tempo Agak Cepat"
+            let feedback = (roundedWPM >= 80.0 && roundedWPM < 100.0) ? "Tempo Agak Lambat" : "Tempo Agak Cepat"
             return ("B", feedback, 0.75)
         } else {
             let feedback = (roundedWPM < 80.0) ? "Tempo Sangat Lambat" : "Tempo Sangat Cepat"
@@ -118,6 +125,18 @@ struct EvaluationViewModel {
             return ("B", feedback, 0.75)
         } else {
             return ("C", "Sangat Datar", 0.5)
+        }
+    }
+    
+    private static func gradeEyeContact(gazeUpCount: Int, gazeDownCount: Int) -> (String, String, Double, Int) {
+        let totalGazeIssues = gazeUpCount + gazeDownCount
+        
+        if totalGazeIssues == 0 {
+            return ("A", "Kontak mata sangat baik dan fokus.", 1.0, totalGazeIssues)
+        } else if totalGazeIssues < 5 {
+            return ("B", "Kontak mata cukup baik, namun ada beberapa distraksi.", 0.75, totalGazeIssues)
+        } else {
+            return ("C", "Perlu lebih fokus menjaga pandangan.", 0.5, totalGazeIssues)
         }
     }
 
