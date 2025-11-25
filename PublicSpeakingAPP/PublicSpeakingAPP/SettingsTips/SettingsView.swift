@@ -74,7 +74,7 @@ struct SettingsView: View {
                                     }
                                     .accessibilityElement(children: .ignore)
                                     .accessibilityLabel("Pilih tingkat distraksi suara")
-                                    .accessibilityHint("Tap 2 kali lalu swipe dengan satu jari untuk mengatur nilai")
+                                    .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
                                     .accessibilityValue(
                                             distractionLevel == 0 ? "Rendah" :
                                             distractionLevel == 1 ? "Sedang" : "Tinggi"

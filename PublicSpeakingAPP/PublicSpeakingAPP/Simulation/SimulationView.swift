@@ -209,6 +209,7 @@ struct SimulationView: View {
                         .font(.title3)
                         .foregroundColor(.white)
                         .zIndex(12)
+                        .accessibilityHidden(true)
                 }
             }
             .overlay(alignment: .top) {
@@ -336,7 +337,7 @@ extension SimulationView {
             showDontShowAgain: false
         )
         enqueueBanner(
-            text: "Jadi, lakukan presentasi dengan baik. Jangan sampai mereka bosan!",
+            text: "Lakukan presentasi terbaikmu. Jangan sampai audiens bosan!",
             isOvertime: false,
             showDontShowAgain: true
         )
@@ -366,59 +367,4 @@ extension SimulationView {
         processQueueIfNeeded()
     }
 
-}
-
-struct ComponentObjective: View {
-    let text: String
-    let isOvertime: Bool
-    var onFinished: (() -> Void)? = nil
-
-    @State private var appear = false
-
-    private var fadeMask: some View {
-        LinearGradient(
-            gradient: Gradient(stops: [
-                .init(color: .clear,  location: 0.0),
-                .init(color: .white,  location: 0.30),
-                .init(color: .white,  location: 0.70),
-                .init(color: .clear,  location: 1.0)
-            ]),
-            startPoint: .leading,
-            endPoint: .trailing
-        )
-    }
-
-    var body: some View {
-        ZStack {
-            Color.black
-                .opacity(appear ? 0.5 : 0.0)
-                .ignoresSafeArea()
-
-            Text(text)
-                .padding(.horizontal, 64)
-                .padding(.vertical, 10)
-                .foregroundColor(.white)
-                .background(
-                    (isOvertime ? Color.baseColorRed : Color.blue)
-                        .mask(fadeMask)
-                )
-                .frame(maxWidth: .infinity)
-                .offset(y: appear ? 0 : -20)
-                .opacity(appear ? 1 : 0)
-        }
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: appear)
-        .onAppear {
-            appear = true
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                withAnimation(.easeOut(duration: 0.25)) {
-                    appear = false
-                }
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    onFinished?()
-                }
-            }
-        }
-    }
 }

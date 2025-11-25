@@ -26,11 +26,13 @@ struct EvaluationSummaryView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .ignoresSafeArea()
+                .accessibilityHidden(true)
             
             Image("HandPaper")
                 .resizable()
                 .scaledToFit()
                 .padding(.horizontal, 30)
+                .accessibilityHidden(true)
                 .overlay(
                     VStack(spacing: 0) {
                         
