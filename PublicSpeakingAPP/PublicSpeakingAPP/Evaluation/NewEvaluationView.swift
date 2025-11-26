@@ -132,7 +132,8 @@ private extension NewEvaluationView {
             transcript: viewModel.fullTranscript,
             guidance: viewModel.currentGuidance,
             showEmptyState: shouldShowEmptyStateForCurrentTab(),
-            emptyStateMessage: emptyStateMessageForCurrentTab()
+            emptyStateMessage: emptyStateMessageForCurrentTab(),
+            tabId: "\(viewModel.currentTab)"
         ) {
             contentForCurrentTab
         }
@@ -141,11 +142,11 @@ private extension NewEvaluationView {
     private func emptyStateMessageForCurrentTab() -> String {
         switch viewModel.currentTab {
         case .artikulasi:
-            return "TIDAK ADA ARTIKULASI KURANG JELAS YANG TERDETEKSI SELAMA KAMU PRESENTASI"
+            return "Tidak ada artikulasi kurang jelas yang terdeteksi."
         case .fillerWords:
-            return "TIDAK ADA KATA JEDA YANG TERDETEKSI SELAMA KAMU PRESENTASI"
+            return "Tidak ada kata jeda yang terdeteksi."
         case .strukturKalimat:
-            return "TIDAK ADA PEMBOROSAN KATA YANG TERDETEKSI DALAM PRESENTASIMU"
+            return "Tidak ada pemborosan kata yang terdeteksi."
         default:
             return ""
         }
@@ -244,33 +245,60 @@ private extension NewEvaluationView {
 
 struct GuidanceView: View {
     let items: [AttributedString]
+    @State private var isExpanded: Bool = false
     
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(.lightbulb)
-                .foregroundColor(.yellow)
-                .frame(width: 24, height: 24)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                    Text("\(index + 1). \(item)")
-                        .font(.body)
+        VStack(spacing: 0) {
+            Button(action: {
+                isExpanded.toggle()
+            }) {
+                HStack(spacing: 0) {
+                    HStack(spacing: 8) {
+                        Image(.cakolightbulb)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 48, height: 48)
+                        
+                        Text("Tips dari CAKO")
+                            .font(.subheadline)
+                            .bold()
+                            .foregroundColor(.baseColorBrown)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: isExpanded ? "minus" : "plus")
                         .foregroundColor(.baseColorBrown)
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .font(.system(size: 18, weight: .bold))
                 }
+                .padding()
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                        Text("\(index + 1). \(item)")
+                            .font(.body)
+                            .foregroundColor(.baseColorBrown)
+                            .frame(maxWidth: .infinity, alignment: .topLeading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color.baseColorWhite.opacity(0.5))
         .cornerRadius(12)
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
-    
 }
 
 struct EvaluationSectionView<Content: View>: View {
@@ -285,6 +313,7 @@ struct EvaluationSectionView<Content: View>: View {
     let showEmptyState: Bool
     let emptyStateMessage: String
     @State private var diffComponents: [DiffComponent] = []
+    let tabId: String
     
     init(
         evaluatorNote: AttributedString,
@@ -296,6 +325,7 @@ struct EvaluationSectionView<Content: View>: View {
         guidance: [AttributedString] = [],
         showEmptyState: Bool = false,
         emptyStateMessage: String = "",
+        tabId: String = "",
         @ViewBuilder content: () -> Content
     ) {
         self.evaluatorNote = evaluatorNote
@@ -307,41 +337,41 @@ struct EvaluationSectionView<Content: View>: View {
         self.guidance = guidance
         self.showEmptyState = showEmptyState
         self.emptyStateMessage = emptyStateMessage
+        self.tabId = tabId
         self.content = content()
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Catatan Evaluator:")
-                .font(.subheadline)
-                .bold()
-                .foregroundColor(.baseColorBrown)
-            
-            Text(evaluatorNote)
-                .font(.body)
-                .foregroundColor(.baseColorBrown)
-                .underline(true, color: Color.baseColorBrown)
-            
-            Text(sectionTitle)
-                .font(.subheadline)
-                .bold()
-                .foregroundColor(Color.baseColorBrown)
-            
-            if showEmptyState {
-                emptyStateContent
-            } else if hasScrollableContent {
-                scrollableContentWithGradient
-            } else {
-                staticContent
+        VStack(alignment: .leading, spacing: 24) {
+            VStack (alignment: .leading){
+                Text("Catatan Evaluator:")
+                    .font(.subheadline)
+                    .bold()
+                    .foregroundColor(.baseColorBrown)
+                
+                Text(evaluatorNote)
+                    .font(.body)
+                    .foregroundColor(.darkBlue)
+                    .underline(true, color: Color.baseColorBrown)
             }
-            
-            Text("Guidance:")
-                .font(.subheadline)
-                .bold()
-                .foregroundColor(.baseColorBrown)
+            VStack (alignment: .leading){
+                Text(sectionTitle)
+                    .font(.subheadline)
+                    .bold()
+                    .foregroundColor(Color.baseColorBrown)
+                
+                if showEmptyState {
+                    emptyStateContent
+                } else if hasScrollableContent {
+                    scrollableContentWithGradient
+                } else {
+                    staticContent
+                }
+            }
             
             if !guidance.isEmpty {
                 GuidanceView(items: guidance)
+                    .id(tabId)
             }
         }
         .padding()
