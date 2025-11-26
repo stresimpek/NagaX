@@ -30,6 +30,8 @@ struct AspectInfoView: View {
                             .font(.title3)
                             .foregroundColor(Color("BaseColorBrown"))
                             .underline()
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 20)
                             .padding(.bottom, 15)
 
@@ -38,8 +40,10 @@ struct AspectInfoView: View {
                                 ForEach(stride(from: 0, to: aspectInfoData.count, by: 2).map { $0 }, id: \.self) { index in
                                     GridRow {
                                         AspectInfoCard(item: aspectInfoData[index])
+                                            .fixedSize(horizontal: false, vertical: true)
                                         if index + 1 < aspectInfoData.count {
                                             AspectInfoCard(item: aspectInfoData[index + 1])
+                                                .fixedSize(horizontal: false, vertical: true)
                                         } else {
                                             Color.clear.gridCellUnsizedAxes([.vertical, .horizontal])
                                         }
@@ -49,6 +53,7 @@ struct AspectInfoView: View {
                             .padding(.horizontal, 24)
                             .padding(.bottom, 12)
                         }
+                        .fixedSize(horizontal: false, vertical: false)
                         .mask(
                             LinearGradient(
                                 gradient: Gradient(stops: [
@@ -66,7 +71,8 @@ struct AspectInfoView: View {
                     .background(
                         Image("SetupPaper")
                             .resizable()
-                            .scaledToFill()
+                            .scaledToFit()
+                            .clipped()
                             .accessibilityHidden(true)
                     )
                     HeaderBackButton(action: onDismiss)

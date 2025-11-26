@@ -32,11 +32,12 @@ struct AspectInfoCard: View {
                     .font(.subheadline)
                     .foregroundColor(Color("BaseColorBrown"))
                     .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
         }
         .padding(.vertical, 10)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color("BaseColorWhite"))
         .cornerRadius(16)

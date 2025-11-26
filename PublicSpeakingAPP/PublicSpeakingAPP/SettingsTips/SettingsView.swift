@@ -20,6 +20,11 @@ struct SettingsView: View {
     
     let onBack: () -> Void
     let onNext: (PracticeSettings) -> Void
+    
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var isAccessibilitySize: Bool {
+        dynamicTypeSize.isAccessibilitySize
+    }
 
     private let aspectOptions: [AspectOption] = AspectOption.allOptions
     @State private var selectedAspects: Set<AspectOption> = []
@@ -33,46 +38,58 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 HStack(alignment: .center) {
                     RoomPreview()
-                        .frame(maxWidth: 280)
-                        .padding(.leading, 12)
+                        .frame(width: dynamicTypeSize.isAccessibilitySize ? 200 : 280)
+                        .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 4 : 12)
                         .accessibilitySortPriority(2)
+                    ScrollView {                        
 
-                    VStack(alignment: .leading, spacing: 18) {
-                        HStack(alignment: .center) {
-                            Text("Durasi")
-                                .font(.headline)
-                                .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 18) {
+                            HStack(alignment: .top) {
+                                Text("Durasi")
+                                    .font(.headline)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .lineLimit(2)
+                                    .minimumScaleFactor(0.7)
+                                    .layoutPriority(1)
+                                    .accessibilityHidden(true)
                                
                             Spacer()
-                           
-                            Picker("Pilih Durasi", selection: $durationMinutes) {
-                                Text("1 menit").tag(1)
-                                Text("2 menit").tag(2)
-                                Text("3 menit").tag(3)
-                                Text("5 menit").tag(5)
-                                Text("10 menit").tag(10)
-            
+                               
+                                Picker("Pilih Durasi", selection: $durationMinutes) {
+                                    Text("1 menit").tag(1)
+                                    Text("2 menit").tag(2)
+                                    Text("3 menit").tag(3)
+                                    Text("5 menit").tag(5)
+                                    Text("10 menit").tag(10)
+                
+                                }
+                                .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 120 : 90)
+                                .tint(Color.white)
+                                .pickerStyle(.menu)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                                .background(Color.darkBlue2)
+                                .cornerRadius(24)
+                                .shadow(color: Color.darkBlue3, radius: 0, x: 0, y: 4)
                             }
-                            .tint(Color.white)
-                            .pickerStyle(.menu)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .background(Color.darkBlue2)
-                            .cornerRadius(24)
-                            .shadow(color: Color.darkBlue3, radius: 0, x: 0, y: 4)
-                        }
 
-                        HStack(alignment: .top, spacing: 40) {
-                            Text("Distraksi simulasi").font(.headline)
-                                .accessibilityHidden(true)
+                            HStack(alignment: .top, spacing: dynamicTypeSize.isAccessibilitySize ? 16 : 40) {
+                                Text("Distraksi simulasi")
+                                    .font(.headline)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .lineLimit(2)
+                                    .minimumScaleFactor(0.7)
+                                    .layoutPriority(1)
+                                    .accessibilityHidden(true)
                             
-                            VStack(spacing: 4) {
-                                Slider(value: $distractionLevel, in: 0...2, step: 1)
-                                    .tint(.darkBlue)
-                                    .onChange(of: distractionLevel) { v, i in
-                                        distractionLevel = v.rounded()
-                                    }
-                                    .accessibilityElement(children: .ignore)
+                                VStack(spacing: 4) {
+                                    Slider(value: $distractionLevel, in: 0...2, step: 1)
+                                        .tint(.darkBlue)
+                                        .onChange(of: distractionLevel) { v, i in
+                                            distractionLevel = v.rounded()
+                                        }
+                                        .accessibilityElement(children: .ignore)
                                     .accessibilityLabel("Pilih tingkat distraksi suara")
                                     .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
                                     .accessibilityValue(
@@ -81,115 +98,121 @@ struct SettingsView: View {
                                         )
                                 
                                 HStack {
-                                    VStack(alignment: .center) {
-                                        Circle()
-                                            .frame(width: 8, height: 8)
-                                        Text("Rendah")
+                                        VStack(alignment: .center) {
+                                            Circle()
+                                                .frame(width: 8, height: 8)
+                                            Text("Rendah")
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        VStack(alignment: .center) {
+                                            Circle()
+                                                .frame(width: 8, height: 8)
+                                            Text("Sedang")
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        VStack(alignment: .center) {
+                                            Circle()
+                                                .frame(width: 8, height: 8)
+                                            Text("Tinggi")
+                                        }
                                     }
-                                    
-                                    Spacer()
-                                    
-                                    VStack(alignment: .center) {
-                                        Circle()
-                                            .frame(width: 8, height: 8)
-                                        Text("Sedang")
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    VStack(alignment: .center) {
-                                        Circle()
-                                            .frame(width: 8, height: 8)
-                                        Text("Tinggi")
-                                    }
-                                }
-                                .font(.subheadline)
-                                .foregroundStyle(.baseColorWhite)
-                                .accessibilityHidden(true)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.baseColorWhite)
+                                    .accessibilityHidden(true)
                             }
-                        }
-                        
-                        HStack {
-                            Text("Aspek yang dievaluasi")
-                                .font(.headline)
-                                .accessibilityLabel("Pilih aspek yang ingin dievaluasi")
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    showAspectInfo = true
-                                }
-                            }) {
-                                Image(systemName: "info.circle.fill")
-                                    .font(.title2)
-                                    .foregroundColor(Color.baseColorWhite)
                             }
-                            .accessibilityLabel("Info aspek")
+                            
+                            HStack {
+                                Text("Aspek yang dievaluasi")
+                                    .font(.headline)
+                                    .lineLimit(2)
+                                    .minimumScaleFactor(0.7)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .accessibilityLabel("Pilih aspek yang ingin dievaluasi")
+                            
+                                Spacer()
+                                
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        showAspectInfo = true
+                                    }
+                                }) {
+                                    Image(systemName: "info.circle.fill")
+                                        .font(.title2)
+                                        .foregroundColor(Color.baseColorWhite)
+                                }
+                                .accessibilityLabel("Info aspek")
                         }
 
-                        HStack {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(aspectOptions) { opt in
-                                        AspectCheckTile(
-                                            option: opt,
-                                            isSelected: Binding(
-                                                get: { selectedAspects.contains(opt) },
-                                                set: { shouldSelect in
-                                                    if shouldSelect {
-                                                        handleAspectSelection(for: opt)
-                                                    } else {
-                                                        selectedAspects.remove(opt)
+                            HStack {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(aspectOptions) { opt in
+                                            AspectCheckTile(
+                                                option: opt,
+                                                isSelected: Binding(
+                                                    get: { selectedAspects.contains(opt) },
+                                                    set: { shouldSelect in
+                                                        if shouldSelect {
+                                                            handleAspectSelection(for: opt)
+                                                        } else {
+                                                            selectedAspects.remove(opt)
+                                                        }
                                                     }
-                                                }
+                                                )
                                             )
-                                        )
+                                        }
                                     }
+                                    .padding(.vertical, 4)
                                 }
-                                .padding(.vertical, 4)
+                                Spacer()
                             }
-                            Spacer()
-                        }
-                       
-                        HStack {
-                            Spacer()
-                            if shouldDisableNext {
-                                ButtonComponent(
-                                    title: "Pilih Aspek",
-                                    systemImage: nil,
-                                    size: .medium,
-                                    kind: .primaryYellow,
-                                    isEnabled: !shouldDisableNext,
-                                    action: {
-                                        let settings = PracticeSettings(
-                                            durationMinutes: durationMinutes,
-                                            distractionLevel: distractionLevel,
-                                            selectedAspects: selectedAspects
-                                        )
-                                        onNext(settings)
-                                    }
-                                )
-                                .accessibilityLabel("Pilih aspek untuk lanjut simulasi")
+                           
+                            HStack {
+                                Spacer()
+                                if shouldDisableNext {
+                                    ButtonComponent(
+                                        title: "Pilih Aspek",
+                                        systemImage: nil,
+                                        size: .medium,
+                                        kind: .primaryYellow,
+                                        isEnabled: !shouldDisableNext,
+                                        action: {
+                                            let settings = PracticeSettings(
+                                                durationMinutes: durationMinutes,
+                                                distractionLevel: distractionLevel,
+                                                selectedAspects: selectedAspects
+                                            )
+                                            onNext(settings)
+                                        }
+                                    )
+                                    .accessibilityLabel("Pilih aspek untuk lanjut simulasi")
                             } else {
-                                ButtonComponent(
-                                    title: "Mulai Latihan",
-                                    systemImage: nil,
-                                    size: .medium,
-                                    kind: .primaryYellow,
-                                    isEnabled: true,
-                                    action: {
-                                        let settings = PracticeSettings(
-                                            durationMinutes: durationMinutes,
-                                            distractionLevel: distractionLevel,
-                                            selectedAspects: selectedAspects
-                                        )
-                                        onNext(settings)
-                                    }
-                                )
+                                    ButtonComponent(
+                                        title: "Mulai Latihan",
+                                        systemImage: nil,
+                                        size: .medium,
+                                        kind: .primaryYellow,
+                                        isEnabled: true,
+                                        action: {
+                                            let settings = PracticeSettings(
+                                                durationMinutes: durationMinutes,
+                                                distractionLevel: distractionLevel,
+                                                selectedAspects: selectedAspects
+                                            )
+                                            onNext(settings)
+                                        }
+                                    )
+                                }
                             }
+                            
                         }
-                        
+                        .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 0 : 8)
+                        .padding(.trailing, 16)
                     }
                     .accessibilitySortPriority(1)
                 }

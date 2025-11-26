@@ -30,7 +30,7 @@ struct ButtonRecord: View {
             HStack(spacing: 8) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .font(.system(size: size.iconSize, weight: .semibold))
+                        .imageScale(size.iconSize)
                         .foregroundStyle(Color(.red))
                 }
                 if let title {

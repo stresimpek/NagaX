@@ -24,17 +24,21 @@ struct AspectCheckTile: View {
                 Text(option.title)
                     .font(.footnote.bold())
                     .multilineTextAlignment(.center)
+//                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(2)
-                    .fixedSize(horizontal: false,
-                               vertical: true)
-                    .frame(height: 28)
+                    .minimumScaleFactor(0.7)
+                    .layoutPriority(1)
                     .frame(maxWidth: .infinity)
                 
                 Spacer(minLength: 0)
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
-            .frame(width: 124, height: 98, alignment: .top)
+            .frame(minWidth: 110, maxWidth: 140)
+            .frame(minHeight: 98)
+            .fixedSize(horizontal: false,
+                       vertical: true)
             .foregroundColor(isSelected || !option.isEnabled ? .darkTurqoise : .baseColorWhite)
             .background(isSelected || !option.isEnabled ? Color.turqoise : Color.darkBlue2)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
