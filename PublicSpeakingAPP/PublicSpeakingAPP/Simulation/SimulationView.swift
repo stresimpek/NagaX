@@ -83,6 +83,13 @@ struct SimulationView: View {
                     .onChange(of: viewModel.isRecording) { _, newValue in
                         newValue ? micMonitor.startMonitoring() : micMonitor.stopMonitoring()
                     }
+                
+                if viewModel.settings.selectedAspects.contains(.kontakMata) {
+                    SimulationARTrackerView(viewModel: viewModel)
+                        .frame(width: 1, height: 1) // Kecil saja supaya tidak mengganggu UI
+                        .opacity(0.01) // Hampir transparan tapi harus visible agar dirender SwiftUI
+                        .allowsHitTesting(false)
+                }
 
                 VStack {
                     
