@@ -250,9 +250,7 @@ struct GuidanceView: View {
     var body: some View {
         VStack(spacing: 0) {
             Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isExpanded.toggle()
-                }
+                isExpanded.toggle()
             }) {
                 HStack(spacing: 0) {
                     HStack(spacing: 8) {
@@ -271,7 +269,7 @@ struct GuidanceView: View {
                     
                     Image(systemName: isExpanded ? "minus" : "plus")
                         .foregroundColor(.baseColorBrown)
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 18, weight: .bold))
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
