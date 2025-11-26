@@ -91,7 +91,7 @@ struct ComponentObjective: View {
         .onAppear {
             appear = true
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) {
                 withAnimation(.easeOut(duration: 0.25)) {
                     appear = false
                 }

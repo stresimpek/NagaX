@@ -40,6 +40,7 @@ struct OnboardingView: View {
                 
                 MicroAnimation(artboardName: "Onboarding")
                     .frame(height: 120)
+                    .accessibilityHidden(true)
                 
                 Spacer()
                 

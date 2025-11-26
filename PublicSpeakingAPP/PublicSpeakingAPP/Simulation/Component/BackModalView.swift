@@ -17,6 +17,7 @@ struct BackModalView: View {
             Image("SetupPaper")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
+                .accessibilityHidden(true)
 
             VStack(spacing: 24) {
                     Text("Simulation Paused")
@@ -24,6 +25,7 @@ struct BackModalView: View {
                         .foregroundColor(.baseColorBrown)
                         .multilineTextAlignment(.center)
                         .underline(true)
+                        .accessibilityHidden(true)
 
                 HStack(spacing: 24) {
                     ButtonComponent(
@@ -34,6 +36,7 @@ struct BackModalView: View {
                         customCircleSize: 60,
                         action: onBackHome
                     )
+                    .accessibilityLabel("Kembali ke menu utama")
                     ButtonComponent(
                         title: nil,
                         systemImage: "play.fill",
@@ -42,6 +45,7 @@ struct BackModalView: View {
                         customCircleSize: 85,
                         action: onPause
                     )
+                    .accessibilityLabel("Lanjutkan simulasi")
                     ButtonComponent(
                         title: nil,
                         systemImage: "arrow.trianglehead.counterclockwise",
@@ -50,6 +54,7 @@ struct BackModalView: View {
                         customCircleSize: 60,
                         action: onRetry
                     )
+                    .accessibilityLabel("Ulang simulasi")
                 }
             }
             .frame(width: 317)

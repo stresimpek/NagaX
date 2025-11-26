@@ -46,6 +46,7 @@ struct NotificationPromptView: View {
                     ) {
                         requestAndScheduleNotification()
                     }
+                    .accessibilityLabel("Mau diingetin")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -60,6 +61,7 @@ struct NotificationPromptView: View {
             )
             .padding(.leading, 16)
             .padding(.top, 16)
+            .accessibilityLabel("Kembali")
         }
     }
     

@@ -33,6 +33,7 @@ struct EvaluationSummaryCard: View {
                 .scaledToFit()
                 .frame(width: 30)
                 .foregroundColor(Color("BaseColorBrown"))
+                .accessibilityHidden(true)
             
             Text(item.text)
                 .font(.body)

@@ -76,7 +76,8 @@ struct AspectCheckTile: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(option.title))
+        .accessibilityLabel(option.title)
+        .accessibilityHint(Text("Tap dua kali untuk memilih"))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

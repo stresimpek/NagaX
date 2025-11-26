@@ -42,5 +42,7 @@ struct CountdownRow: View {
         }
         .onReceive(timer) { _ in now = Date() }
         .opacity(r.done ? 0.6 : 1)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Kamu akan presentasi dalam \(r.d) hari, \(r.h) jam, dan \(r.m) menit.")
     }
 }

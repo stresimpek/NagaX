@@ -186,6 +186,7 @@ struct IntonationResultChart: View {
                 }
             }
             .padding(.vertical, 24)
+            .accessibilityHidden(true)
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Rekaman Audio")

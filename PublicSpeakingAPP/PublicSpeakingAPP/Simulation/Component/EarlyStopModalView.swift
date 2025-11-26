@@ -16,6 +16,7 @@ struct EarlyStopModalView: View {
             Image("SetupPaper")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
+                .accessibilityHidden(true)
 
             VStack(spacing: 24) {
                 VStack(spacing: 4){

@@ -35,14 +35,17 @@ struct SettingsView: View {
                     RoomPreview()
                         .frame(maxWidth: 280)
                         .padding(.leading, 12)
+                        .accessibilitySortPriority(2)
 
                     VStack(alignment: .leading, spacing: 18) {
                         HStack(alignment: .center) {
                             Text("Durasi")
                                 .font(.headline)
+                                .accessibilityHidden(true)
+                               
                             Spacer()
                            
-                            Picker("Durasi", selection: $durationMinutes) {
+                            Picker("Pilih Durasi", selection: $durationMinutes) {
                                 Text("1 menit").tag(1)
                                 Text("2 menit").tag(2)
                                 Text("3 menit").tag(3)
@@ -61,6 +64,7 @@ struct SettingsView: View {
 
                         HStack(alignment: .top, spacing: 40) {
                             Text("Distraksi simulasi").font(.headline)
+                                .accessibilityHidden(true)
                             
                             VStack(spacing: 4) {
                                 Slider(value: $distractionLevel, in: 0...2, step: 1)
@@ -68,6 +72,14 @@ struct SettingsView: View {
                                     .onChange(of: distractionLevel) { v, i in
                                         distractionLevel = v.rounded()
                                     }
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityLabel("Pilih tingkat distraksi suara")
+                                    .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
+                                    .accessibilityValue(
+                                            distractionLevel == 0 ? "Rendah" :
+                                            distractionLevel == 1 ? "Sedang" : "Tinggi"
+                                        )
+                                
                                 HStack {
                                     VStack(alignment: .center) {
                                         Circle()
@@ -93,12 +105,14 @@ struct SettingsView: View {
                                 }
                                 .font(.subheadline)
                                 .foregroundStyle(.baseColorWhite)
+                                .accessibilityHidden(true)
                             }
                         }
                         
                         HStack {
                             Text("Aspek yang dievaluasi")
                                 .font(.headline)
+                                .accessibilityLabel("Pilih aspek yang ingin dievaluasi")
                             
                             Spacer()
                             
@@ -111,6 +125,7 @@ struct SettingsView: View {
                                     .font(.title2)
                                     .foregroundColor(Color.baseColorWhite)
                             }
+                            .accessibilityLabel("Info aspek")
                         }
 
                         HStack {
@@ -155,6 +170,7 @@ struct SettingsView: View {
                                         onNext(settings)
                                     }
                                 )
+                                .accessibilityLabel("Pilih aspek untuk lanjut simulasi")
                             } else {
                                 ButtonComponent(
                                     title: "Mulai Latihan",
@@ -175,6 +191,7 @@ struct SettingsView: View {
                         }
                         
                     }
+                    .accessibilitySortPriority(1)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
@@ -193,6 +210,8 @@ struct SettingsView: View {
                 action: onBack
             )
             .padding(.top, 16)
+            .accessibilityLabel("Kembali")
+            .accessibilitySortPriority(3)
             
             if showAspectInfo {
                 Color.black.opacity(0.5)
@@ -202,6 +221,7 @@ struct SettingsView: View {
                             showAspectInfo = false
                         }
                     }
+                    .accessibilityHidden(true)
                 
                 AspectInfoView(onDismiss: {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -209,6 +229,8 @@ struct SettingsView: View {
                     }
                 })
                 .transition(.opacity)
+                .zIndex(1)
+                .accessibilityAddTraits(.isModal)
             }
         }
         .alert("Izin Mikrofon Diperlukan", isPresented: $showPermissionAlert) {

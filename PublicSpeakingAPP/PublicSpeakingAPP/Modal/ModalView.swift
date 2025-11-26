@@ -13,6 +13,7 @@ struct ModalView: View {
     let onStart: () -> Void
     
     @StateObject private var viewModel = ModalViewModel()
+    @AccessibilityFocusState private var isTitleFocused: Bool
      
     var body: some View {
         GeometryReader { geometry in
@@ -30,13 +31,16 @@ struct ModalView: View {
                             .resizable()
                             .scaledToFill()
                             .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .accessibilityHidden(true)
                         
                         VStack(spacing: 0) {
                             VStack {
                                 Spacer().frame(height: geometry.size.height * 0.05)
                                 TitleView()
+                                    .accessibilityFocused($isTitleFocused)
                             }
                             .background(Color.clear)
+                            .accessibilitySortPriority(3)
                             
                             Spacer().frame(height: geometry.size.height * 0.035)
                             
@@ -75,6 +79,7 @@ struct ModalView: View {
                                     .padding(.bottom, 80)
                                 }
                             }
+                            .accessibilitySortPriority(2)
                         }
                     }
                     .frame(width: geometry.size.width * 0.85)
@@ -95,6 +100,7 @@ struct ModalView: View {
                     .frame(width: geometry.size.width * 0.3)
                     .offset(y: -geometry.size.height * 0.03)
                     .zIndex(1)
+                    .accessibilitySortPriority(1)
                        
                     Spacer().frame(height: 0)
                 }
@@ -102,8 +108,14 @@ struct ModalView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .onChange(of: viewModel.currentStep) { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                isTitleFocused = true
+                UIAccessibility.post(notification: .screenChanged, argument: nil)
+            }
+        }
         .onDisappear {
-            viewModel.stopMonitoring()
+            viewModel.stopMonitoring() 
         }
         .alert("Izin Mikrofon Ditolak", isPresented: $viewModel.showPermissionAlert) {
             Button("Batal") {}

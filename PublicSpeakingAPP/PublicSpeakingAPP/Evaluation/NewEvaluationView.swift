@@ -37,6 +37,8 @@ struct NewEvaluationView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .edgesIgnoringSafeArea(.all)
+                .accessibilityHidden(true)
+            
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 49){
@@ -171,6 +173,7 @@ private extension NewEvaluationView {
                 }
             )
             .padding()
+            .accessibilityHidden(true)
         case .fillerWords:
             FillerWordTranscriptView(
                 result: viewModel.result,
@@ -179,7 +182,9 @@ private extension NewEvaluationView {
                     viewModel.fillerWordCount = maps.totalCount
                     viewModel.fillerWordCalculated = true
                 }
-            ).padding()
+            )
+            .padding()
+            .accessibilityHidden(true)
         case .tempo:
             VStack() {
                 TempoResultChart(
@@ -285,6 +290,7 @@ struct GuidanceView: View {
                             .frame(maxWidth: .infinity, alignment: .topLeading)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                    .accessibilityElement(children: .combine)
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -359,6 +365,7 @@ struct EvaluationSectionView<Content: View>: View {
                     .font(.subheadline)
                     .bold()
                     .foregroundColor(Color.baseColorBrown)
+                    .accessibilityHidden(true)
                 
                 if showEmptyState {
                     emptyStateContent
@@ -500,8 +507,22 @@ struct DiffRenderView: View {
                 }
             }
             .fixedSize(horizontal: false, vertical: true)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(generateAccessibilityLabel())
         }
         .font(.body)
         .lineSpacing(8)
+    }
+    
+    private func generateAccessibilityLabel() -> String {
+        return components
+            .filter { $0.type != .deleted }
+            .map { component -> String in
+                if component.type == .added {
+                    return " " + component.text
+                }
+                return component.text
+            }
+            .joined()
     }
 }

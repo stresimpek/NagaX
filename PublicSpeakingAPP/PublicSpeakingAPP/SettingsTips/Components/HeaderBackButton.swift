@@ -18,5 +18,6 @@ struct HeaderBackButton: View {
             kind: .secondaryBlue,
             action: action
         )
+        .accessibilityLabel("Kembali")
     }
 }

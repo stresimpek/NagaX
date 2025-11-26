@@ -34,9 +34,11 @@ struct HomeContentView: View {
                 Spacer()
                 CountdownRow(targetDate: targetDate)
                     .font(.system(size: 16))
+                
                 Spacer()
                 Button(action: onDatePicker) {
                     Image(systemName: "calendar")
+                        .accessibilityLabel("Atur tanggal presentasimu")
                 }
                 .padding(.horizontal, 40)
                 .font(.title)
@@ -51,11 +53,13 @@ struct HomeContentView: View {
             ZStack {
                 VStack {
                     Spacer()
-                    
-                    NameBanner(name: "Si Cupu (Kamu)")
-                    
-                    MicroAnimation(artboardName: "Home")
-                        .frame(height: 120)
+                    VStack(spacing: 0) {
+                        NameBanner(name: "Si Cupu (Kamu)")
+
+                        MicroAnimation(artboardName: "Home")
+                            .frame(height: 120)
+                    }
+                    .accessibilityHidden(true)
                     
                     Spacer()
                     
@@ -73,6 +77,7 @@ struct HomeContentView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.leading, 440)
                     .padding(.bottom, 160)
+                    .accessibilityLabel("Hari ini kamu belum latihan. Ayo mulai latihan")
             }
         }
         .ignoresSafeArea(edges: .horizontal)
@@ -106,6 +111,7 @@ struct SpeechBubble: View {
                 .offset(x: -4, y: 2)
         }
         .frame(width: 207, height: 86)
+        .accessibilityElement(children: .combine)
     }
 }
 

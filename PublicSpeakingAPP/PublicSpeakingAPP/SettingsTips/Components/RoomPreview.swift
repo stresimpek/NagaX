@@ -18,5 +18,7 @@ struct RoomPreview: View {
                 .bold()
                 .foregroundStyle(Color.baseColorWhite)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("Simulasi di Ruang Kelas"))
     }
 }
