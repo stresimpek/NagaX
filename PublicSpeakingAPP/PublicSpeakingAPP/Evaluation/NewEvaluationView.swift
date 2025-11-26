@@ -142,11 +142,11 @@ private extension NewEvaluationView {
     private func emptyStateMessageForCurrentTab() -> String {
         switch viewModel.currentTab {
         case .artikulasi:
-            return "TIDAK ADA ARTIKULASI KURANG JELAS YANG TERDETEKSI SELAMA KAMU PRESENTASI"
+            return "Tidak ada artikulasi kurang jelas yang terdeteksi."
         case .fillerWords:
-            return "TIDAK ADA KATA JEDA YANG TERDETEKSI SELAMA KAMU PRESENTASI"
+            return "Tidak ada kata jeda yang terdeteksi."
         case .strukturKalimat:
-            return "TIDAK ADA PEMBOROSAN KATA YANG TERDETEKSI DALAM PRESENTASIMU"
+            return "Tidak ada pemborosan kata yang terdeteksi."
         default:
             return ""
         }
