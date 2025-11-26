@@ -51,7 +51,6 @@ struct TempoResultChart: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            
             Chart {
                 let lastT = max(fixedDuration, 1.0)
 
@@ -186,6 +185,7 @@ struct TempoResultChart: View {
                 }
             }
             .padding(.vertical, 24)
+            .accessibilityHidden(true)
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Rekaman Audio")
