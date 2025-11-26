@@ -17,6 +17,8 @@ struct SettingsView: View {
     
     @State private var showAspectInfo: Bool = false
     @State private var showPermissionAlert: Bool = false
+    // Menambahkan state untuk pesan alert yang dinamis
+    @State private var alertMessage: String = ""
     
     let onBack: () -> Void
     let onNext: (PracticeSettings) -> Void
@@ -51,7 +53,7 @@ struct SettingsView: View {
                                 Text("3 menit").tag(3)
                                 Text("5 menit").tag(5)
                                 Text("10 menit").tag(10)
-            
+           
                             }
                             .tint(Color.white)
                             .pickerStyle(.menu)
@@ -65,7 +67,7 @@ struct SettingsView: View {
                         HStack(alignment: .top, spacing: 40) {
                             Text("Distraksi simulasi").font(.headline)
                                 .accessibilityHidden(true)
-                            
+                           
                             VStack(spacing: 4) {
                                 Slider(value: $distractionLevel, in: 0...2, step: 1)
                                     .tint(.darkBlue)
@@ -78,25 +80,25 @@ struct SettingsView: View {
                                     .accessibilityValue(
                                             distractionLevel == 0 ? "Rendah" :
                                             distractionLevel == 1 ? "Sedang" : "Tinggi"
-                                        )
-                                
+                                    )
+                               
                                 HStack {
                                     VStack(alignment: .center) {
                                         Circle()
                                             .frame(width: 8, height: 8)
                                         Text("Rendah")
                                     }
-                                    
+                                   
                                     Spacer()
-                                    
+                                   
                                     VStack(alignment: .center) {
                                         Circle()
                                             .frame(width: 8, height: 8)
                                         Text("Sedang")
                                     }
-                                    
+                                   
                                     Spacer()
-                                    
+                                   
                                     VStack(alignment: .center) {
                                         Circle()
                                             .frame(width: 8, height: 8)
@@ -108,14 +110,14 @@ struct SettingsView: View {
                                 .accessibilityHidden(true)
                             }
                         }
-                        
+                       
                         HStack {
                             Text("Aspek yang dievaluasi")
                                 .font(.headline)
                                 .accessibilityLabel("Pilih aspek yang ingin dievaluasi")
-                            
+                           
                             Spacer()
-                            
+                           
                             Button(action: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     showAspectInfo = true
@@ -189,7 +191,7 @@ struct SettingsView: View {
                                 )
                             }
                         }
-                        
+                       
                     }
                     .accessibilitySortPriority(1)
                 }
@@ -200,7 +202,7 @@ struct SettingsView: View {
             .background(Color.baseColorBlue)
             .foregroundStyle(Color.baseColorWhite)
             .navigationBarBackButtonHidden(true)
-            
+           
             ButtonComponent(
                 title: nil,
                 systemImage: "arrow.uturn.left",
@@ -212,7 +214,7 @@ struct SettingsView: View {
             .padding(.top, 16)
             .accessibilityLabel("Kembali")
             .accessibilitySortPriority(3)
-            
+           
             if showAspectInfo {
                 Color.black.opacity(0.5)
                     .edgesIgnoringSafeArea(.all)
@@ -222,7 +224,7 @@ struct SettingsView: View {
                         }
                     }
                     .accessibilityHidden(true)
-                
+             
                 AspectInfoView(onDismiss: {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         showAspectInfo = false
@@ -233,19 +235,30 @@ struct SettingsView: View {
                 .accessibilityAddTraits(.isModal)
             }
         }
-        .alert("Izin Mikrofon Diperlukan", isPresented: $showPermissionAlert) {
-                Button("Batal", role: .cancel) { }
-                Button("Buka Pengaturan") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
-                    }
+        .alert("Izin Diperlukan", isPresented: $showPermissionAlert) {
+            Button("Batal", role: .cancel) { }
+            Button("Buka Pengaturan") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
                 }
-            } message: {
-                Text("Aspek yang kamu pilih memerlukan analisis suara. Harap izinkan akses mikrofon di Pengaturan.")
             }
+        } message: {
+            Text(alertMessage)
+        }
     }
     
     private func handleAspectSelection(for option: AspectOption) {
+        // Asumsi: 'kontakMata' adalah nama case di enum AspectOption kamu.
+        // Jika namanya berbeda (misal: .eyeContact), silakan sesuaikan di baris bawah ini.
+        if option == .kontakMata {
+            requestCameraAndMicrophone(for: option)
+        } else {
+            requestMicrophoneOnly(for: option)
+        }
+    }
+    
+    // MARK: - Logic 1: Hanya Mic (untuk aspek selain kontak mata)
+    private func requestMicrophoneOnly(for option: AspectOption) {
         let status = AVAudioApplication.shared.recordPermission
         
         switch status {
@@ -253,10 +266,68 @@ struct SettingsView: View {
             selectedAspects.insert(option)
             
         case .denied:
+            alertMessage = "Aspek ini memerlukan analisis suara. Harap izinkan akses mikrofon di Pengaturan."
             showPermissionAlert = true
             
         case .undetermined:
             AVAudioApplication.requestRecordPermission { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self.selectedAspects.insert(option)
+                    }
+                }
+            }
+        @unknown default:
+            break
+        }
+    }
+    
+    // MARK: - Logic 2: Mic DAN Kamera (Khusus Kontak Mata)
+    private func requestCameraAndMicrophone(for option: AspectOption) {
+        // 1. Cek/Minta Mic Dulu
+        let micStatus = AVAudioApplication.shared.recordPermission
+        
+        switch micStatus {
+        case .granted:
+            // Jika Mic sudah OK, lanjut cek Kamera
+            checkCameraPermission(for: option)
+            
+        case .denied:
+            alertMessage = "Fitur Kontak Mata memerlukan akses Mikrofon dan Kamera. Harap izinkan di Pengaturan."
+            showPermissionAlert = true
+            
+        case .undetermined:
+            // Minta Mic dulu
+            AVAudioApplication.requestRecordPermission { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        // Jika user "Allow" Mic, langsung tanya Kamera
+                        self.checkCameraPermission(for: option)
+                    } else {
+                        // Jika Mic ditolak, tidak perlu tanya kamera, langsung stop
+                    }
+                }
+            }
+        @unknown default:
+            break
+        }
+    }
+    
+    private func checkCameraPermission(for option: AspectOption) {
+        let cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
+        
+        switch cameraStatus {
+        case .authorized:
+            // Mic OK (dari flow sebelumnya) + Kamera OK = Pilih Aspek
+            selectedAspects.insert(option)
+            
+        case .denied, .restricted:
+            alertMessage = "Fitur Kontak Mata memerlukan akses Kamera. Harap izinkan di Pengaturan."
+            showPermissionAlert = true
+            
+        case .notDetermined:
+            // Minta Kamera
+            AVCaptureDevice.requestAccess(for: .video) { granted in
                 DispatchQueue.main.async {
                     if granted {
                         self.selectedAspects.insert(option)

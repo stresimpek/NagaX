@@ -25,25 +25,30 @@ class SimulationViewModel: ObservableObject {
     private var hasScheduledAutoStop = false
     
     @Published var isPaused: Bool = false {
-            didSet {
-                if isPaused {
-                    gameTimer?.invalidate()
-                    gameTimer = nil
-                } else if !isPaused && isRecording {
-                    gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-                        DispatchQueue.main.async {
-                            self?.updateGameLogic()
-                        }
+        didSet {
+            if isPaused {
+                gameTimer?.invalidate()
+                gameTimer = nil
+                // Saat pause, kita tidak memproses update game logic
+            } else if !isPaused && isRecording {
+                // Resume timer jika masih recording
+                gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                    DispatchQueue.main.async {
+                        self?.updateGameLogic()
                     }
                 }
             }
         }
+    }
 
     
     let whisperKitVM: SpeechTranscriberViewModel
     let intonationAnalyzerVM: IntonationAnalyzerViewModel
     let tempoVM: TempoViewModel
     let fillerWordVM: FillerWordViewModel
+    
+    // --- INTEGRASI BARU: EyeContactVM ---
+    let eyeContactVM: EyeContactViewModel
     
     @Published var evaluationResult: EvaluationModel? = nil
     @Published var isAnalysisComplete: Bool = false
@@ -77,31 +82,38 @@ class SimulationViewModel: ObservableObject {
         whisperKitVM: SpeechTranscriberViewModel,
         intonationAnalyzerVM: IntonationAnalyzerViewModel,
         tempoVM: TempoViewModel,
-        fillerWordVM: FillerWordViewModel
+        fillerWordVM: FillerWordViewModel,
+        // Inject EyeContactVM (Changed to optional to fix MainActor isolation error)
+        eyeContactVM: EyeContactViewModel? = nil
     ) {
         self.settings = settings
         self.whisperKitVM = whisperKitVM
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
         self.fillerWordVM = fillerWordVM
+        // Initialize inside init body to ensure MainActor isolation
+        self.eyeContactVM = eyeContactVM ?? EyeContactViewModel()
+        
         self.whisperKitVM.$modelState
             .receive(on: DispatchQueue.main)
             .assign(to: &$whisperModelState)
          
         self.whisperKitVM.$publishedError
             .receive(on: DispatchQueue.main)
-            .compactMap { $0 } // Hanya teruskan jika tidak nil
+            .compactMap { $0 }
             .sink { [weak self] errorText in
                 self?.errorMessage = errorText
             }
             .store(in: &cancellables)
+            
         self.whisperKitVM.$showEarlyStopModal
-                    .receive(on: DispatchQueue.main)
-                    .sink { [weak self] showing in
-                        guard let self = self else { return }
-                        self.isPaused = showing
-                    }
-                    .store(in: &cancellables)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] showing in
+                guard let self = self else { return }
+                self.isPaused = showing
+            }
+            .store(in: &cancellables)
+            
         self.whisperKitVM.$showEmptyTranscriptModal
             .receive(on: DispatchQueue.main)
             .sink { [weak self] showing in
@@ -120,52 +132,73 @@ class SimulationViewModel: ObservableObject {
         setupMoodAggregation()
     }
     
+    // --- FUNGSI BARU: Menerima Event dari ARTracker ---
+    func updateHeadGazeEvent(_ event: HeadGazeEvent) {
+        // CEK PENTING:
+        // 1. Harus sedang Recording.
+        // 2. Tidak boleh sedang Pause (misal modal stop muncul).
+        guard isRecording, !isPaused else {
+            return
+        }
+        
+        // Teruskan ke VM khusus
+        eyeContactVM.processEvent(event, at: Double(timerSeconds))
+    }
+    
     private func setupMoodAggregation() {
+        // Gabungkan publisher dari semua VM termasuk EyeContact
         intonationAnalyzerVM.$intonationRating
-            .combineLatest(tempoVM.$tempoRating, fillerWordVM.$fillerRating)
+            .combineLatest(tempoVM.$tempoRating, fillerWordVM.$fillerRating, eyeContactVM.$eyeContactRating)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] (intonation, tempo, filler) in
+            .sink { [weak self] (intonation, tempo, filler, eyeContact) in
                 guard let self = self else { return }
                 
                 self.updateAggregateMood(
                     intonationRating: intonation,
                     tempoRating: tempo,
-                    fillerRating: filler
+                    fillerRating: filler,
+                    eyeContactRating: eyeContact
                 )
             }
             .store(in: &cancellables)
     }
     
-    private func updateAggregateMood(intonationRating: Int, tempoRating: Int, fillerRating: Int) {
+    private func updateAggregateMood(intonationRating: Int, tempoRating: Int, fillerRating: Int, eyeContactRating: Int) {
         
         if isLockedOvertimeMood { return }
-    
-        print("--- Update Mood ---")
-        print("Settings Aspects: \(settings.selectedAspects.map { $0.title })")
-        print("Incoming Ratings: Intonation=\(intonationRating), Tempo=\(tempoRating), FillerWords=\(fillerRating)")
         
         var activeRatings: [Int] = []
         
         if settings.selectedAspects.contains(.intonasi) {
-            print("Intonation aspect IS selected.")
             activeRatings.append(intonationRating)
         }
         if settings.selectedAspects.contains(.tempo) {
-            print("Tempo aspect IS selected.")
             activeRatings.append(tempoRating)
         }
         if settings.selectedAspects.contains(.fillerWords) {
             activeRatings.append(fillerRating)
         }
-//            if settings.selectedAspects.contains(.kontakMata) {
-//                activeRatings.append(eyeContactRating)
-//            }
+        // --- Tambahkan Kontak Mata jika dipilih di settings ---
+        if settings.selectedAspects.contains(.kontakMata) {
+            activeRatings.append(eyeContactRating)
+        }
         
+        // Filter nilai 0 (belum ada data)
         let validRatings = activeRatings.filter { $0 > 0 }
+        
+        // Jika belum ada satupun rating valid, skip update mood
         guard !validRatings.isEmpty else { return }
 
+        // Hitung Rata-rata
         let avg = Double(validRatings.reduce(0, +)) / Double(validRatings.count)
+        
+        // Konversi ke Mood Score (-1.0 s/d 1.0)
+        // Rating 1 (Buruk) -> -1.0
+        // Rating 2 (Cukup) -> 0.0
+        // Rating 3 (Bagus) -> 1.0
         let instantScore = (avg - 2.0)
+        
+        // Smoothing (EMA) agar perubahan mood tidak terlalu drastis
         moodScoreEMA = emaAlpha * instantScore + (1.0 - emaAlpha) * moodScoreEMA
     }
     
@@ -198,29 +231,23 @@ class SimulationViewModel: ObservableObject {
             .sink { [weak self] newStatus in
                 guard let self = self else { return }
 
-                print("[SimulationVM] Received Recording Status: \(newStatus)")
-
                 switch newStatus {
                 case .recording:
                     if !self.isRecording {
                         self.isRecording = true
-                        print("[SimulationVM] State -> isRecording = true")
                     }
                     if self.recordingStartTime == nil {
                         self.recordingStartTime = Date()
-                        print("[SimulationVM] Recording confirmed STARTED at: \(self.recordingStartTime!)")
                     }
                     
                 case .starting:
                     if self.isRecording {
                          self.isRecording = false
-                         print("[SimulationVM] State -> isRecording = false (During Starting)")
                     }
                     
                 case .stopping, .stopped:
                     if self.isRecording {
                         self.isRecording = false
-                        print("[SimulationVM] State -> isRecording = false (Stopped/Stopping)")
                     }
                 }
             }
@@ -263,7 +290,6 @@ class SimulationViewModel: ObservableObject {
         self.errorMessage = nil
 
         guard whisperModelState == .loaded else {
-            print("Model belum siap, tidak bisa merekam.")
             self.errorMessage = "Model belum siap, tidak bisa merekam."
             return
         }
@@ -271,7 +297,6 @@ class SimulationViewModel: ObservableObject {
         let shouldStart = (whisperKitVM.recordingStatus == .stopped)
 
         if shouldStart {
-            print("Requesting START recording...")
             startGame()
             whisperKitVM.toggleRecording(
                 shouldLoop: true,
@@ -279,7 +304,6 @@ class SimulationViewModel: ObservableObject {
                 durationLimitSeconds: durationLimitSeconds
             )
         } else {
-            print("Requesting STOP recording...")
             whisperKitVM.toggleRecording(
                 shouldLoop: false,
                 timerSeconds: Double(timerSeconds),
@@ -290,23 +314,19 @@ class SimulationViewModel: ObservableObject {
 
     private func processEvaluation() {
         guard !isRecording else { return }
-        guard !isStopModalActive else {
-            print("Evaluation skipped: modal active.")
-            return
-        }
+        guard !isStopModalActive else { return }
         guard recordingStartTime != nil else { return }
         
         recordingStartTime = nil
         let finalDuration = whisperKitVM.finalBufferDuration
         
         guard finalDuration > 0 || !whisperKitVM.confirmedText.isEmpty else {
-            errorMessage = "Tidak ada data audio yang direkam (durasi: \(finalDuration))."
+            errorMessage = "Tidak ada data audio yang direkam."
             isAnalysisComplete = true
             return
         }
         
         finalTranscript = whisperKitVM.confirmedText
-        
         let (weakCount, totalCount) = calculateArticulationStats()
         
         evaluationResult = EvaluationViewModel.process(
@@ -323,13 +343,10 @@ class SimulationViewModel: ObservableObject {
     
     private func calculateArticulationStats() -> (count: Int, total: Int) {
         let allWords = whisperKitVM.confirmedWords
-        
         let weakWordsCount = allWords.filter { word in
             let cleaned = word.word.trimmingCharacters(in: .punctuationCharacters.union(.symbols).union(.whitespaces))
-            
             return !cleaned.isEmpty && word.probability < 0.55
         }.count
-        
         return (weakWordsCount, allWords.count)
     }
     
@@ -348,7 +365,7 @@ class SimulationViewModel: ObservableObject {
         
         hasPlayedOvertimeSound = false
         hasPlayedOverOneMinuteSound = false
-        hasScheduledAutoStop = false  
+        hasScheduledAutoStop = false
         isOverOneMinuteTrigger = false
         isOvertimeTrigger = false
         isPaused = false
@@ -357,6 +374,8 @@ class SimulationViewModel: ObservableObject {
         tempoVM.clearResults()
         intonationAnalyzerVM.clearResults()
         fillerWordVM.clearResults()
+        // --- RESET EyeContactVM saat mulai baru ---
+        eyeContactVM.clearResults()
         
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             DispatchQueue.main.async {
@@ -369,8 +388,6 @@ class SimulationViewModel: ObservableObject {
     private func stopGame() {
         gameTimer?.invalidate()
         gameTimer = nil
-        
-        stopMoodTimer()
         stopMoodTimer()
     }
     
@@ -400,23 +417,16 @@ class SimulationViewModel: ObservableObject {
            whisperKitVM.recordingStatus == .recording {
 
             hasScheduledAutoStop = true
-            print("Lebih dari 1 menit overtime – akan auto-stop dalam 5 detik")
-
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
                 guard let self = self else { return }
-
                 if self.whisperKitVM.recordingStatus == .recording {
-                    print("Auto-stopping recording setelah 5 detik > 1 menit overtime")
                     self.stopGame()
                     toggleRecording()
-                } else {
-                    print("Auto-stop dibatalkan, recording sudah berhenti lebih dulu")
                 }
             }
         }
     }
 
-    
     func cleanup() {
         gameTimer?.invalidate()
         gameTimer = nil
@@ -434,20 +444,16 @@ class SimulationViewModel: ObservableObject {
         if isOvertime {
             isOvertimeTrigger = true
             if !hasPlayedOvertimeSound {
-                print("Overtime mulai – play SFX waktuHabis")
                 playLocalSound(named: "waktuHabis")
                 hasPlayedOvertimeSound = true
             }
             
             if isMoreThanOneMinute {
                 isOverOneMinuteTrigger = true
-    
                 if !hasPlayedOverOneMinuteSound {
-                    print("Overtime > 1 menit – play SFX waktuHabisBanget")
                     playLocalSound(named: "waktuHabisBanget")
                     hasPlayedOverOneMinuteSound = true
                 }
-                
                 presentationScore = -1.0
                 isLockedOvertimeMood = true
             } else {
@@ -461,23 +467,19 @@ class SimulationViewModel: ObservableObject {
     }
 }
 
+// Extension untuk Helper Functions
 extension SimulationViewModel {
     
     private func playLocalSound(named name: String, ext: String = "MP3") {
-        guard let url = Bundle.main.url(forResource: name, withExtension: ext) else {
-            print("Sound file \(name).\(ext) tidak ditemukan di bundle")
-            return
-        }
-        
+        guard let url = Bundle.main.url(forResource: name, withExtension: ext) else { return }
         do {
             let player = try AVAudioPlayer(contentsOf: url)
             player.prepareToPlay()
             player.play()
             distractionPlayers.append(player)
-                    
             distractionPlayers.removeAll { !$0.isPlaying }
         } catch {
-            print("Gagal play sound \(name): \(error)")
+            print("Gagal play sound: \(error)")
         }
     }
 
