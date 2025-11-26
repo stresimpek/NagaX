@@ -160,13 +160,13 @@ class NewEvaluationViewModel: ObservableObject {
         let count = ineffectiveSentenceCount
         let duration = settings.durationMinutes
 
-        return try! AttributedString(markdown: "Kamu ada **\(count)** kalimat yang ga efektif. Yuk cek rekomendasi perbaikannya! Kamu mungkin mau potong beberapa kata agar pesan lebih ringkas dan efektif.")
+        return try! AttributedString(markdown: "Kamu ada **\(count)** kata yang ga efektif. Yuk cek rekomendasi perbaikannya! Kamu mungkin mau potong beberapa kata agar pesan lebih ringkas dan efektif.")
 
     }
     
     private var articulationEvaluatorNote: AttributedString {
         let count = articulationCount
-        let total = articulationTotal > 0 ? articulationTotal : 100
+        let total = articulationTotal
         let clearWords = total - count
         let percentage = total > 0 ? Int((Double(clearWords) / Double(total)) * 100) : 0
 
@@ -186,19 +186,16 @@ class NewEvaluationViewModel: ObservableObject {
         case "A":
             return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **zona aman**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
         case "B":
-            if wpm < 100 {
-                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang agak lambat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
-            } else {
-                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang agak cepat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
-            }
+            let status = wpm < 100 ? "agak lambat" : "agak cepat"
+                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di rentang **\(status)**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
+        
         case "C":
-            if wpm < 80 {
-                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang sangat lambat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
-            } else {
-                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang sangat cepat**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
-            }
+            let status = wpm < 80 ? "sangat lambat" : "sangat cepat"
+                
+                return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di rentang **\(status)**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
+            
         default:
-            return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di **rentang ...**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
+            return try! AttributedString(markdown: "Selama presentasi, tempo bicaranya paling sering ada di rentang **kurang pas**. Yuk cek tips dan rekaman, kapan ritme ini paling cocok sama pesan yang kamu bawa.")
         }
     }
 
@@ -209,21 +206,22 @@ class NewEvaluationViewModel: ObservableObject {
     }
     
     private var intonationEvaluatorNote: AttributedString {
-        let avgHz = Int(averagePitchHz)
+        let finalstd = result.intonationStdDev
 
-        switch result.intonationGrade {
-        case "A":
-            return try! AttributedString(markdown: "Intonasimu paling sering **terdengar berdinamika**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
-        case "B":
-            return try! AttributedString(markdown: "Intonasimu paling sering **terdengar cukup bervariasi**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
-        case "C":
-            return try! AttributedString(markdown: "Intonasimu paling sering **terdengar cenderung datar**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
-        default:
-            if avgHz > 0 {
-                return try! AttributedString(markdown: "Intonasimu paling sering **terdengar ...**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
-            } else {
-                return try! AttributedString(markdown: "Intonasimu paling sering **terdengar ...**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
-            }
+    
+            
+        if finalstd < 1.5 {
+            return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cenderung datar**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
+        }
+        else if finalstd <= 2.5 {
+            return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cukup bervariasi**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
+        }
+        else if finalstd <= 4.5 {
+            return try! AttributedString(markdown: "Intonasimu paling sering terdengar **sangat bervariasi**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
+        }
+        else {
+                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **agak berlebihan**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
+            
         }
     }
     
@@ -293,10 +291,24 @@ class NewEvaluationViewModel: ObservableObject {
             original: fullTranscript,
             new: sentenceAnalysisResult
         )
-        return components.filter { $0.type == .deleted }.count
+        
+        // Filter out deleted words, excluding whitespace
+        let deletedCount = components.filter {
+            $0.type == .deleted && !$0.text.trimmingCharacters(in: .whitespaces).isEmpty
+        }.count
+        
+        // Debug print
+        print("=== DIFF DEBUG ===")
+        print("Original length: \(fullTranscript.count)")
+        print("New length: \(sentenceAnalysisResult.count)")
+        print("Total components: \(components.count)")
+        print("Deleted words: \(deletedCount)")
+        print("Deleted words: \(components.filter { $0.type == .deleted && !$0.text.trimmingCharacters(in: .whitespaces).isEmpty }.map { $0.text })")
+        
+        return deletedCount
     }
-    
 }
+
 extension String {
     func splitByWord() -> [String] {
         let regex = try? NSRegularExpression(pattern: "\\s+|\\S+")
@@ -325,7 +337,7 @@ extension NewEvaluationViewModel {
         switch tab {
         case .strukturKalimat:
             let count = ineffectiveSentenceCount
-            return try! AttributedString(markdown: "Kamu ada **\(count)** kalimat yang terdeteksi kurang efektif.")
+            return try! AttributedString(markdown: "Kamu ada **\(count)** kata yang terdeteksi kurang efektif.")
             
         case .artikulasi:
             let count = articulationCount
@@ -352,15 +364,16 @@ extension NewEvaluationViewModel {
             }
             
         case .intonasi:
-            switch result.intonationGrade {
-            case "A":
-                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **berdinamika**.")
-            case "B":
-                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cukup bervariasi**.")
-            case "C":
+            let finalstd = result.intonationStdDev
+
+            if finalstd < 1.5 {
                 return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cenderung datar**.")
-            default:
-                return try! AttributedString(markdown: "Intonasi perlu latihan.")
+            } else if finalstd <= 2.5 {
+                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cukup bervariasi**.")
+            } else if finalstd <= 4.5 {
+                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **sangat bervariasi**.")
+            } else {
+                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **agak berlebihan**.")
             }
             
         case .kontakMata:
