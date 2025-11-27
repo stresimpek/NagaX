@@ -239,6 +239,7 @@ struct SimulationView: View {
                         .foregroundColor(.white)
                         .zIndex(12)
                         .accessibilityHidden(true)
+                        .accessibilityAddTraits(.isModal)
                 }
             }
             .overlay(alignment: .top) {
