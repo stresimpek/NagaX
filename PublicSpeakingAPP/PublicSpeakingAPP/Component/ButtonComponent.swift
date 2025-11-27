@@ -104,11 +104,29 @@ struct AppButtonStyle: ButtonStyle {
     let isEnabled: Bool
     let isIconOnly: Bool
     var overrideCircleSize: CGFloat? = nil
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+       
+    private var circleBase: CGFloat {
+        switch dynamicTypeSize {
+        case .xSmall, .small:
+            return 40
+        case .medium, .large:
+            return 44
+        default:
+            return 48
+        }
+    }
     
     func makeBody(configuration: Configuration) -> some View {
         let isCircle = isIconOnly && (size == .largeIconCircle)
-        let defaultCircleSize = max(size.minHeight, size.horizontalPadding * 2)
-        let circleSize = overrideCircleSize ?? defaultCircleSize
+        let baseCircleSize: CGFloat = {
+            if let overrideCircleSize {
+                return overrideCircleSize
+            }
+            return max(size.minHeight, circleBase)
+        }()
+        
+        let circleSize = baseCircleSize
         
         return configuration.label
             .font(size.font)
@@ -158,8 +176,23 @@ struct ButtonComponent: View {
     var customCircleSize: CGFloat? = nil
     var action: () -> Void
     
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+        
+    private var iconPointSize: CGFloat {
+        switch dynamicTypeSize {
+        case .xSmall, .small:
+            return 16
+        case .medium, .large:
+            return 18
+        case .xLarge, .xxLarge, .xxxLarge:
+            return 20
+        default:
+            return 20
+        }
+    }
+
+    
     var body: some View {
-        // icon-only: ada icon, tidak ada title
         let isIconOnly = (title == nil && systemImage != nil)
         let effectiveKind: AppButtonStyleKind = isEnabled ? kind : .disabled
         
@@ -171,7 +204,7 @@ struct ButtonComponent: View {
             HStack(spacing: 8) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .imageScale(size.iconSize)
+                        .font(.system(size: iconPointSize, weight: .bold))
                 }
                 if let title {
                     Text(title)

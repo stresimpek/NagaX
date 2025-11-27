@@ -38,7 +38,7 @@ struct IntonationResultChart: View {
         self.pitchSeries = pitchSeries
         self.fixedDuration = fixedDuration
     }
-
+    
     private var xDomain: ClosedRange<Double> { 0...max(0.001, fixedDuration) }
 
     private func xAxisLabel(_ value: Double) -> String {
@@ -58,6 +58,11 @@ struct IntonationResultChart: View {
     
     private func clampToDomain(_ x: Double) -> Double {
         min(max(0, x), fixedDuration)
+    }
+    
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var isAccessibilitySize: Bool {
+        dynamicTypeSize.isAccessibilitySize
     }
 
     var body: some View {
@@ -153,8 +158,8 @@ struct IntonationResultChart: View {
             .chartYAxis { AxisMarks(position: .leading) }
             .chartXScale(domain: xDomain)
             .chartYScale(domain: 0...maxY)
-            .frame(height: 180)
-            .padding(.horizontal, 12)
+            .frame(height: isAccessibilitySize ? 300 : 180)
+            .padding(.horizontal, isAccessibilitySize ? 32 : 16)
             .chartOverlay { proxy in
                 GeometryReader { geo in
                     let plotFrame = geo[proxy.plotAreaFrame]
@@ -185,7 +190,7 @@ struct IntonationResultChart: View {
                         )
                 }
             }
-            .padding(.vertical, 24)
+            .padding(.top, isAccessibilitySize ? 56 : 24)
             .accessibilityHidden(true)
             
             VStack(alignment: .leading, spacing: 8) {

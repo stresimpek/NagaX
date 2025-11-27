@@ -9,7 +9,7 @@ import SwiftUI
 import AVFoundation
 
 struct SettingsView: View {
-    
+    @State private var maxTileHeight: CGFloat = 0
     @State private var durationMinutes: Int = 1
     @State private var distractionLevel: Double = 0.0
     @State private var enableQnA: Bool = false
@@ -39,7 +39,7 @@ struct SettingsView: View {
                 HStack(alignment: .center) {
                     RoomPreview()
                         .frame(width: dynamicTypeSize.isAccessibilitySize ? 200 : 280)
-                        .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 4 : 12)
+                        .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 8 : 12)
                         .accessibilitySortPriority(2)
                     ScrollView {                        
 
@@ -74,56 +74,97 @@ struct SettingsView: View {
                                 .shadow(color: Color.darkBlue3, radius: 0, x: 0, y: 4)
                             }
 
-                            HStack(alignment: .top, spacing: dynamicTypeSize.isAccessibilitySize ? 16 : 40) {
-                                Text("Distraksi simulasi")
-                                    .font(.headline)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .lineLimit(2)
-                                    .minimumScaleFactor(0.7)
-                                    .layoutPriority(1)
-                                    .accessibilityHidden(true)
-                            
-                                VStack(spacing: 4) {
-                                    Slider(value: $distractionLevel, in: 0...2, step: 1)
-                                        .tint(.darkBlue)
-                                        .onChange(of: distractionLevel) { v, i in
-                                            distractionLevel = v.rounded()
-                                        }
-                                        .accessibilityElement(children: .ignore)
-                                    .accessibilityLabel("Pilih tingkat distraksi suara")
-                                    .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
-                                    .accessibilityValue(
-                                            distractionLevel == 0 ? "Rendah" :
-                                            distractionLevel == 1 ? "Sedang" : "Tinggi"
-                                        )
-                                
-                                HStack {
-                                        VStack(alignment: .center) {
-                                            Circle()
-                                                .frame(width: 8, height: 8)
-                                            Text("Rendah")
-                                        }
+                            // MARK: - Distraksi simulasi
+                            if isAccessibilitySize {
+                                // ⚠️ Mode teks besar: label di atas, slider di bawah
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Distraksi simulasi")
+                                        .font(.headline)
+                                        .lineLimit(2)
+                                        .minimumScaleFactor(0.7)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                    
+                                    VStack(spacing: 4) {
+                                        Slider(value: $distractionLevel, in: 0...2, step: 1)
+                                            .tint(.darkBlue)
+                                            .onChange(of: distractionLevel) { v, _ in
+                                                distractionLevel = v.rounded()
+                                            }
+                                            .accessibilityElement(children: .ignore)
+                                            .accessibilityLabel("Pilih tingkat distraksi suara")
+                                            .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
+                                            .accessibilityValue(
+                                                distractionLevel == 0 ? "Rendah" :
+                                                distractionLevel == 1 ? "Sedang" : "Tinggi"
+                                            )
                                         
-                                        Spacer()
-                                        
-                                        VStack(alignment: .center) {
-                                            Circle()
-                                                .frame(width: 8, height: 8)
-                                            Text("Sedang")
+                                        HStack {
+                                            VStack {
+                                                Circle().frame(width: 8, height: 8)
+                                                Text("Rendah")
+                                            }
+                                            Spacer()
+                                            VStack {
+                                                Circle().frame(width: 8, height: 8)
+                                                Text("Sedang")
+                                            }
+                                            Spacer()
+                                            VStack {
+                                                Circle().frame(width: 8, height: 8)
+                                                Text("Tinggi")
+                                            }
                                         }
-                                        
-                                        Spacer()
-                                        
-                                        VStack(alignment: .center) {
-                                            Circle()
-                                                .frame(width: 8, height: 8)
-                                            Text("Tinggi")
-                                        }
+                                        .font(.subheadline)
+                                        .foregroundStyle(.baseColorWhite)
+                                        .accessibilityHidden(true)
                                     }
-                                    .font(.subheadline)
-                                    .foregroundStyle(.baseColorWhite)
-                                    .accessibilityHidden(true)
-                            }
+                                }
+                            } else {
+                                // 👌 Mode normal: label kiri, slider kanan
+                                HStack(alignment: .top, spacing: 40) {
+                                    Text("Distraksi simulasi")
+                                        .font(.headline)
+                                        .lineLimit(2)
+                                        .minimumScaleFactor(0.7)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .layoutPriority(1)
+                                        .accessibilityHidden(true)
+                                    
+                                    VStack(spacing: 4) {
+                                        Slider(value: $distractionLevel, in: 0...2, step: 1)
+                                            .tint(.darkBlue)
+                                            .onChange(of: distractionLevel) { v, _ in
+                                                distractionLevel = v.rounded()
+                                            }
+                                            .accessibilityElement(children: .ignore)
+                                            .accessibilityLabel("Pilih tingkat distraksi suara")
+                                            .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
+                                            .accessibilityValue(
+                                                distractionLevel == 0 ? "Rendah" :
+                                                distractionLevel == 1 ? "Sedang" : "Tinggi"
+                                            )
+                                        
+                                        HStack {
+                                            VStack {
+                                                Circle().frame(width: 8, height: 8)
+                                                Text("Rendah")
+                                            }
+                                            Spacer()
+                                            VStack {
+                                                Circle().frame(width: 8, height: 8)
+                                                Text("Sedang")
+                                            }
+                                            Spacer()
+                                            VStack {
+                                                Circle().frame(width: 8, height: 8)
+                                                Text("Tinggi")
+                                            }
+                                        }
+                                        .font(.subheadline)
+                                        .foregroundStyle(.baseColorWhite)
+                                        .accessibilityHidden(true)
+                                    }
+                                }
                             }
                             
                             HStack {
@@ -163,11 +204,17 @@ struct SettingsView: View {
                                                             selectedAspects.remove(opt)
                                                         }
                                                     }
-                                                )
+                                                ),
+                                                fixedHeight: maxTileHeight == 0 ? nil : maxTileHeight
                                             )
                                         }
                                     }
                                     .padding(.vertical, 4)
+                                }
+                                .onPreferenceChange(AspectTileHeightPreferenceKey.self) { height in
+                                    if height > 0 {
+                                        maxTileHeight = height
+                                    }
                                 }
                                 Spacer()
                             }

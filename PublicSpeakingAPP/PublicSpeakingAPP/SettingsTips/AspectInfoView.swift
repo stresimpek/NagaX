@@ -7,6 +7,13 @@
 
 import SwiftUI
 
+struct AspectCardHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 private let aspectInfoData: [AspectInfoItem] = [
     .init(iconName: "AspectTempo", title: "Tempo", description: "Kecepatan bicaramu, jumlah kata yang kamu ucapkan per menit."),
     .init(iconName: "AspectFiller", title: "Kata Jeda", description: "Seberapa sering kamu menggunakan kata jeda seperti \"eee...\" atau \"kayak...\"."),
@@ -18,6 +25,7 @@ private let aspectInfoData: [AspectInfoItem] = [
 
 struct AspectInfoView: View {
     let onDismiss: () -> Void
+    @State private var maxCardHeight: CGFloat = 0
     
     var body: some View {
         GeometryReader { geo in
@@ -39,11 +47,17 @@ struct AspectInfoView: View {
                             Grid(horizontalSpacing: 16, verticalSpacing: 10) {
                                 ForEach(stride(from: 0, to: aspectInfoData.count, by: 2).map { $0 }, id: \.self) { index in
                                     GridRow {
-                                        AspectInfoCard(item: aspectInfoData[index])
-                                            .fixedSize(horizontal: false, vertical: true)
+                                        AspectInfoCard(
+                                            item: aspectInfoData[index],
+                                            fixedHeight: maxCardHeight == 0 ? nil : maxCardHeight
+                                        )
+//                                        .fixedSize(horizontal: false, vertical: true)
                                         if index + 1 < aspectInfoData.count {
-                                            AspectInfoCard(item: aspectInfoData[index + 1])
-                                                .fixedSize(horizontal: false, vertical: true)
+                                            AspectInfoCard(
+                                                item: aspectInfoData[index + 1],
+                                                fixedHeight: maxCardHeight == 0 ? nil : maxCardHeight
+                                            )
+//                                            .fixedSize(horizontal: false, vertical: true)
                                         } else {
                                             Color.clear.gridCellUnsizedAxes([.vertical, .horizontal])
                                         }
@@ -66,6 +80,11 @@ struct AspectInfoView: View {
                             )
                         )
                         .padding(.bottom, 15)
+                        .onPreferenceChange(AspectCardHeightPreferenceKey.self) { newHeight in
+                            if newHeight > 0 {
+                                maxCardHeight = newHeight
+                            }
+                        }
                     }
                     .frame(width: geo.size.width * 0.85)
                     .background(
