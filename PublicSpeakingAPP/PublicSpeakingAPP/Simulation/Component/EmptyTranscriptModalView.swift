@@ -12,47 +12,63 @@ struct EmptyTranscriptModalView: View {
     let onContinue: () -> Void
     
     var body: some View {
-        
-        ZStack {
-            Image("SetupPaper")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .accessibilityHidden(true)
-            
-            VStack(spacing: 24) {
-                VStack(spacing: 4){
-                    Text("Sepertinya kamu belum mulai bicara")
-                        .font(.title3)
-                        .foregroundColor(.baseColorBrown)
-                        .multilineTextAlignment(.center)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack {
+                    Spacer()
                     
-                    Text("Silakan lakukan presentasi terlebih dahulu agar hasil evaluasi bisa muncul.")
-                        .font(.footnote)
-                        .foregroundColor(.baseColorBrown)
-                        .multilineTextAlignment(.center)
-                }
-                
-                // Buttons
-                HStack(spacing: 12) {
-                    ButtonComponent(
-                        title: "Ulang Sesi",
-                        systemImage: nil,
-                        size: .medium,
-                        kind: .secondaryBlue,
-                        action: onRestart
+                    VStack(spacing: 24) {
+                        VStack(spacing: 4) {
+                            Text("Sepertinya kamu belum mulai bicara")
+                                .font(.title2)
+                                .foregroundColor(.baseColorBrown)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("Silakan lakukan presentasi terlebih dahulu agar hasil evaluasi bisa muncul.")
+                                .font(.subheadline)
+                                .foregroundColor(.baseColorBrown)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.horizontal, 16)
+                        
+                        HStack(spacing: 12) {
+                            buttonsContent
+                        }
+                    }
+                    .frame(width: 370)
+                    .padding(.vertical, 30)
+                    .background(
+                        Image("SetupPaper")
+                            .resizable()
+                            .resizable(resizingMode: .stretch)
                     )
+                    .frame(width: 450)
                     
-                    ButtonComponent(
-                        title: "Lanjut Latihan",
-                        systemImage: nil,
-                        size: .medium,
-                        kind: .primaryYellow,
-                        action: onContinue
-                    )
+                    Spacer()
                 }
+                .frame(minHeight: geometry.size.height)
+                .frame(maxWidth: .infinity)
             }
-            .frame(width: 317)
         }
-        .frame(width: 370.73706, height: 190.9482)
+    }
+    
+    var buttonsContent: some View {
+        Group {
+            ButtonComponent(
+                title: "Ulang Sesi",
+                systemImage: nil,
+                size: .medium,
+                kind: .secondaryBlue,
+                action: onRestart
+            )
+            
+            ButtonComponent(
+                title: "Lanjut Latihan",
+                systemImage: nil,
+                size: .medium,
+                kind: .primaryYellow,
+                action: onContinue
+            )
+        }
     }
 }

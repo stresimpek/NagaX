@@ -12,47 +12,61 @@ struct EarlyStopModalView: View {
     let onViewEvaluation: () -> Void
     
     var body: some View {
-        ZStack {
-            Image("SetupPaper")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .accessibilityHidden(true)
-
-            VStack(spacing: 24) {
-                VStack(spacing: 4){
-                    Text("Selesai Latihan?")
-                        .font(.title3)
-                        .foregroundColor(.baseColorBrown)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Sesi latihanmu belum memenuhi durasi yang terpilih, kamu akan lanjut ke evaluasi setelah ini.")
-                        .font(.footnote)
-                        .foregroundColor(.baseColorBrown)
-                        .multilineTextAlignment(.center)
-                }
-
-                // Buttons
-                HStack(spacing: 12) {
-                    ButtonComponent(
-                        title: "Lanjut Latihan",
-                        systemImage: nil,
-                        size: .medium,
-                        kind: .secondaryBlue,
-                        action: onContinue
+        GeometryReader { geometry in
+            ScrollView {
+                VStack {
+                    Spacer()
+                    VStack(spacing: 24) {
+                        VStack(spacing: 4){
+                            Text("Selesai Latihan?")
+                                .font(.title2)
+                                .foregroundColor(.baseColorBrown)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("Sesi latihanmu belum memenuhi durasi yang terpilih, kamu akan lanjut ke evaluasi setelah ini.")
+                                .font(.subheadline)
+                                .foregroundColor(.baseColorBrown)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.horizontal, 16)
+                        
+                        HStack(spacing: 12) {
+                            buttonsContent
+                        }
+                    }
+                    .frame(width: 317)
+                    .padding(.vertical, 30)
+                    .background(
+                        Image("SetupPaper")
+                            .resizable()
+                            .resizable(resizingMode: .stretch)
                     )
-                    ButtonComponent(
-                        title: "Lihat Evaluasi",
-                        systemImage: nil,
-                        size: .medium,
-                        kind: .primaryYellow,
-                        action: onViewEvaluation
-                    )
+                    .frame(width: 370)
+                    Spacer()
                 }
+                .frame(minHeight: geometry.size.height)
+                .frame(maxWidth: .infinity)
             }
-            .frame(width: 317)
         }
-        .frame(width: 370.73706, height: 190.9482)
- 
+    }
+    
+    var buttonsContent: some View {
+        Group {
+            ButtonComponent(
+                title: "Lanjut",
+                systemImage: nil,
+                size: .medium,
+                kind: .secondaryBlue,
+                action: onContinue
+            )
+            ButtonComponent(
+                title: "Evaluasi",
+                systemImage: nil,
+                size: .medium,
+                kind: .primaryYellow,
+                action: onViewEvaluation
+            )
+        }
     }
 }
-

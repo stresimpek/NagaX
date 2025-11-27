@@ -37,7 +37,7 @@ struct ButtonRecord: View {
                 if let systemImage {
                     Image(systemName: systemImage)
                         .font(.system(size: iconPointSize, weight: .semibold))
-                        .foregroundStyle(Color(.red))
+                        .foregroundStyle(Color(.baseColorRed))
                 }
                 if let title {
                     Text(title)

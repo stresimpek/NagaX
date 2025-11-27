@@ -485,14 +485,16 @@ struct DiffRenderView: View {
     let components: [DiffComponent]
     
     let defaultColor = Color(.baseColorBrown)
-    let deletedColor = Color.red
-    let addedColor = Color.blue
+    let deletedColor = Color.baseColorRed
+    let addedColor = Color.darkBlue
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             components.reduce(Text("")) { (result, component) in
+                let font: Font = component.type == .same ? .system(.body, design: .serif) : .body.bold()
+                
                 let styledText = Text(component.text)
-                    .font(.body)
+                    .font(font)
                 
                 switch component.type {
                 case .same:
@@ -511,7 +513,6 @@ struct DiffRenderView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(generateAccessibilityLabel())
         }
-        .font(.body)
         .lineSpacing(8)
     }
     
@@ -527,4 +528,3 @@ struct DiffRenderView: View {
             .joined()
     }
 }
-
