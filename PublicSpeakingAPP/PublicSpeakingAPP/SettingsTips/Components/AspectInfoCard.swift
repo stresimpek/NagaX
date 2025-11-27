@@ -16,6 +16,7 @@ struct AspectInfoItem: Identifiable {
 
 struct AspectInfoCard: View {
     let item: AspectInfoItem
+    var fixedHeight: CGFloat? = nil
     
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -32,14 +33,29 @@ struct AspectInfoCard: View {
                     .font(.subheadline)
                     .foregroundColor(Color("BaseColorBrown"))
                     .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
         }
         .padding(.vertical, 10)
-        .padding(.horizontal, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity, minHeight: fixedHeight ?? 0,
+               alignment: .center)
         .background(Color("BaseColorWhite"))
         .cornerRadius(16)
         .accessibilityElement(children: .combine)
+        .background(
+            Group {
+                if fixedHeight == nil {
+                    GeometryReader { geo in
+                        Color.clear
+                            .preference(
+                                key: AspectCardHeightPreferenceKey.self,
+                                value: geo.size.height
+                            )
+                    }
+                }
+            }
+        )
     }
 }

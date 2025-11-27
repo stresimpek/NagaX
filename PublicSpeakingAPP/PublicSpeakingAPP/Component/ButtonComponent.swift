@@ -37,22 +37,34 @@ enum AppButtonSize {
         case .largePill: 14
         }
     }
-    var font: Font {
+    var minHeight: CGFloat {
         switch self {
-        case .large: .system(size: 20, weight: .semibold)
-        case .medium: .system(size: 16, weight: .semibold)
-        case .small: .system(size: 14, weight: .semibold)
-        case .largeIconCircle: .system(size: 20, weight: .semibold)
-        case .largePill: .system(size: 20, weight: .semibold)
+        case .large, .largePill: 52
+        case .medium, .largeIconCircle: 48
+        case .small: 40
         }
     }
-    var iconSize: CGFloat {
+    private var textStyle: Font.TextStyle {
         switch self {
-        case .large: 22
-        case .medium: 18
-        case .small: 16
-        case .largeIconCircle: 22
-        case .largePill: 22
+        case .large, .largePill:
+            return .title3
+        case .medium, .largeIconCircle:
+            return .headline
+        case .small:
+            return .subheadline
+        }
+    }
+    var font: Font {
+        .system(textStyle, design: .default)
+    }
+    var iconSize: Image.Scale {
+        switch self {
+        case .large, .largePill, .largeIconCircle:
+            return .large
+        case .medium:
+            return .medium
+        case .small:
+            return .small
         }
     }
 }
@@ -92,11 +104,29 @@ struct AppButtonStyle: ButtonStyle {
     let isEnabled: Bool
     let isIconOnly: Bool
     var overrideCircleSize: CGFloat? = nil
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+       
+    private var circleBase: CGFloat {
+        switch dynamicTypeSize {
+        case .xSmall, .small:
+            return 40
+        case .medium, .large:
+            return 44
+        default:
+            return 48
+        }
+    }
     
     func makeBody(configuration: Configuration) -> some View {
         let isCircle = isIconOnly && (size == .largeIconCircle)
-        let defaultCircleSize = size.iconSize + size.horizontalPadding * 2
-        let circleSize = overrideCircleSize ?? defaultCircleSize
+        let baseCircleSize: CGFloat = {
+            if let overrideCircleSize {
+                return overrideCircleSize
+            }
+            return max(size.minHeight, circleBase)
+        }()
+        
+        let circleSize = baseCircleSize
         
         return configuration.label
             .font(size.font)
@@ -146,8 +176,23 @@ struct ButtonComponent: View {
     var customCircleSize: CGFloat? = nil
     var action: () -> Void
     
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+        
+    private var iconPointSize: CGFloat {
+        switch dynamicTypeSize {
+        case .xSmall, .small:
+            return 16
+        case .medium, .large:
+            return 18
+        case .xLarge, .xxLarge, .xxxLarge:
+            return 20
+        default:
+            return 20
+        }
+    }
+
+    
     var body: some View {
-        // icon-only: ada icon, tidak ada title
         let isIconOnly = (title == nil && systemImage != nil)
         let effectiveKind: AppButtonStyleKind = isEnabled ? kind : .disabled
         
@@ -159,13 +204,13 @@ struct ButtonComponent: View {
             HStack(spacing: 8) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .font(.system(size: size.iconSize, weight: .semibold))
+                        .font(.system(size: iconPointSize, weight: .bold))
                 }
                 if let title {
                     Text(title)
                         .font(size.font)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+//                        .lineLimit(1)
+//                        .minimumScaleFactor(0.8)
                 }
             }
             .frame(maxWidth: fullWidth ? .infinity : nil)
