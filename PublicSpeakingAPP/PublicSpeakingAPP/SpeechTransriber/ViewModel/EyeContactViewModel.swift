@@ -18,7 +18,11 @@ struct GazeLogItem: Identifiable, Hashable {
 class EyeContactViewModel: ObservableObject {
     
     // Output ke View/SimulationVM
-    @Published var eyeContactRating: Int = 3 // Mulai dengan nilai sempurna (3)
+    @Published var eyeContactRating: Int = 3 {
+        didSet {
+            print("👀👀👀👀👀👀👀👀👀👀👀👀👀👀\n [EyeContactVM] Rating Berubah: \(oldValue) -> \(eyeContactRating)")
+        }
+    }
     @Published var statusLabel: String = "Kontak Mata Bagus"
     @Published var feedbackMessage: String = ""
     

@@ -28,13 +28,13 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
     
     private let gazeSmoothness: Int = 10
     private let gazeLerpFactor: CGFloat = 0.4
-    private let gazeSensitivity: Float = 4.0
+    private let gazeSensitivity: Float = 1.0
     private var recentGazePoints: [CGPoint] = []
     private var lastLerpedGazePoint: CGPoint = .zero
 
     let headPitchUpThreshold: Float = 0.08
     let headPitchDownThreshold: Float = -0.08
-    private let gazeThresholdVertical: CGFloat = 25.0
+    private let gazeThresholdVertical: CGFloat = 15.0
     
     private var latestFaceAnchor: ARFaceAnchor?
     private var gazeOrigin: CGPoint?
