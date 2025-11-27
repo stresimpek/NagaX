@@ -97,7 +97,7 @@ private extension NewEvaluationView {
                         Text(viewModel.tabTitle(for: tab))
                             .font(.footnote)
                             .fontWeight(viewModel.selectedTabIndex == index ? .bold : .regular)
-                            .foregroundColor(viewModel.selectedTabIndex == index ? Color("BaseColorBrown") : Color("BaseColorBrown").opacity(0.3))
+                            .foregroundColor(viewModel.selectedTabIndex == index ? Color("BaseColorBrown") : Color("BaseColorBrown"))
                             .padding(.vertical, 10)
                             .padding(.horizontal, 14)
                             .background(
@@ -358,8 +358,8 @@ struct EvaluationSectionView<Content: View>: View {
                 
                 Text(evaluatorNote)
                     .font(.body)
-                    .foregroundColor(.darkBlue)
-                    .underline(true, color: Color.baseColorBrown)
+                    .foregroundColor(.brownCapsule)
+                  
             }
             VStack (alignment: .leading){
                 Text(sectionTitle)

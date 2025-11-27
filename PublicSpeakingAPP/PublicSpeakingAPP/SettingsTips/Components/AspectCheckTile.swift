@@ -28,7 +28,7 @@ struct AspectCheckTile: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
-                    .foregroundColor(isSelected || !option.isEnabled ? .darkTurqoise : .baseColorWhite)
+                    .foregroundColor(isSelected || !option.isEnabled ? .darkBlue2 : .baseColorWhite)
                 
                 VStack {
                     Spacer(minLength: 0)
@@ -46,7 +46,7 @@ struct AspectCheckTile: View {
             .padding(.horizontal, 12)
             .frame(width: 134)
             .frame(minHeight: fixedHeight ?? 0, alignment: .top)
-            .foregroundColor(isSelected || !option.isEnabled ? .darkTurqoise : .baseColorWhite)
+            .foregroundColor(isSelected || !option.isEnabled ? .darkBlue2 : .baseColorWhite)
             .background(isSelected || !option.isEnabled ? Color.turqoise : Color.darkBlue2)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .shadow(color: isSelected || !option.isEnabled ? Color.shadowTurqoise : Color.darkBlue3,
