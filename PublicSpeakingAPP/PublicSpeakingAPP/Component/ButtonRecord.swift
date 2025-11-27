@@ -61,12 +61,11 @@ struct ButtonRecord: View {
             )
         )
         .disabled(!isEnabled || isLoading)
-        .accessibilityLabel(accessibilityLabel)
     }
     
-    private var accessibilityLabel: Text {
+    var accessibilityLabel: Text {
         if let title = title { return Text(title) }
         if let systemImage = systemImage { return Text(systemImage.replacingOccurrences(of: ".", with: " ")) }
-        return Text("Button")
+        return Text("Tombol")
     }
 }
