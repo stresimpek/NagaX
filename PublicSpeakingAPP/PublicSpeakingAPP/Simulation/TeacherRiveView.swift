@@ -94,11 +94,8 @@ private extension TeacherRiveView {
     }
     
     func announceMoodIfNeeded(_ mood: BelugaMood) {
-        // Hanya kalau VoiceOver aktif
         guard UIAccessibility.isVoiceOverRunning else { return }
-        // Jangan spam kalau mood sama
         guard lastAnnouncedMood != mood else { return }
-        // Optional: kalau neutral mau di-skip
         guard mood != .neutral else {
             lastAnnouncedMood = mood
             return
@@ -109,14 +106,23 @@ private extension TeacherRiveView {
         case .happy:
             message = "Beluga terlihat senang dengan performamu."
         case .angry:
-            message = "Beluga tampak kecewa. Coba perbaiki penyampaianmu."
+            message = "Beluga tampak kecewa dengan presentasimu."
         case .neutral:
-            message = "Beluga kembali netral."
+            message = "Beluga terlihat netral."
         }
         
+        let attributed = NSMutableAttributedString(string: message)
+        attributed.addAttribute(
+            .accessibilitySpeechLanguage,
+            value: "id-ID",
+            range: NSRange(location: 0, length: attributed.length)
+        )
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            UIAccessibility.post(notification: .announcement,
-                                 argument: message)
+            UIAccessibility.post(
+                notification: .announcement,
+                argument: attributed
+            )
             lastAnnouncedMood = mood
         }
     }
