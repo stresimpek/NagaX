@@ -13,11 +13,9 @@ struct MicroAnimation: View {
 
     init(
         artboardName: String? = nil
-//        stateMachineName: String? = nil
     ) {
         self.rive = RiveViewModel(
             fileName: "microAnimation",
-//            stateMachineName: stateMachineName,
             autoPlay: true,
             artboardName: artboardName
         )
@@ -25,6 +23,5 @@ struct MicroAnimation: View {
 
     var body: some View {
         rive.view()
-//            .aspectRatio(contentMode: .fit)
     }
 }

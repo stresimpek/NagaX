@@ -180,7 +180,7 @@ struct DatePickerView: View {
                                 HStack {
                                     Text(months.first(where: { $0.0 == selectedMonth })?.1 ?? "")
                                         .foregroundStyle(Color.white)
-                                        .lineLimit(1)
+//                                        .lineLimit(1)
                                     Spacer()
                                     Image(systemName: "chevron.up.chevron.down")
                                         .font(.body)

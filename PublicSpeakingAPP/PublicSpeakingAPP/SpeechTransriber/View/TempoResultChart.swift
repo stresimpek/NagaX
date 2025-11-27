@@ -48,6 +48,11 @@ struct TempoResultChart: View {
     private func clampToDomain(_ x: Double) -> Double {
         min(max(0, x), fixedDuration)
     }
+    
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var isAccessibilitySize: Bool {
+        dynamicTypeSize.isAccessibilitySize
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -152,8 +157,8 @@ struct TempoResultChart: View {
             }
             .chartXScale(domain: xDomain)
             .chartYScale(domain: 0...maxY)
-            .frame(height: 180)
-            .padding(.horizontal, 12)
+            .frame(height: isAccessibilitySize ? 500 : 180)
+            .padding(.horizontal, isAccessibilitySize ? 32 : 16)
             .chartOverlay { proxy in
                 GeometryReader { geo in
                     let plotFrame = geo[proxy.plotAreaFrame]
@@ -184,7 +189,7 @@ struct TempoResultChart: View {
                         )
                 }
             }
-            .padding(.vertical, 24)
+            .padding(.top, isAccessibilitySize ? 56 : 24)
             .accessibilityHidden(true)
             
             VStack(alignment: .leading, spacing: 8) {

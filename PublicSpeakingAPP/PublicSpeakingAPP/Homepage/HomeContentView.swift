@@ -33,8 +33,7 @@ struct HomeContentView: View {
             HStack {
                 Spacer()
                 CountdownRow(targetDate: targetDate)
-                    .font(.system(size: 16))
-                
+                    .font(.footnote)
                 Spacer()
                 Button(action: onDatePicker) {
                     Image(systemName: "calendar")
