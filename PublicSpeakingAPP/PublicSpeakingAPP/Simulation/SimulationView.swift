@@ -109,6 +109,7 @@ struct SimulationView: View {
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing)
                             .padding(.top, 16)
                             .accessibilityLabel("Jeda")
+                            .accessibilitySortPriority(4)
                             
                             Spacer()
                         }
@@ -154,7 +155,9 @@ struct SimulationView: View {
                             .background(.coral)
                             .cornerRadius(24)
                             .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
-                            .accessibilityHidden(true)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Telah merekam selama \(viewModel.formattedTime)")
+                            .accessibilitySortPriority(2)
                         } else {
                             HStack(alignment: .center, spacing: 6) {
                                 Image(systemName: "alarm.fill")
@@ -168,7 +171,9 @@ struct SimulationView: View {
                             .background(.darkBlue)
                             .cornerRadius(24)
                             .shadow(color: .darkBlue2, radius: 0, x: 0, y: 4)
-                            .accessibilityHidden(true)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Telah merekam selama \(viewModel.formattedTime)")
+                            .accessibilitySortPriority(2)
                         }
                         
                         Spacer()
@@ -207,6 +212,8 @@ struct SimulationView: View {
                                 action: viewModel.toggleRecording
                             )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing )
+                            .accessibilityLabel(viewModel.isRecording ? "Selesai Rekam" : "Mulai Rekam")
+                            .accessibilitySortPriority(viewModel.isRecording ? 3 : 1)
                             VStack(alignment: .leading) {
                                 if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
                                     Text(viewModel.whisperModelState.description)
@@ -288,7 +295,6 @@ struct SimulationView: View {
                         },
                         onPause: {
                             showPauseModal = false
-                            // Prevent any pending modal flags from showing
                             viewModel.whisperKitVM.showEarlyStopModal = false
                             viewModel.whisperKitVM.showEmptyTranscriptModal = false
                             viewModel.resumeAfterEarlyStop()
