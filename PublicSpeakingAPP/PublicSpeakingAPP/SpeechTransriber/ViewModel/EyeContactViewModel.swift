@@ -11,61 +11,68 @@ import Combine
 struct GazeLogItem: Identifiable, Hashable {
     let id = UUID()
     let timestamp: TimeInterval
-    let event: String // e.g., "Head Up", "Gaze Down"
+    let event: String
 }
 
 @MainActor
 class EyeContactViewModel: ObservableObject {
     
-    // Output ke View/SimulationVM
-    @Published var eyeContactRating: Int = 3 {
-        didSet {
-            print("👀👀👀👀👀👀👀👀👀👀👀👀👀👀\n [EyeContactVM] Rating Berubah: \(oldValue) -> \(eyeContactRating)")
-        }
-    }
+    @Published var eyeContactRating: Int = 3
     @Published var statusLabel: String = "Kontak Mata Bagus"
     @Published var feedbackMessage: String = ""
-    
-    // Log untuk Evaluasi Nanti
-    // UPDATED: Menggunakan struct eksternal GazeLogItem agar kompatibel dengan EvaluationView
     @Published var issueHistory: [GazeLogItem] = []
     
-    // Internal Logic Variables
     private var badEventCounter: Int = 0
-    private let badEventThreshold: Int = 2 // Sesuai request: 2 kali terima event jelek
+    private let badEventThreshold: Int = 2
     
-    // Fungsi Utama yang dipanggil dari SimulationViewModel
+    private var currentActiveEvent: HeadGazeEvent? = nil
+    
     func processEvent(_ event: HeadGazeEvent, at timestamp: TimeInterval) {
         
         switch event {
         case .normal:
-            // Jika kembali normal, reset counter dan kembalikan nilai ke 3
             badEventCounter = 0
+            if currentActiveEvent != nil {
+                currentActiveEvent = nil
+                print("[EyeContactVM] Recovered to Normal")
+            }
+            
             if eyeContactRating != 3 {
                 eyeContactRating = 3
                 statusLabel = "Kontak Mata Bagus"
                 feedbackMessage = ""
-                print("[EyeContactVM] Recovered to Normal (Rating: 3)")
             }
             
         case .headPitchUp, .headPitchDown, .gazeUp, .gazeDown:
-            // Jika event buruk, tambah counter
+            if let active = currentActiveEvent, active == event {
+                return
+            }
+            
+            if let active = currentActiveEvent {
+                if active == .headPitchUp && event == .gazeUp {
+                    return
+                }
+                if active == .headPitchDown && event == .gazeDown {
+                    return
+                }
+            }
+            
             badEventCounter += 1
             
-            // Cek apakah sudah mencapai ambang batas (2x terima event = 1 detik asumsi)
             if badEventCounter >= badEventThreshold {
+                
                 if eyeContactRating != 1 {
                     eyeContactRating = 1
-                    updateStatusLabel(for: event)
-                    
-                    // Catat ke history untuk report akhir
-                    // UPDATED: Menggunakan GazeLogItem
-                    let issueText = mapEventToString(event)
-                    let newLog = GazeLogItem(timestamp: timestamp, event: issueText)
-                    issueHistory.append(newLog)
-                    
-                    print("[EyeContactVM] Bad Event Threshold Reached! (Rating: 1) - Cause: \(issueText)")
                 }
+                
+                updateStatusLabel(for: event)
+                currentActiveEvent = event
+                
+                let issueText = mapEventToString(event)
+                let newLog = GazeLogItem(timestamp: timestamp, event: issueText)
+                issueHistory.append(newLog)
+                
+                print("[EyeContactVM] Logged: \(issueText) at \(timestamp)")
             }
         }
     }
@@ -89,16 +96,13 @@ class EyeContactViewModel: ObservableObject {
         }
     }
     
-    // Helper mapping agar sesuai dengan logika di EyeContactEvaluationView
-    // View kamu mengecek: type == "Up" ? ... : ...
     private func mapEventToString(_ event: HeadGazeEvent) -> String {
         switch event {
-        case .headPitchUp, .gazeUp:
-            return "Up"
-        case .headPitchDown, .gazeDown:
-            return "Down"
-        default:
-            return "Normal"
+        case .headPitchUp: return "HeadUp"
+        case .headPitchDown: return "HeadDown"
+        case .gazeUp: return "GazeUp"
+        case .gazeDown: return "GazeDown"
+        default: return "Normal"
         }
     }
     
@@ -107,6 +111,7 @@ class EyeContactViewModel: ObservableObject {
         statusLabel = "Kontak Mata Bagus"
         feedbackMessage = ""
         badEventCounter = 0
+        currentActiveEvent = nil
         issueHistory.removeAll()
     }
 }

@@ -100,13 +100,13 @@ struct EyeContactEvaluationView: View {
                     }
                 }
                 
-            
                 if !issues.isEmpty {
                     VStack {
                         Spacer()
                         HStack {
-                            let type = issues[currentIssueIndex].event // "Up" or "Down"
-                            Text(type == "Up" ? "Melihat ke Atas" : "Melihat ke Bawah")
+                            let type = issues[currentIssueIndex].event
+                            
+                            Text(labelForEvent(type))
                                 .font(.caption).bold()
                                 .padding(.vertical, 6)
                                 .padding(.horizontal, 12)
@@ -182,5 +182,20 @@ struct EyeContactEvaluationView: View {
         let min = Int(seconds) / 60
         let sec = Int(seconds) % 60
         return String(format: "%02d:%02d", min, sec)
+    }
+    
+    private func labelForEvent(_ event: String) -> String {
+        switch event {
+        case "HeadUp":
+            return "Kepala Terlalu Naik"
+        case "HeadDown":
+            return "Kepala Menunduk"
+        case "GazeUp":
+            return "Mata Melihat ke Atas"
+        case "GazeDown":
+            return "Mata Melihat ke Bawah"
+        default:
+            return "Gangguan Kontak Mata"
+        }
     }
 }
