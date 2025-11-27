@@ -209,8 +209,8 @@ struct ButtonComponent: View {
                 if let title {
                     Text(title)
                         .font(size.font)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+//                        .lineLimit(1)
+//                        .minimumScaleFactor(0.8)
                 }
             }
             .frame(maxWidth: fullWidth ? .infinity : nil)

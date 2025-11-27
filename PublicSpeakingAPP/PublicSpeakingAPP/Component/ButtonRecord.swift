@@ -43,8 +43,8 @@ struct ButtonRecord: View {
                     Text(title)
                         .font(size.font)
                         .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.8)
+//                        .lineLimit(2)
+//                        .minimumScaleFactor(0.8)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }

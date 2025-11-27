@@ -48,8 +48,8 @@ struct SettingsView: View {
                                 Text("Durasi")
                                     .font(.headline)
                                     .fixedSize(horizontal: false, vertical: true)
-                                    .lineLimit(2)
-                                    .minimumScaleFactor(0.7)
+//                                    .lineLimit(2)
+//                                    .minimumScaleFactor(0.7)
                                     .layoutPriority(1)
                                     .accessibilityHidden(true)
                                
@@ -80,8 +80,8 @@ struct SettingsView: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("Distraksi simulasi")
                                         .font(.headline)
-                                        .lineLimit(2)
-                                        .minimumScaleFactor(0.7)
+//                                        .lineLimit(2)
+//                                        .minimumScaleFactor(0.7)
                                         .fixedSize(horizontal: false, vertical: true)
                                     
                                     VStack(spacing: 4) {
@@ -120,12 +120,11 @@ struct SettingsView: View {
                                     }
                                 }
                             } else {
-                                // 👌 Mode normal: label kiri, slider kanan
                                 HStack(alignment: .top, spacing: 40) {
                                     Text("Distraksi simulasi")
                                         .font(.headline)
-                                        .lineLimit(2)
-                                        .minimumScaleFactor(0.7)
+//                                        .lineLimit(2)
+//                                        .minimumScaleFactor(0.7)
                                         .fixedSize(horizontal: false, vertical: true)
                                         .layoutPriority(1)
                                         .accessibilityHidden(true)
@@ -170,8 +169,8 @@ struct SettingsView: View {
                             HStack {
                                 Text("Aspek yang dievaluasi")
                                     .font(.headline)
-                                    .lineLimit(2)
-                                    .minimumScaleFactor(0.7)
+//                                    .lineLimit(2)
+//                                    .minimumScaleFactor(0.7)
                                     .fixedSize(horizontal: false, vertical: true)
                                     .accessibilityLabel("Pilih aspek yang ingin dievaluasi")
                             
