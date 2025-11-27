@@ -13,7 +13,6 @@ protocol SimulationARTrackerDelegate: AnyObject {
     func didUpdate(event: HeadGazeEvent)
 }
 
-// 1. Pastikan protokol ARSessionDelegate ada di sini
 class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     private let logInterval: TimeInterval = 1.0
@@ -25,10 +24,8 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
     weak var delegate: SimulationARTrackerDelegate?
     private var arView: ARSCNView!
     
-    // Recorder
     private let recorder = ARVideoRecorder()
     
-    // Gaze Variables
     private let gazeSmoothness: Int = 30
     private let gazeLerpFactor: CGFloat = 0.1
     private let gazeSensitivity: Float = 3.0
@@ -50,9 +47,19 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         self.view.backgroundColor = .clear
         setupARView()
         
-        // Observer
         NotificationCenter.default.addObserver(self, selector: #selector(handleStartRecording), name: NSNotification.Name("StartARRecording"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleStopRecording), name: NSNotification.Name("StopARRecording"), object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(handlePauseRecording), name: NSNotification.Name("PauseARRecording"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleResumeRecording), name: NSNotification.Name("ResumeARRecording"), object: nil)
+    }
+
+    @objc private func handlePauseRecording() {
+        recorder.pause()
+    }
+    
+    @objc private func handleResumeRecording() {
+        recorder.resume()
     }
     
     override func viewDidLayoutSubviews() {
@@ -68,8 +75,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         let configuration = ARFaceTrackingConfiguration()
         configuration.isLightEstimationEnabled = true
         
-        // ⚠️ BAGIAN PALING PENTING: MENYAMBUNG PIPA DATA ⚠️
-        // Kalau ini tidak ada, recorder tidak akan pernah menerima gambar.
         arView.session.delegate = self
         
         arView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
@@ -86,7 +91,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
             self.view.addSubview(arView)
             arView.alpha = 0.01
             self.view.sendSubviewToBack(arView)
-            // ----------------------
             
             arView.delegate = self
             arView.backgroundColor = .clear
@@ -100,14 +104,10 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
             ])
         }
     
-    // --- FUNGSI UTAMA: PIPA PENYALUR GAMBAR ---
-    // Fungsi ini dipanggil ARKit 60 kali per detik
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        // Kirim setiap frame ke recorder
         recorder.record(pixelBuffer: frame.capturedImage, timestamp: frame.timestamp)
     }
     
-    // --- Handler Recording ---
     @objc private func handleStartRecording() {
         let tempDir = FileManager.default.temporaryDirectory
         let fileName = "SelfieRec_\(UUID().uuidString).mp4"
@@ -122,17 +122,13 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         recorder.stop { url in
             if let url = url {
                 print("✅ ARVC: Video Berhasil Disimpan -> \(url.lastPathComponent)")
-                // Kirim balik ke ViewModel
                 NotificationCenter.default.post(name: NSNotification.Name("ARRecordingSaved"), object: nil, userInfo: ["url": url])
             } else {
                 print("❌ ARVC: Video Gagal Disimpan (URL nil)")
-                // Kirim notifikasi gagal agar ViewModel tetap lanjut evaluasi
                 NotificationCenter.default.post(name: NSNotification.Name("ARRecordingSaved"), object: nil, userInfo: nil)
             }
         }
     }
-    
-    // --- LOGIC GAZE TRACKING (TIDAK BERUBAH) ---
     
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         guard let frame = arView.session.currentFrame else { return }

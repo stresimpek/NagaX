@@ -377,13 +377,12 @@ extension NewEvaluationViewModel {
             }
             
         case .kontakMata:
-            switch result.eyeContactGrade {
-            case "A":
-                return try! AttributedString(markdown: "Kontak mata **sangat baik**.")
-            case "B":
-                return try! AttributedString(markdown: "Kontak mata **cukup baik**.")
-            default:
-                return try! AttributedString(markdown: "Kontak mata **perlu fokus**.")
+            let grade = result.eyeContactGrade
+            if grade == "A" {
+                 return try! AttributedString(markdown: "Kontak matamu **sangat terjaga** sepanjang presentasi.")
+            } else {
+                 let issuesCount = result.gazeEvents.count
+                 return try! AttributedString(markdown: "Terdeteksi **\(issuesCount)** kali gangguan kontak mata.")
             }
         }
     }

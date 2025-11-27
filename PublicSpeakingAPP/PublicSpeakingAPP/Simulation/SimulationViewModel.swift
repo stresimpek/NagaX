@@ -23,20 +23,31 @@ class SimulationViewModel: ObservableObject {
     private var hasPlayedOvertimeSound = false
     private var hasPlayedOverOneMinuteSound = false
     private var hasScheduledAutoStop = false
+    private var isAudioProcessingFinished = false
+    private var isVideoProcessingFinished = false
+    
+    @Published var recordedVideoURL: URL? = nil
     
     @Published var isPaused: Bool = false {
         didSet {
             if isPaused {
                 gameTimer?.invalidate()
                 gameTimer = nil
-                // Saat pause, kita tidak memproses update game logic
+                
+                NotificationCenter.default.post(name: NSNotification.Name("PauseARRecording"), object: nil)
+                
+                distractionPlayers.forEach { $0.pause() }
+                
             } else if !isPaused && isRecording {
-                // Resume timer jika masih recording
                 gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
                     DispatchQueue.main.async {
                         self?.updateGameLogic()
                     }
                 }
+                
+                NotificationCenter.default.post(name: NSNotification.Name("ResumeARRecording"), object: nil)
+                
+                distractionPlayers.forEach { $0.play() }
             }
         }
     }
@@ -47,7 +58,6 @@ class SimulationViewModel: ObservableObject {
     let tempoVM: TempoViewModel
     let fillerWordVM: FillerWordViewModel
     
-    // --- INTEGRASI BARU: EyeContactVM ---
     let eyeContactVM: EyeContactViewModel
     
     @Published var evaluationResult: EvaluationModel? = nil
@@ -83,7 +93,6 @@ class SimulationViewModel: ObservableObject {
         intonationAnalyzerVM: IntonationAnalyzerViewModel,
         tempoVM: TempoViewModel,
         fillerWordVM: FillerWordViewModel,
-        // Inject EyeContactVM (Changed to optional to fix MainActor isolation error)
         eyeContactVM: EyeContactViewModel? = nil
     ) {
         self.settings = settings
@@ -91,7 +100,6 @@ class SimulationViewModel: ObservableObject {
         self.intonationAnalyzerVM = intonationAnalyzerVM
         self.tempoVM = tempoVM
         self.fillerWordVM = fillerWordVM
-        // Initialize inside init body to ensure MainActor isolation
         self.eyeContactVM = eyeContactVM ?? EyeContactViewModel()
         
         self.whisperKitVM.$modelState
@@ -125,6 +133,8 @@ class SimulationViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
+        setupVideoProcessingObserver()
+        
         recordingStatus()
         
         setupRecordingObserver()
@@ -132,26 +142,46 @@ class SimulationViewModel: ObservableObject {
         setupMoodAggregation()
     }
     
-    // --- FUNGSI BARU: Menerima Event dari ARTracker ---
-    func updateHeadGazeEvent(_ event: HeadGazeEvent) {
-        // CEK PENTING:
-        // 1. Harus sedang Recording.
-        // 2. Tidak boleh sedang Pause (misal modal stop muncul).
-        guard isRecording, !isPaused else {
+    private func setupVideoProcessingObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleARRecordingSaved),
+            name: NSNotification.Name("ARRecordingSaved"),
+            object: nil
+        )
+    }
+    
+    @objc private func handleARRecordingSaved(_ notification: Notification) {
+        guard let url = notification.userInfo?["url"] as? URL else {
+            print("⚠️ VM: Mengabaikan sinyal video gagal/nil (menunggu sinyal sukses...)")
             return
         }
         
-        // Teruskan ke VM khusus
+        DispatchQueue.main.async {
+            print("🎥 VM: Video Valid Diterima -> \(url)")
+            self.recordedVideoURL = url
+            
+            self.isVideoProcessingFinished = true
+            
+            self.attemptToFinalizeEvaluation()
+        }
+    }
+    
+    func updateHeadGazeEvent(_ event: HeadGazeEvent) {
+        guard isRecording, !isPaused else {
+            return
+        }
         eyeContactVM.processEvent(event, at: Double(timerSeconds))
     }
     
     private func setupMoodAggregation() {
-        // Gabungkan publisher dari semua VM termasuk EyeContact
         intonationAnalyzerVM.$intonationRating
             .combineLatest(tempoVM.$tempoRating, fillerWordVM.$fillerRating, eyeContactVM.$eyeContactRating)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] (intonation, tempo, filler, eyeContact) in
                 guard let self = self else { return }
+                
+                guard !self.isPaused else { return }
                 
                 self.updateAggregateMood(
                     intonationRating: intonation,
@@ -164,6 +194,8 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func updateAggregateMood(intonationRating: Int, tempoRating: Int, fillerRating: Int, eyeContactRating: Int) {
+        
+        if isPaused { return }
         
         if isLockedOvertimeMood { return }
         
@@ -178,51 +210,49 @@ class SimulationViewModel: ObservableObject {
         if settings.selectedAspects.contains(.fillerWords) {
             activeRatings.append(fillerRating)
         }
-        // --- Tambahkan Kontak Mata jika dipilih di settings ---
+        
         if settings.selectedAspects.contains(.kontakMata) {
             activeRatings.append(eyeContactRating)
         }
         
-        // Filter nilai 0 (belum ada data)
         let validRatings = activeRatings.filter { $0 > 0 }
         
-        // Jika belum ada satupun rating valid, skip update mood
         guard !validRatings.isEmpty else { return }
 
-        // Hitung Rata-rata
         let avg = Double(validRatings.reduce(0, +)) / Double(validRatings.count)
         
-        // Konversi ke Mood Score (-1.0 s/d 1.0)
-        // Rating 1 (Buruk) -> -1.0
-        // Rating 2 (Cukup) -> 0.0
-        // Rating 3 (Bagus) -> 1.0
         let instantScore = (avg - 2.0)
         
-        // Smoothing (EMA) agar perubahan mood tidak terlalu drastis
         moodScoreEMA = emaAlpha * instantScore + (1.0 - emaAlpha) * moodScoreEMA
     }
     
     private func setupRecordingObserver() {
-        var prevRec: Bool? = nil
-        var prevTrans: Bool? = nil
-        
         whisperKitVM.$isRecording
             .combineLatest(whisperKitVM.$isTranscribing)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] (isRec, isTrans) in
                 guard let self = self else { return }
-                let justStopped = (prevRec != false || prevTrans != false) && (!isRec && !isTrans)
-                if justStopped && self.recordingStartTime != nil {
-                    if self.isStopModalActive {
-                        print(">>> Suppress evaluation: modal active.")
-                    } else {
-                        self.processEvaluation()
-                    }
+                
+                if !isRec && !isTrans && self.recordingStartTime != nil {
+                    self.isAudioProcessingFinished = true
+                    
+                    self.attemptToFinalizeEvaluation()
                 }
-                prevRec = isRec
-                prevTrans = isTrans
             }
             .store(in: &cancellables)
+    }
+    
+    private func attemptToFinalizeEvaluation() {
+        print("🔄 Checking Completion: Audio=\(isAudioProcessingFinished), Video=\(isVideoProcessingFinished)")
+        
+        guard isAudioProcessingFinished else { return }
+        
+        if isVideoProcessingFinished {
+             print("✅ BOTH Finished. Processing Evaluation now.")
+             processEvaluation()
+        } else {
+             print("⏳ Waiting for Video to finish saving...")
+        }
     }
     
     private func recordingStatus() {
@@ -298,12 +328,17 @@ class SimulationViewModel: ObservableObject {
 
         if shouldStart {
             startGame()
+            
+            NotificationCenter.default.post(name: NSNotification.Name("StartARRecording"), object: nil)
+            
             whisperKitVM.toggleRecording(
                 shouldLoop: true,
                 timerSeconds: Double(timerSeconds),
                 durationLimitSeconds: durationLimitSeconds
             )
         } else {
+            NotificationCenter.default.post(name: NSNotification.Name("StopARRecording"), object: nil)
+            
             whisperKitVM.toggleRecording(
                 shouldLoop: false,
                 timerSeconds: Double(timerSeconds),
@@ -313,6 +348,7 @@ class SimulationViewModel: ObservableObject {
     }
 
     private func processEvaluation() {
+        guard !isAnalysisComplete else { return }
         guard !isRecording else { return }
         guard !isStopModalActive else { return }
         guard recordingStartTime != nil else { return }
@@ -333,6 +369,8 @@ class SimulationViewModel: ObservableObject {
             tempoVM: tempoVM,
             intonationVM: intonationAnalyzerVM,
             fillerWordVM: fillerWordVM,
+            eyeContactVM: eyeContactVM,
+            videoURL: self.recordedVideoURL,
             duration: finalDuration,
             fullTranscript: finalTranscript,
             articulationCount: weakCount,
@@ -352,7 +390,9 @@ class SimulationViewModel: ObservableObject {
     
     private func startGame() {
         resetGame()
-
+        self.recordedVideoURL = nil
+        self.isAudioProcessingFinished = false
+        self.isVideoProcessingFinished = false
         self.isAnalysisComplete = false
         self.evaluationResult = nil
         self.finalTranscript = ""
@@ -374,7 +414,6 @@ class SimulationViewModel: ObservableObject {
         tempoVM.clearResults()
         intonationAnalyzerVM.clearResults()
         fillerWordVM.clearResults()
-        // --- RESET EyeContactVM saat mulai baru ---
         eyeContactVM.clearResults()
         
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in

@@ -206,7 +206,12 @@ private extension NewEvaluationView {
             .frame(maxWidth: .infinity)
             .padding()
         case .kontakMata:
-            Text("")
+            EyeContactEvaluationView(
+                videoURL: viewModel.result.videoURL,
+                gazeEvents: viewModel.result.gazeEvents
+            )
+            .frame(maxWidth: .infinity)
+            .padding()
         }
     }
     

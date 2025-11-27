@@ -14,14 +14,22 @@ class ARVideoRecorder {
     private var pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor?
     
     private var isRecording = false
+    private var isPaused = false
+    
     private var sessionStartTime: CMTime? = nil
     private var outputURL: URL?
 
+    private var totalPauseDuration: CMTime = .zero
+    private var pauseStartTimestamp: CMTime? = nil
+    
     private let frameSize = CGSize(width: 1300, height: 720)
     
     func start(outputURL: URL) {
         self.outputURL = outputURL
-        self.sessionStartTime = nil // Reset waktu mulai
+        self.sessionStartTime = nil
+        self.totalPauseDuration = .zero
+        self.pauseStartTimestamp = nil
+        self.isPaused = false
         
         if FileManager.default.fileExists(atPath: outputURL.path) {
             try? FileManager.default.removeItem(at: outputURL)
@@ -55,17 +63,27 @@ class ARVideoRecorder {
                 }
                 
                 if writer.startWriting() {
-                    // HAPUS BARIS INI: writer.startSession(atSourceTime: .zero)
-                    // KITA JANGAN MULAI SESSION DI SINI.
-                    
                     isRecording = true
-                    print("✅ ARVideoRecorder: Writer ready (Waiting for first frame)")
+                    print("✅ ARVideoRecorder: Writer ready")
                 }
             }
             
         } catch {
             print("❌ ARVideoRecorder Init Error: \(error)")
         }
+    }
+    
+    func pause() {
+        guard isRecording, !isPaused else { return }
+        isPaused = true
+        pauseStartTimestamp = nil
+        print("⏸️ ARVideoRecorder: PAUSED")
+    }
+    
+    func resume() {
+        guard isRecording, isPaused else { return }
+        isPaused = false
+        print("▶️ ARVideoRecorder: RESUMED")
     }
     
     func stop(completion: @escaping (URL?) -> Void) {
@@ -75,19 +93,17 @@ class ARVideoRecorder {
         }
         
         isRecording = false
+        isPaused = false
         input.markAsFinished()
         
         writer.finishWriting { [weak self] in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 if writer.status == .completed {
-                    print("✅ Video Saved: \(self.outputURL?.absoluteString ?? "")")
                     completion(self.outputURL)
                 } else {
-                    print("❌ Save Failed: \(writer.error?.localizedDescription ?? "Unknown error")")
                     completion(nil)
                 }
-                // Bersihkan resource
                 self.assetWriter = nil
                 self.videoInput = nil
                 self.pixelBufferAdaptor = nil
@@ -101,25 +117,32 @@ class ARVideoRecorder {
               let input = videoInput,
               let adaptor = pixelBufferAdaptor else { return }
         
-        if writer.status == .failed {
-            print("❌ Writer Failed: \(writer.error?.localizedDescription ?? "")")
-            isRecording = false
+        let currentTimestamp = CMTime(seconds: timestamp, preferredTimescale: 600)
+        
+        if isPaused {
+            if pauseStartTimestamp == nil {
+                pauseStartTimestamp = currentTimestamp
+            }
             return
         }
         
-        // Konversi timestamp dari ARKit ke CMTime
-        let presentationTime = CMTime(seconds: timestamp, preferredTimescale: 600)
-        
-        // LOGIKA KUNCI: Mulai session saat frame PERTAMA datang
-        if sessionStartTime == nil {
-            sessionStartTime = presentationTime
-            writer.startSession(atSourceTime: presentationTime)
-            print("🚀 ARVideoRecorder: Session Started at \(timestamp)")
+        if let pauseStart = pauseStartTimestamp {
+            let pauseDuration = CMTimeSubtract(currentTimestamp, pauseStart)
+            totalPauseDuration = CMTimeAdd(totalPauseDuration, pauseDuration)
+            pauseStartTimestamp = nil
         }
         
-        // Pastikan input siap
+        let adjustedTimestamp = CMTimeSubtract(currentTimestamp, totalPauseDuration)
+        
+        if sessionStartTime == nil {
+            sessionStartTime = adjustedTimestamp
+            writer.startSession(atSourceTime: adjustedTimestamp)
+        }
+        
         if input.isReadyForMoreMediaData {
-            adaptor.append(pixelBuffer, withPresentationTime: presentationTime)
+            if let start = sessionStartTime, adjustedTimestamp >= start {
+                adaptor.append(pixelBuffer, withPresentationTime: adjustedTimestamp)
+            }
         }
     }
 }

@@ -282,14 +282,11 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - Logic 2: Mic DAN Kamera (Khusus Kontak Mata)
     private func requestCameraAndMicrophone(for option: AspectOption) {
-        // 1. Cek/Minta Mic Dulu
         let micStatus = AVAudioApplication.shared.recordPermission
         
         switch micStatus {
         case .granted:
-            // Jika Mic sudah OK, lanjut cek Kamera
             checkCameraPermission(for: option)
             
         case .denied:
@@ -297,14 +294,11 @@ struct SettingsView: View {
             showPermissionAlert = true
             
         case .undetermined:
-            // Minta Mic dulu
             AVAudioApplication.requestRecordPermission { granted in
                 DispatchQueue.main.async {
                     if granted {
-                        // Jika user "Allow" Mic, langsung tanya Kamera
                         self.checkCameraPermission(for: option)
                     } else {
-                        // Jika Mic ditolak, tidak perlu tanya kamera, langsung stop
                     }
                 }
             }
@@ -318,7 +312,6 @@ struct SettingsView: View {
         
         switch cameraStatus {
         case .authorized:
-            // Mic OK (dari flow sebelumnya) + Kamera OK = Pilih Aspek
             selectedAspects.insert(option)
             
         case .denied, .restricted:
@@ -326,7 +319,6 @@ struct SettingsView: View {
             showPermissionAlert = true
             
         case .notDetermined:
-            // Minta Kamera
             AVCaptureDevice.requestAccess(for: .video) { granted in
                 DispatchQueue.main.async {
                     if granted {
