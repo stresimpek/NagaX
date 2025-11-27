@@ -248,8 +248,6 @@ struct SettingsView: View {
     }
     
     private func handleAspectSelection(for option: AspectOption) {
-        // Asumsi: 'kontakMata' adalah nama case di enum AspectOption kamu.
-        // Jika namanya berbeda (misal: .eyeContact), silakan sesuaikan di baris bawah ini.
         if option == .kontakMata {
             requestCameraAndMicrophone(for: option)
         } else {
@@ -257,7 +255,6 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - Logic 1: Hanya Mic (untuk aspek selain kontak mata)
     private func requestMicrophoneOnly(for option: AspectOption) {
         let status = AVAudioApplication.shared.recordPermission
         

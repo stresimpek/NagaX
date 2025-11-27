@@ -243,15 +243,20 @@ class SimulationViewModel: ObservableObject {
     }
     
     private func attemptToFinalizeEvaluation() {
-        print("🔄 Checking Completion: Audio=\(isAudioProcessingFinished), Video=\(isVideoProcessingFinished)")
-        
         guard isAudioProcessingFinished else { return }
         
-        if isVideoProcessingFinished {
-             print("✅ BOTH Finished. Processing Evaluation now.")
-             processEvaluation()
+        let isEyeContactMode = settings.selectedAspects.contains(.kontakMata)
+        
+        if isEyeContactMode {
+            if isVideoProcessingFinished {
+                 print("✅ BOTH Finished (Audio & Video). Processing Evaluation now.")
+                 processEvaluation()
+            } else {
+                 print("⏳ Waiting for Video to finish saving...")
+            }
         } else {
-             print("⏳ Waiting for Video to finish saving...")
+            print("✅ Audio Finished. No Video needed. Processing Evaluation now.")
+            processEvaluation()
         }
     }
     

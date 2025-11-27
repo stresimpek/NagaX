@@ -26,9 +26,9 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
     
     private let recorder = ARVideoRecorder()
     
-    private let gazeSmoothness: Int = 30
-    private let gazeLerpFactor: CGFloat = 0.1
-    private let gazeSensitivity: Float = 3.0
+    private let gazeSmoothness: Int = 10
+    private let gazeLerpFactor: CGFloat = 0.4
+    private let gazeSensitivity: Float = 4.0
     private var recentGazePoints: [CGPoint] = []
     private var lastLerpedGazePoint: CGPoint = .zero
 
