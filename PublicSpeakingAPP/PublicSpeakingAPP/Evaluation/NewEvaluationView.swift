@@ -358,7 +358,8 @@ struct EvaluationSectionView<Content: View>: View {
                 
                 Text(evaluatorNote)
                     .font(.body)
-                    .foregroundColor(.brownCapsule)
+                    .foregroundColor(.darkBlue3)
+                    .underline(true, color: Color.baseColorBrown)
                   
             }
             VStack (alignment: .leading){
