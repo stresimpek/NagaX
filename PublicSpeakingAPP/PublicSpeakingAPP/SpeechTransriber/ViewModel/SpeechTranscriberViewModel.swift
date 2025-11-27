@@ -491,7 +491,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 Task {
                     do {
                         try await transcribeFullSession()
-                        finalizeText()
+                        await finalizeText()
                         await self.analyzeTranscriptSentence()
                     } catch {
                         print("Error during full session transcription: \(error.localizedDescription)")
@@ -520,7 +520,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
                 } catch {
                     print("Error during final transcription: \(error.localizedDescription)")
                 }
-                finalizeText()
+                await finalizeText()
                 await self.analyzeTranscriptSentence()
 
                 await MainActor.run {
@@ -701,6 +701,12 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     hypothesisText = ""
                 }
 
+                    
+                if !hypothesisWords.isEmpty {
+                    confirmedWords.append(contentsOf: hypothesisWords)
+                    hypothesisWords = []
+                }
+                
                 if !unconfirmedSegments.isEmpty {
                     confirmedSegments.append(contentsOf: unconfirmedSegments)
                     unconfirmedSegments = []
@@ -1114,7 +1120,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
         } catch {
             print("[EagerMode] Error: \(error)")
-            finalizeText()
+            await finalizeText()
         }
 
         let mergedResult = TranscriptionUtilities.mergeTranscriptionResults(eagerResults, confirmedWords: confirmedWords)
@@ -1345,9 +1351,8 @@ private extension SpeechTranscriberViewModel {
                 try? await transcribeEagerMode(Array(currentBuffer))
             }
         }
-        
+        await finalizeText()
         await MainActor.run {
-            finalizeText()
             updateHasSpokenInSession()
             print("[Flush] Finalized text: '\(confirmedText)'")
         }
