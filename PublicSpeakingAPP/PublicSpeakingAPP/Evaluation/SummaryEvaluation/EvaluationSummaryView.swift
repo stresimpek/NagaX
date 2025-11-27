@@ -49,19 +49,44 @@ struct EvaluationSummaryView: View {
                             )
                             .padding(.bottom, 10)
                         
-                        ScrollView(showsIndicators: false) {
-                            LazyVGrid(columns: columns, spacing: 12) {
-                                ForEach(viewModel.summaryItems) { item in
-                                    EvaluationSummaryCard(
-                                        item: item,
-                                        fixedHeight: maxCardHeight > 0 ? maxCardHeight : nil
+                        ScrollView(showsIndicators: true) {
+                            VStack {
+                                LazyVGrid(columns: columns, spacing: 12) {
+                                    ForEach(viewModel.summaryItems) { item in
+                                        EvaluationSummaryCard(
+                                            item: item,
+                                            fixedHeight: maxCardHeight > 0 ? maxCardHeight : nil
+                                        )
+                                    }
+                                }
+                                .onPreferenceChange(CardHeightPreferenceKey.self) { newHeight in
+                                    maxCardHeight = newHeight
+                                }
+                                .padding(.bottom, 16)
+                                
+                                HStack(spacing: 12) {
+                                    ButtonComponent(
+                                        title: "Latihan Lagi",
+                                        systemImage: nil,
+                                        size: .largePill,
+                                        kind: .secondaryBlue,
+                                        fullWidth: false,
+                                        action: onPracticeAgain
+                                    )
+
+                                    ButtonComponent(
+                                        title: "Lihat Detail",
+                                        systemImage: nil,
+                                        size: .largePill,
+                                        kind: .primaryYellow,
+                                        fullWidth: false,
+                                        action: onViewDetails
                                     )
                                 }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.top, 4)
+                                .padding(.bottom, 10)
                             }
-                            .padding(.bottom, 10)
-                        }
-                        .onPreferenceChange(CardHeightPreferenceKey.self) { newHeight in
-                            maxCardHeight = newHeight
                         }
                         .mask(
                             LinearGradient(
@@ -75,24 +100,6 @@ struct EvaluationSummaryView: View {
                             )
                         )
                         .padding(.bottom, 10)
-                        
-                        HStack(spacing: 12) {
-                            ButtonComponent(
-                                title: "Latihan Lagi",
-                                systemImage: nil,
-                                size: .largePill,
-                                kind: .secondaryBlue,
-                                action: onPracticeAgain
-                            )
-                            
-                            ButtonComponent(
-                                title: "Lihat Detail",
-                                systemImage: nil,
-                                size: .largePill,
-                                kind: .primaryYellow,
-                                action: onViewDetails
-                            )
-                        }
                     }
                     .padding(.horizontal, 130)
                     .padding(.top, 20)
