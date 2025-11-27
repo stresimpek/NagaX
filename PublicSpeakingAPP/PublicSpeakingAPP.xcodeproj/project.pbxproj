@@ -99,11 +99,15 @@
 		};
 		12BCF37D2E8BACB500FD1CF8 /* PublicSpeakingAPPTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = PublicSpeakingAPPTests;
 			sourceTree = "<group>";
 		};
 		12BCF3872E8BACB500FD1CF8 /* PublicSpeakingAPPUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = PublicSpeakingAPPUITests;
 			sourceTree = "<group>";
 		};
@@ -448,13 +452,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -469,13 +469,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -490,13 +486,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests/Pods-PublicSpeakingAPP-PublicSpeakingAPPUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -511,13 +503,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PublicSpeakingAPP/Pods-PublicSpeakingAPP-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
