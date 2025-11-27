@@ -41,6 +41,8 @@ struct EmptyTranscriptModalView: View {
                         Image("SetupPaper")
                             .resizable()
                             .resizable(resizingMode: .stretch)
+                            .accessibilityHidden(true)
+
                     )
                     .frame(width: 450)
                     

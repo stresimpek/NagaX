@@ -265,6 +265,7 @@ struct SimulationView: View {
                     )
                     .transition(.opacity)
                     .zIndex(20)
+                    .accessibilityAddTraits(.isModal)
                 }
                             
                 if viewModel.whisperKitVM.showEmptyTranscriptModal && !showPauseModal {
@@ -278,6 +279,7 @@ struct SimulationView: View {
                     )
                     .transition(.opacity)
                     .zIndex(20)
+                    .accessibilityAddTraits(.isModal)
                 }
                 
                 if showPauseModal {
@@ -301,6 +303,7 @@ struct SimulationView: View {
                         }
                     )
                     .zIndex(20)
+                    .accessibilityAddTraits(.isModal)
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)

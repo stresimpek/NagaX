@@ -41,6 +41,7 @@ struct EarlyStopModalView: View {
                         Image("SetupPaper")
                             .resizable()
                             .resizable(resizingMode: .stretch)
+                            .accessibilityHidden(true)
                     )
                     .frame(width: 370)
                     Spacer()
