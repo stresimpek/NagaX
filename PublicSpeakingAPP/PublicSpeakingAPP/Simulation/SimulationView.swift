@@ -98,7 +98,7 @@ struct SimulationView: View {
                                 kind: .primaryYellow,
                                 action: {
                                                 viewModel.pauseForModal()  // Use new function
-                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
                                                     showPauseModal = true
                                                 }
                                             }
@@ -251,7 +251,7 @@ struct SimulationView: View {
                 hasShownOvertimeBanner = false
             }
             .overlay {
-                if viewModel.whisperKitVM.showEarlyStopModal && !showPauseModal {
+                if viewModel.whisperKitVM.showEarlyStopModal && !showPauseModal && !viewModel.isManualPause {
                     EarlyStopModalView(
                         onContinue: {
                             viewModel.resumeAfterEarlyStop()
@@ -264,7 +264,7 @@ struct SimulationView: View {
                     .zIndex(20)
                 }
                             
-                if viewModel.whisperKitVM.showEmptyTranscriptModal && !showPauseModal {
+                if viewModel.whisperKitVM.showEmptyTranscriptModal && !showPauseModal && !viewModel.isManualPause{
                     EmptyTranscriptModalView(
                         onRestart: {
                             viewModel.restartAfterEmptyTranscript()
@@ -281,6 +281,7 @@ struct SimulationView: View {
                     BackModalView(
                         onBackHome: {
                             showPauseModal = false
+                            viewModel.isManualPause = false
                             onBack()
                         },
                         onPause: {
