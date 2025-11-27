@@ -278,22 +278,30 @@ struct SimulationView: View {
                 }
                 
                 if showPauseModal {
-                    BackModalView(
-                        onBackHome: {
-                            showPauseModal = false
-                            viewModel.isManualPause = false
-                            onBack()
-                        },
-                        onPause: {
-                            showPauseModal = false
-                            viewModel.resumeAfterEarlyStop()
-                        },
-                        onRetry: {
-                            showPauseModal = false
-                            viewModel.restartAfterEmptyTranscript()
+                        ZStack {
+                            Color.black.opacity(0.5)
+                                .ignoresSafeArea()
+                                .onTapGesture {
+                                }
+                            
+                            BackModalView(
+                                onBackHome: {
+                                    showPauseModal = false
+                                    viewModel.isManualPause = false
+                                    onBack()
+                                },
+                                onPause: {
+                                    showPauseModal = false
+                                    viewModel.resumeAfterEarlyStop()
+                                },
+                                onRetry: {
+                                    showPauseModal = false
+                                    viewModel.restartAfterEmptyTranscript()
+                                }
+                            )
                         }
-                    )
-                    .zIndex(20)
+                        .transition(.opacity)
+                        .zIndex(20)
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
