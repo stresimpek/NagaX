@@ -34,7 +34,7 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
 
     let headPitchUpThreshold: Float = 0.08
     let headPitchDownThreshold: Float = -0.08
-    private let gazeThresholdVertical: CGFloat = 15.0
+    private let gazeThresholdVertical: CGFloat = 25.0
     
     private var latestFaceAnchor: ARFaceAnchor?
     private var gazeOrigin: CGPoint?
