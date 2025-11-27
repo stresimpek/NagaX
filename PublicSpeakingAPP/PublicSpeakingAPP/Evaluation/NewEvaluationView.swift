@@ -389,7 +389,7 @@ struct EvaluationSectionView<Content: View>: View {
             HStack(alignment: .center, spacing: 12) {
                 Text(emptyStateMessage)
                     .font(.title3)
-                    .foregroundColor(Color.baseColorBrown.opacity(0.5))
+                    .foregroundColor(Color.baseColorBrown)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, minHeight: 152.8125, maxHeight: 152.8125, alignment: .center)
