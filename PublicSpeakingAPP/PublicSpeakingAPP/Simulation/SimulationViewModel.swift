@@ -298,7 +298,6 @@ class SimulationViewModel: ObservableObject {
             return
         }
         
-        // ✅ ADD THIS CHECK
         guard !isManualPause else {
             print("Evaluation skipped: manual pause active.")
             return
@@ -519,7 +518,7 @@ extension SimulationViewModel {
     }
     
     func resumeAfterEarlyStop() {
-        isManualPause = false  // ✅ Clear the pause flag
+        isManualPause = false  //  Clear the pause flag
         whisperKitVM.continueRecording(shouldLoop: true)
         if gameTimer == nil {
             gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -531,7 +530,7 @@ extension SimulationViewModel {
 
     
     func restartAfterEmptyTranscript() {
-        isManualPause = false  // ✅ Clear the pause flag
+        isManualPause = false  //  Clear the pause flag
         stopGame()
         whisperKitVM.restartSession(shouldLoop: true)
         startGame()

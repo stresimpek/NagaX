@@ -94,7 +94,7 @@ struct SimulationView: View {
                                 size: .largeIconCircle,
                                 kind: .primaryYellow,
                                 action: {
-                                                viewModel.pauseForModal()  // ✅ Use new function
+                                                viewModel.pauseForModal()  // Use new function
                                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                                                     showPauseModal = true
                                                 }
