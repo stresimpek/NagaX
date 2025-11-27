@@ -94,14 +94,11 @@ struct SimulationView: View {
                                 size: .largeIconCircle,
                                 kind: .primaryYellow,
                                 action: {
-                                    viewModel.toggleRecording()
-                                    // Clear any modal flags that might have been triggered
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                        viewModel.whisperKitVM.showEarlyStopModal = false
-                                        viewModel.whisperKitVM.showEmptyTranscriptModal = false
-                                        showPauseModal = true
-                                    }
-                                }
+                                                viewModel.pauseForModal()  // ✅ Use new function
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                                    showPauseModal = true
+                                                }
+                                            }
                             )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing)
                             .padding(.top, 16)
@@ -266,15 +263,10 @@ struct SimulationView: View {
                         },
                         onPause: {
                             showPauseModal = false
-                            // Prevent any pending modal flags from showing
-                            viewModel.whisperKitVM.showEarlyStopModal = false
-                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
                             viewModel.resumeAfterEarlyStop()
                         },
                         onRetry: {
                             showPauseModal = false
-                            viewModel.whisperKitVM.showEarlyStopModal = false
-                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
                             viewModel.restartAfterEmptyTranscript()
                         }
                     )

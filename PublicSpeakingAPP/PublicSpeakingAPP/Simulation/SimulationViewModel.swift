@@ -24,6 +24,8 @@ class SimulationViewModel: ObservableObject {
     private var hasPlayedOverOneMinuteSound = false
     private var hasScheduledAutoStop = false
     
+    @Published var isManualPause: Bool = false
+    
     @Published var isPaused: Bool = false {
             didSet {
                 if isPaused {
@@ -280,6 +282,7 @@ class SimulationViewModel: ObservableObject {
             )
         } else {
             print("Requesting STOP recording...")
+            stopGame()
             whisperKitVM.toggleRecording(
                 shouldLoop: false,
                 timerSeconds: Double(timerSeconds),
@@ -294,6 +297,13 @@ class SimulationViewModel: ObservableObject {
             print("Evaluation skipped: modal active.")
             return
         }
+        
+        // ✅ ADD THIS CHECK
+        guard !isManualPause else {
+            print("Evaluation skipped: manual pause active.")
+            return
+        }
+        
         guard recordingStartTime != nil else { return }
         
         recordingStartTime = nil
@@ -502,7 +512,14 @@ extension SimulationViewModel {
         whisperKitVM.showEarlyStopModal || whisperKitVM.showEmptyTranscriptModal
     }
     
+    func pauseForModal() {
+        guard isRecording else { return }
+        isManualPause = true  // Set flag BEFORE stopping
+        toggleRecording()      // Now stop recording
+    }
+    
     func resumeAfterEarlyStop() {
+        isManualPause = false  // ✅ Clear the pause flag
         whisperKitVM.continueRecording(shouldLoop: true)
         if gameTimer == nil {
             gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -511,8 +528,10 @@ extension SimulationViewModel {
         }
         isPaused = false
     }
+
     
     func restartAfterEmptyTranscript() {
+        isManualPause = false  // ✅ Clear the pause flag
         stopGame()
         whisperKitVM.restartSession(shouldLoop: true)
         startGame()
