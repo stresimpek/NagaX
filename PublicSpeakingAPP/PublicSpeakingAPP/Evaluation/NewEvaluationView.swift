@@ -95,7 +95,8 @@ private extension NewEvaluationView {
                 ForEach(Array(viewModel.availableTabs.enumerated()), id: \.offset) { index, tab in
                     Button(action: { viewModel.selectTab(index) }) {
                         Text(viewModel.tabTitle(for: tab))
-                            .font(.system(size: 13, weight: viewModel.selectedTabIndex == index ? .bold : .regular))
+                            .font(.footnote)
+                            .fontWeight(viewModel.selectedTabIndex == index ? .bold : .regular)
                             .foregroundColor(viewModel.selectedTabIndex == index ? Color("BaseColorBrown") : Color("BaseColorBrown").opacity(0.3))
                             .padding(.vertical, 10)
                             .padding(.horizontal, 14)
@@ -526,3 +527,4 @@ struct DiffRenderView: View {
             .joined()
     }
 }
+

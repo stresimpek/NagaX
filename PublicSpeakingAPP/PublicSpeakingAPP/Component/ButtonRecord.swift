@@ -18,6 +18,12 @@ struct ButtonRecord: View {
     var customCircleSize: CGFloat? = nil
     var action: () -> Void
     
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+        
+    private var iconPointSize: CGFloat {
+        dynamicTypeSize.isAccessibilitySize ? 18 : 22
+    }
+    
     var body: some View {
         let isIconOnly = (title == nil && systemImage != nil)
         let effectiveKind: AppButtonStyleKind = isEnabled ? kind : .disabled
@@ -30,14 +36,16 @@ struct ButtonRecord: View {
             HStack(spacing: 8) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .font(.system(size: size.iconSize, weight: .semibold))
+                        .font(.system(size: iconPointSize, weight: .semibold))
                         .foregroundStyle(Color(.red))
                 }
                 if let title {
                     Text(title)
                         .font(size.font)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .multilineTextAlignment(.center)
+//                        .lineLimit(2)
+//                        .minimumScaleFactor(0.8)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .frame(maxWidth: fullWidth ? .infinity : nil)

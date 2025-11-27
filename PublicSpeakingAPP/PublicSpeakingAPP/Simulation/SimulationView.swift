@@ -47,6 +47,9 @@ struct SimulationView: View {
     
     @AppStorage("objectiveDontShowAgain") private var objectiveDontShowAgain = false
     
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var isAccessibilitySize: Bool { dynamicTypeSize.isAccessibilitySize }
+    
     private var isProcessing: Bool {
         let status = viewModel.whisperKitVM.recordingStatus
         return !viewModel.isRecording
@@ -130,10 +133,20 @@ struct SimulationView: View {
                     Spacer()
 
                     HStack(alignment: .bottom) {
+                        let alarmIconSize: CGFloat = isAccessibilitySize ? 18 : 22
+                        let timerFont: Font = {
+                           if viewModel.isOvertime {
+                               return isAccessibilitySize ? .headline : .title
+                           } else {
+                               return isAccessibilitySize ? .headline : .title2
+                           }
+                        }()
                         if viewModel.isOvertime {
-                            HStack (alignment: .center) {
+                            HStack(alignment: .center, spacing: 6) {
                                 Image(systemName: "alarm.fill")
+                                    .font(.system(size: alarmIconSize, weight: .semibold))
                                 Text(viewModel.formattedTime)
+                                    .font(timerFont)
                             }
                             .font(.title)
                             .padding(12)
@@ -143,9 +156,11 @@ struct SimulationView: View {
                             .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
                             .accessibilityHidden(true)
                         } else {
-                            HStack (alignment: .center) {
+                            HStack(alignment: .center, spacing: 6) {
                                 Image(systemName: "alarm.fill")
+                                    .font(.system(size: alarmIconSize, weight: .semibold))
                                 Text(viewModel.formattedTime)
+                                    .font(timerFont)
                             }
                             .font(.title2)
                             .padding(12)
@@ -163,7 +178,7 @@ struct SimulationView: View {
                                 AudioVisualizerModalView(micMonitor: micMonitor)
                                     .padding(.leading, 30)
                                     .padding(.trailing, 0)
-                                    .frame(width: 280, height: 50)
+                                    .frame(width: isAccessibilitySize ? 240 : 280, height: 50)
                                     .frame(alignment: .leading)
                                     .background(Color.black.opacity(0.27))
                                     .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -177,8 +192,15 @@ struct SimulationView: View {
                         Spacer()
                         
                         HStack(spacing: 5) {
+                            let recordTitle: String = {
+                                if viewModel.isRecording {
+                                    return isAccessibilitySize ? "Selesai\nRekam" : "Selesai Rekam"
+                                } else {
+                                    return isAccessibilitySize ? "Mulai\nRekam" : "Mulai Rekam"
+                                }
+                            }()
                             ButtonRecord(
-                                title: viewModel.isRecording ? "Selesai Rekam" : "Mulai Rekam",
+                                title: recordTitle,
                                 systemImage: viewModel.isRecording ? "stop.fill" : "circle.fill",
                                 size: .large,
                                 kind: .primaryYellow,
