@@ -21,36 +21,32 @@ struct EvaluationSummaryView: View {
     ]
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Image("BG")
+        ZStack {
+            // Background wallpaper
+            Image("HandBG")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .ignoresSafeArea()
                 .accessibilityHidden(true)
             
-            Image("HandPaper")
-                .resizable()
-                .scaledToFit()
-                .padding(.horizontal, 30)
-                .accessibilityHidden(true)
-                .overlay(
+            GeometryReader { proxy in
+                ScrollView(.vertical, showsIndicators: true) {
                     VStack(spacing: 0) {
-                        
-                        Text("LEMBAR EVALUASI")
-                            .font(.title2.weight(.black))
-                            .foregroundColor(Color("BaseColorBrown"))
-                            .padding(.bottom, 1)
-                            .background(
-                                Rectangle()
-                                    .fill(Color("BaseColorBrown"))
-                                    .frame(height: 3)
-                                    .cornerRadius(10)
-                                , alignment: .bottom
-                            )
-                            .padding(.bottom, 10)
-                        
-                        ScrollView(showsIndicators: true) {
-                            VStack {
+                        VStack(spacing: 0) {
+                            Text("LEMBAR EVALUASI")
+                                .font(.title2.weight(.black))
+                                .foregroundColor(Color("BaseColorBrown"))
+                                .padding(.bottom, 1)
+                                .background(
+                                    Rectangle()
+                                        .fill(Color("BaseColorBrown"))
+                                        .frame(height: 3)
+                                        .cornerRadius(10)
+                                    , alignment: .bottom
+                                )
+                                .padding(.vertical, 18)
+
+                            VStack(spacing: 31) {
                                 LazyVGrid(columns: columns, spacing: 12) {
                                     ForEach(viewModel.summaryItems) { item in
                                         EvaluationSummaryCard(
@@ -62,8 +58,10 @@ struct EvaluationSummaryView: View {
                                 .onPreferenceChange(CardHeightPreferenceKey.self) { newHeight in
                                     maxCardHeight = newHeight
                                 }
-                                .padding(.bottom, 16)
-                                
+                                .padding(.horizontal, 32)
+                                .padding(.top, 8)
+
+                                // Buttons
                                 HStack(spacing: 12) {
                                     ButtonComponent(
                                         title: "Latihan Lagi",
@@ -84,29 +82,25 @@ struct EvaluationSummaryView: View {
                                     )
                                 }
                                 .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.top, 4)
-                                .padding(.bottom, 10)
+                                .padding(.top, 12)
+                                .padding(.bottom, 30)
                             }
                         }
-                        .mask(
-                            LinearGradient(
-                                gradient: Gradient(stops: [
-                                    .init(color: .black, location: 0.0),
-                                    .init(color: .black, location: 0.9),
-                                    .init(color: .clear, location: 1.0)
-                                ]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
+                        .frame(maxWidth: 860)
+                        .frame(minHeight: proxy.size.height)
+                        .background(
+                           Color("LightYellow")
                         )
-                        .padding(.bottom, 10)
+                        .padding(.top, 32)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.horizontal, 16)
+                        .safeAreaPadding(.horizontal)
                     }
-                    .padding(.horizontal, 130)
-                    .padding(.top, 20)
-                    .padding(.bottom, 30)
-                )
+                    .frame(maxWidth: .infinity)
+                }
+                .ignoresSafeArea(edges: .bottom)
+            }
+            .navigationBarBackButtonHidden(true)
         }
-        .navigationBarBackButtonHidden(true)
-        .ignoresSafeArea(edges: .bottom)
     }
 }
