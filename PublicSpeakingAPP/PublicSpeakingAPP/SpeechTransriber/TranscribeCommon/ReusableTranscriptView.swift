@@ -65,7 +65,7 @@ struct ReusableTranscriptCardView: View {
             .padding(.bottom)
             
             Text(page.attributedString)
-                .font(.system(.body, design: .serif))
+                .font(.body)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
             
