@@ -58,7 +58,7 @@ struct EvaluationSummaryView: View {
                                 .onPreferenceChange(CardHeightPreferenceKey.self) { newHeight in
                                     maxCardHeight = newHeight
                                 }
-                                .padding(.horizontal, 20)
+                                .padding(.horizontal, 32)
                                 .padding(.top, 8)
 
                                 // Buttons
