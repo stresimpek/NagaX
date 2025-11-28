@@ -26,6 +26,8 @@ struct TeacherRiveView: View {
     @State private var lastSent: Double = 0.0
     
     @State private var currentMood: BelugaMood = .neutral
+    
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
 
     init(sim: SimulationViewModel) {
         self._sim = ObservedObject(initialValue: sim)
@@ -35,9 +37,7 @@ struct TeacherRiveView: View {
     var body: some View {
         ctrl.view()
             .accessibilityElement(children: .ignore)
-            // Label statis, value dinamis → dibaca saat elemen fokus saja
             .accessibilityLabel(moodDescription)
-//            .accessibilityValue(moodDescription)
             .accessibilitySortPriority(sim.isRecording ? 1 : 3)
             .onAppear {
                 Task { @MainActor in
@@ -45,7 +45,12 @@ struct TeacherRiveView: View {
                     ctrl.setScore(0.0)
                     lastSent = 0.0
                     currentMood = .neutral
+                    
+                    ctrl.triggerDifferentiateWithoutColor(value: differentiateWithoutColor)
                 }
+            }
+            .onChange(of: differentiateWithoutColor) { newValue in
+                ctrl.triggerDifferentiateWithoutColor(value: newValue)
             }
             .onReceive(sim.$presentationScore
                 .map { ($0 * 100).rounded() / 100 }
@@ -63,7 +68,7 @@ struct TeacherRiveView: View {
                     mood = .neutral
                 }
                 
-                currentMood = mood        // update value VoiceOver
+                currentMood = mood
                 ctrl.setScore(score)
                 lastSent = score
             }
