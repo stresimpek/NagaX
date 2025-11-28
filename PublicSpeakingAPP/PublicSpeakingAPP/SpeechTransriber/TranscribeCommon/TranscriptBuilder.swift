@@ -91,7 +91,7 @@ struct TranscriptBuilder {
                 
                 if isProblematic(word) {
                     str.foregroundColor = .baseColorRed
-                    str.font = .system(.body, design: .serif).bold()
+                    str.font = .body.bold()
                     
                     let globalIndex = start + localOffset
                     problematicGlobalIndicesOnThisPage.append(globalIndex)

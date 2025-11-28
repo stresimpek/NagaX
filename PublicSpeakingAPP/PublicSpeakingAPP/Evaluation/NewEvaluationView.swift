@@ -97,7 +97,7 @@ private extension NewEvaluationView {
                         Text(viewModel.tabTitle(for: tab))
                             .font(.footnote)
                             .fontWeight(viewModel.selectedTabIndex == index ? .bold : .regular)
-                            .foregroundColor(viewModel.selectedTabIndex == index ? Color("BaseColorBrown") : Color("BaseColorBrown").opacity(0.3))
+                            .foregroundColor(viewModel.selectedTabIndex == index ? Color("BaseColorBrown") : Color("BaseColorBrown"))
                             .padding(.vertical, 10)
                             .padding(.horizontal, 14)
                             .background(
@@ -363,8 +363,9 @@ struct EvaluationSectionView<Content: View>: View {
                 
                 Text(evaluatorNote)
                     .font(.body)
-                    .foregroundColor(.darkBlue)
+                    .foregroundColor(.darkBlue3)
                     .underline(true, color: Color.baseColorBrown)
+                  
             }
             VStack (alignment: .leading){
                 Text(sectionTitle)
@@ -394,7 +395,7 @@ struct EvaluationSectionView<Content: View>: View {
             HStack(alignment: .center, spacing: 12) {
                 Text(emptyStateMessage)
                     .font(.title3)
-                    .foregroundColor(Color.baseColorBrown.opacity(0.5))
+                    .foregroundColor(Color.baseColorBrown)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, minHeight: 152.8125, maxHeight: 152.8125, alignment: .center)
@@ -490,14 +491,16 @@ struct DiffRenderView: View {
     let components: [DiffComponent]
     
     let defaultColor = Color(.baseColorBrown)
-    let deletedColor = Color.red
-    let addedColor = Color.blue
+    let deletedColor = Color.baseColorRed
+    let addedColor = Color.darkBlue
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             components.reduce(Text("")) { (result, component) in
+                let font: Font = component.type == .same ? .system(.body, design: .serif) : .body.bold()
+                
                 let styledText = Text(component.text)
-                    .font(.body)
+                    .font(font)
                 
                 switch component.type {
                 case .same:
@@ -516,7 +519,6 @@ struct DiffRenderView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(generateAccessibilityLabel())
         }
-        .font(.body)
         .lineSpacing(8)
     }
     
@@ -532,4 +534,3 @@ struct DiffRenderView: View {
             .joined()
     }
 }
-

@@ -184,7 +184,7 @@ struct SettingsView: View {
                                     }
                                 }) {
                                     Image(systemName: "info.circle.fill")
-                                        .font(.title2)
+                                        .font(.title)
                                         .foregroundColor(Color.baseColorWhite)
                                 }
                                 .accessibilityLabel("Info aspek")

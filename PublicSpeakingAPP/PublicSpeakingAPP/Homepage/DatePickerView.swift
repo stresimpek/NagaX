@@ -10,6 +10,8 @@ import SwiftData
 
 struct DatePickerView: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.dynamicTypeSize) var dynamicTypeSize
+        
     let onBack: () -> Void
     let onComplete: (Date) -> Void
     
@@ -36,8 +38,6 @@ struct DatePickerView: View {
     private var months: [(Int, String)] {
         let monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
                          "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
-        let currentYear = currentComponents.year ?? 2025
-        let currentMonth = currentComponents.month ?? 1
         
         return Array(1...12).map { month in
             (month, monthNames[month - 1])
@@ -119,227 +119,142 @@ struct DatePickerView: View {
             Color(.baseColorBlue)
                 .ignoresSafeArea()
             
-            VStack(alignment: .center, spacing: 32) {
-                Text("Tanggal dan jam berapakah kamu akan presentasi?")
-                    .font(.title2)
-                    .foregroundStyle(Color.white)
-                    .bold()
-                    .padding(.horizontal)
-
-                HStack(alignment: .center, spacing: 16) {
-                    Spacer()
-                    HStack(spacing: 8) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Hari")
-                                .font(.body)
-                                .foregroundStyle(Color.white)
-                            
-                            Menu {
-                                ForEach(availableDays, id: \.self) { day in
-                                    Button(action: {
-                                        selectedDay = day
-                                        validateAndAdjustSelection()
-                                    }) {
-                                        Text("\(day)")
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Text("\(selectedDay)")
-                                        .foregroundStyle(Color.white)
-                                    Spacer()
-                                    Image(systemName: "chevron.up.chevron.down")
-                                        .font(.body)
-                                        .foregroundStyle(Color.white)
-                                        .accessibilityHidden(true)
-                                }
-                                .padding()
-                                .background(Color.darkBlue2)
-                                .cornerRadius(12)
-                            }
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityHint("Tap 2 kali untuk memilih hari")
-                        }
-                        .accessibilityElement(children: .combine)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Bulan")
-                                .font(.body)
-                                .foregroundStyle(Color.white)
-                            
-                            Menu {
-                                ForEach(availableMonths, id: \.0) { month in
-                                    Button(action: {
-                                        selectedMonth = month.0
-                                        validateAndAdjustSelection()
-                                    }) {
-                                        Text(month.1)
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Text(months.first(where: { $0.0 == selectedMonth })?.1 ?? "")
-                                        .foregroundStyle(Color.white)
-//                                        .lineLimit(1)
-                                    Spacer()
-                                    Image(systemName: "chevron.up.chevron.down")
-                                        .font(.body)
-                                        .foregroundStyle(Color.white)
-                                        .accessibilityHidden(true)
-                                }
-                                .padding()
-                                .background(Color.darkBlue2)
-                                .cornerRadius(12)
-                            }
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityHint("Tap 2 kali untuk memilih bulan")
-                        }
-                        .accessibilityElement(children: .combine)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Tahun")
-                                .font(.body)
-                                .foregroundStyle(Color.white)
-                            
-                            Menu {
-                                ForEach(years, id: \.self) { year in
-                                    Button(action: {
-                                        selectedYear = year
-                                        validateAndAdjustSelection()
-                                    }) {
-                                        Text(String(format: "%d", year))
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Text(String(format: "%d", selectedYear))
-                                        .foregroundStyle(Color.white)
-                                    Spacer()
-                                    Image(systemName: "chevron.up.chevron.down")
-                                        .font(.body)
-                                        .foregroundStyle(Color.white)
-                                        .accessibilityHidden(true)
-                                }
-                                .padding()
-                                .background(Color.darkBlue2)
-                                .cornerRadius(12)
-                            }
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityHint("Tap 2 kali untuk memilih tahun")
-                        }
-                        .accessibilityElement(children: .combine)
-                    }
-                    .frame(width: 400)
-
-                    HStack(spacing: 8) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Jam")
-                                .font(.body)
-                                .foregroundStyle(Color.white)
-                            
-                            Menu {
-                                ForEach(availableHours, id: \.self) { hour in
-                                    Button(action: {
-                                        selectedHour = hour
-                                        validateAndAdjustSelection()
-                                    }) {
-                                        Text(String(format: "%02d", hour))
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Text(String(format: "%02d", selectedHour))
-                                        .foregroundStyle(Color.white)
-                                    Spacer()
-                                    Image(systemName: "chevron.up.chevron.down")
-                                        .font(.body)
-                                        .foregroundStyle(Color.white)
-                                        .accessibilityHidden(true)
-                                }
-                                .padding()
-                                .background(Color.darkBlue2)
-                                .cornerRadius(12)
-                            }
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityHint("Tap 2 kali untuk memilih jam")
-                        }
-                        .accessibilityElement(children: .combine)
-                        
-                        Text(":")
-                            .font(.title)
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(alignment: .center, spacing: 24) {
+                        Spacer ()
+                        Text("Tanggal dan jam berapakah kamu akan presentasi?")
+                            .font(.title2)
                             .foregroundStyle(Color.white)
-                            .padding(.top, 20)
-                            .accessibilityHidden(true)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Menit")
-                                .font(.body)
-                                .foregroundStyle(Color.white)
-                            
-                            Menu {
-                                ForEach(availableMinutes, id: \.self) { minute in
-                                    Button(action: {
-                                        selectedMinute = minute
-                                        validateAndAdjustSelection()
-                                    }) {
-                                        Text(String(format: "%02d", minute))
+                            .bold()
+                            .padding(.horizontal)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .multilineTextAlignment(.center)
+                        
+                        VStack(alignment: .center, spacing: 16) {
+                            HStack(spacing: 8) {
+                                // HARI
+                                dateComponentPicker(
+                                    title: "Hari",
+                                    value: "\(selectedDay)",
+                                    hint: "Tap 2 kali untuk memilih hari"
+                                ) {
+                                    ForEach(availableDays, id: \.self) { day in
+                                        Button(action: {
+                                            selectedDay = day
+                                            validateAndAdjustSelection()
+                                        }) {
+                                            Text("\(day)")
+                                        }
                                     }
                                 }
-                            } label: {
-                                HStack {
-                                    Text(String(format: "%02d", selectedMinute))
-                                        .foregroundStyle(Color.white)
-                                    Spacer()
-                                    Image(systemName: "chevron.up.chevron.down")
-                                        .font(.body)
-                                        .foregroundStyle(Color.white)
-                                        .accessibilityHidden(true)
+                                
+                                // BULAN
+                                dateComponentPicker(
+                                    title: "Bulan",
+                                    value: months.first(where: { $0.0 == selectedMonth })?.1 ?? "",
+                                    hint: "Tap 2 kali untuk memilih bulan"
+                                ) {
+                                    ForEach(availableMonths, id: \.0) { month in
+                                        Button(action: {
+                                            selectedMonth = month.0
+                                            validateAndAdjustSelection()
+                                        }) {
+                                            Text(month.1)
+                                        }
+                                    }
                                 }
-                                .padding()
-                                .background(Color.darkBlue2)
-                                .cornerRadius(12)
+                                
+                                // TAHUN
+                                dateComponentPicker(
+                                    title: "Tahun",
+                                    value: String(format: "%d", selectedYear),
+                                    hint: "Tap 2 kali untuk memilih tahun"
+                                ) {
+                                    ForEach(years, id: \.self) { year in
+                                        Button(action: {
+                                            selectedYear = year
+                                            validateAndAdjustSelection()
+                                        }) {
+                                            Text(String(format: "%d", year))
+                                        }
+                                    }
+                                }
                             }
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityHint("Tap 2 kali untuk memilih menit")
+                            .frame(maxWidth: .infinity)
+                            
+                            HStack(spacing: 8) {
+                                // JAM
+                                dateComponentPicker(
+                                    title: "Jam",
+                                    value: String(format: "%02d", selectedHour),
+                                    hint: "Tap 2 kali untuk memilih jam"
+                                ) {
+                                    ForEach(availableHours, id: \.self) { hour in
+                                        Button(action: {
+                                            selectedHour = hour
+                                            validateAndAdjustSelection()
+                                        }) {
+                                            Text(String(format: "%02d", hour))
+                                        }
+                                    }
+                                }
+                                
+                                Text(":")
+                                    .font(.title)
+                                    .foregroundStyle(Color.white)
+                                    .padding(.top, 20)
+                                    .accessibilityHidden(true)
+                                
+                                // MENIT
+                                dateComponentPicker(
+                                    title: "Menit",
+                                    value: String(format: "%02d", selectedMinute),
+                                    hint: "Tap 2 kali untuk memilih menit"
+                                ) {
+                                    ForEach(availableMinutes, id: \.self) { minute in
+                                        Button(action: {
+                                            selectedMinute = minute
+                                            validateAndAdjustSelection()
+                                        }) {
+                                            Text(String(format: "%02d", minute))
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: 300)
                         }
-                        .accessibilityElement(children: .combine)
+                                                
+                        Group {
+                            if !isSelectedDateTimeValid {
+                                ButtonComponent(
+                                    title: "Tanggal Invalid",
+                                    systemImage: nil,
+                                    size: .large,
+                                    kind: .primaryYellow
+                                ) {
+                                    handleCompletion()
+                                }
+                                .disabled(true)
+                                .opacity(0.5)
+                            } else {
+                                ButtonComponent(
+                                    title: "Pilih Deadline",
+                                    systemImage: nil,
+                                    size: .large,
+                                    kind: .primaryYellow
+                                ) {
+                                    handleCompletion()
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        Spacer()
                     }
-                    .frame(width: 200)
-                    Spacer()
+                    .padding(24)
+                    .multilineTextAlignment(.center)
                 }
-
-                if !isSelectedDateTimeValid {
-                    ButtonComponent(
-                        title: "Tanggal Invalid",
-                        systemImage: nil,
-                        size: .large,
-                        kind: .primaryYellow
-                    ) {
-                        let selectedDate = createDate()
-                        saveOrUpdate(date: selectedDate)
-                        onComplete(selectedDate)
-                    }
-                    .disabled(!isSelectedDateTimeValid)
-                    .opacity(0.5)
-                    .padding(.horizontal)
-                } else {
-                    ButtonComponent(
-                        title: "Pilih Deadline",
-                        systemImage: nil,
-                        size: .large,
-                        kind: .primaryYellow
-                    ) {
-                        let selectedDate = createDate()
-                        saveOrUpdate(date: selectedDate)
-                        onComplete(selectedDate)
-                    }
-                    .padding(.horizontal)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(24)
-            .multilineTextAlignment(.center)
-
+        }
             ButtonComponent(
                 title: nil,
                 systemImage: "arrow.uturn.left",
@@ -354,6 +269,53 @@ struct DatePickerView: View {
         .onAppear {
             initializeWithCurrentOrSavedDate()
         }
+    }
+    
+    @ViewBuilder
+    private func dateComponentPicker<Content: View>(
+        title: String,
+        value: String,
+        hint: String,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.body)
+                .foregroundStyle(Color.white)
+                .fixedSize(horizontal: true, vertical: false)
+            
+            Menu {
+                content()
+            } label: {
+                HStack {
+                    Text(value)
+                        .foregroundStyle(Color.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                    
+                    Spacer(minLength: 8)
+                    
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.body)
+                        .foregroundStyle(Color.white)
+                        .accessibilityHidden(true)
+                }
+                .padding()
+                .background(Color.darkBlue2)
+                .cornerRadius(12)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(title), \(value)")
+            .accessibilityHint(hint)
+            .accessibilityAddTraits(.isButton)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func handleCompletion() {
+        let selectedDate = createDate()
+        saveOrUpdate(date: selectedDate)
+        onComplete(selectedDate)
     }
     
     private func initializeWithCurrentOrSavedDate() {

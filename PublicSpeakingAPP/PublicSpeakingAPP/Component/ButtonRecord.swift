@@ -37,7 +37,7 @@ struct ButtonRecord: View {
                 if let systemImage {
                     Image(systemName: systemImage)
                         .font(.system(size: iconPointSize, weight: .semibold))
-                        .foregroundStyle(Color(.red))
+                        .foregroundStyle(Color(.baseColorRed))
                 }
                 if let title {
                     Text(title)
@@ -61,12 +61,11 @@ struct ButtonRecord: View {
             )
         )
         .disabled(!isEnabled || isLoading)
-        .accessibilityLabel(accessibilityLabel)
     }
     
-    private var accessibilityLabel: Text {
+    var accessibilityLabel: Text {
         if let title = title { return Text(title) }
         if let systemImage = systemImage { return Text(systemImage.replacingOccurrences(of: ".", with: " ")) }
-        return Text("Button")
+        return Text("Tombol")
     }
 }

@@ -28,8 +28,10 @@ struct CountdownRow: View {
         let r = remaining()
         
         HStack(spacing: 4) {
-            Text("Presentasimu dimulai dalam:")
+            Text("Waktu menuju presentasimu:")
                 .font(.body)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
             CountdownBox(text: "\(r.d)")
             Text("hari")
                 .font(.body)
