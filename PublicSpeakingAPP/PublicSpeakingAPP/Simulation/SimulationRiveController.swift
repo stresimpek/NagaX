@@ -78,6 +78,15 @@ final class SimulationRiveController: ObservableObject {
 
         boredom.value = value
     }
+    
+    func triggerDifferentiateWithoutColor(value: Bool) {
+        guard let vm = vmInstance,
+              let differentiateWithoutColor = vm.booleanProperty(fromPath: "Differentiate") else {
+            return
+        }
+        
+        differentiateWithoutColor.value = value
+    }
 
 
     func pauseAll() {
