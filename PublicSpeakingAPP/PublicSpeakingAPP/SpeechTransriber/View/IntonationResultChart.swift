@@ -89,7 +89,7 @@ struct IntonationResultChart: View {
                         yStart: .value("y0", bandLow),
                         yEnd: .value("y1", bandHigh)
                     )
-                    .foregroundStyle(.lightTurqoise.opacity(0.5))
+                    .foregroundStyle(.chartTurqoise)
                     .annotation(position: .overlay, alignment: .center) {
                         Text("BERDINAMIKA")
                             .font(.title3)
@@ -113,11 +113,11 @@ struct IntonationResultChart: View {
                 }
                 
                 RuleMark(y: .value("Limit1", bandLow))
-                        .foregroundStyle(.gray.opacity(0.6))
+                    .foregroundStyle(.chartGray)
                         .lineStyle(.init(lineWidth: 1, dash: [4]))
 
                 RuleMark(y: .value("Limit2", bandHigh))
-                    .foregroundStyle(.gray.opacity(0.6))
+                    .foregroundStyle(.chartGray)
                     .lineStyle(.init(lineWidth: 1, dash: [4]))
                 
                 ForEach(processedSeries) { p in
@@ -129,7 +129,7 @@ struct IntonationResultChart: View {
                 }
                 
                 RuleMark(x: .value("Cursor", cursorTime))
-                    .foregroundStyle(isDragging ? .red : .red.opacity(0.8))
+                    .foregroundStyle(isDragging ? .baseColorRed : .baseColorRed.opacity(0.8))
                     .lineStyle(.init(lineWidth: 2))
                     .annotation(position: .top) {
                         Text(formatMMSS(cursorTime))

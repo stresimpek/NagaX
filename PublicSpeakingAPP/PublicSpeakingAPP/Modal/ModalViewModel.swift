@@ -23,6 +23,7 @@ enum InstructionStep {
     case cameraSetup
     case quietRoom
     case distanceCheck
+    case volumeCheck
 }
 
 @MainActor
@@ -57,6 +58,9 @@ class ModalViewModel: ObservableObject {
         ),
         .distanceCheck: try! AttributedString(
             markdown: "Letakan HP di posisi **sejajar dengan matamu** dan nyalakan kameramu!"
+        ),
+        .volumeCheck: try! AttributedString(
+            markdown: "Aktifkan volume HP-mu agar suara distraksi dapat terdengar dengan jelas."
         )
     ]
     
@@ -154,6 +158,12 @@ class ModalViewModel: ObservableObject {
             }
             isButtonEnabled = true
             showMicVisualizer = false
+        case .volumeCheck:
+            mainImageName = ""
+            animationName = "VOLUME"
+            buttonTitle = "LANJUT"
+            isButtonEnabled = true
+            showMicVisualizer = false
         }
     }
     
@@ -178,7 +188,7 @@ class ModalViewModel: ObservableObject {
             currentStep = .quietRoom
             
         case .quietRoom:
-            currentStep = .distanceCheck
+            currentStep = .volumeCheck
             
         case .distanceCheck:
             if needsCameraCheck {
@@ -186,6 +196,8 @@ class ModalViewModel: ObservableObject {
             } else {
                 // Logic start handled in View
             }
+        case .volumeCheck:
+            currentStep = .distanceCheck
             
         case .cameraSetup:
             break

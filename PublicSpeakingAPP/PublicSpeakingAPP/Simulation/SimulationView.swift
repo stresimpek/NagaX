@@ -53,10 +53,10 @@ struct SimulationView: View {
     private var isProcessing: Bool {
         let status = viewModel.whisperKitVM.recordingStatus
         return !viewModel.isRecording
-            && viewModel.whisperKitVM.isTranscribing
-            && (status == .stopping || status == .stopped)
+        && viewModel.whisperKitVM.isTranscribing
+        && (status == .stopping || status == .stopped)
     }
-
+    
     
     init(
         viewModel: SimulationViewModel,
@@ -103,18 +103,16 @@ struct SimulationView: View {
                                 size: .largeIconCircle,
                                 kind: .primaryYellow,
                                 action: {
-                                    viewModel.toggleRecording()
-                                    // Clear any modal flags that might have been triggered
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                        viewModel.whisperKitVM.showEarlyStopModal = false
-                                        viewModel.whisperKitVM.showEmptyTranscriptModal = false
-                                        showPauseModal = true
+                                                                                viewModel.pauseForModal()  // Use new function
+                                                                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                                                                                    showPauseModal = true
                                     }
                                 }
                             )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing)
                             .padding(.top, 16)
                             .accessibilityLabel("Jeda")
+                            .accessibilitySortPriority(4)
                             
                             Spacer()
                         }
@@ -134,18 +132,18 @@ struct SimulationView: View {
                     .font(.headline)
                     .animation(.easeInOut, value: isOverOneMinutes)
                     .padding(.top, 16)
-
-
+                    
+                    
                     Spacer()
-
+                    
                     HStack(alignment: .bottom) {
                         let alarmIconSize: CGFloat = isAccessibilitySize ? 18 : 22
                         let timerFont: Font = {
-                           if viewModel.isOvertime {
-                               return isAccessibilitySize ? .headline : .title
-                           } else {
-                               return isAccessibilitySize ? .headline : .title2
-                           }
+                            if viewModel.isOvertime {
+                                return isAccessibilitySize ? .headline : .title
+                            } else {
+                                return isAccessibilitySize ? .headline : .title2
+                            }
                         }()
                         if viewModel.isOvertime {
                             HStack(alignment: .center, spacing: 6) {
@@ -160,7 +158,9 @@ struct SimulationView: View {
                             .background(.coral)
                             .cornerRadius(24)
                             .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
-                            .accessibilityHidden(true)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Telah merekam selama \(viewModel.formattedTime)")
+                            .accessibilitySortPriority(2)
                         } else {
                             HStack(alignment: .center, spacing: 6) {
                                 Image(systemName: "alarm.fill")
@@ -174,7 +174,9 @@ struct SimulationView: View {
                             .background(.darkBlue)
                             .cornerRadius(24)
                             .shadow(color: .darkBlue2, radius: 0, x: 0, y: 4)
-                            .accessibilityHidden(true)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Telah merekam selama \(viewModel.formattedTime)")
+                            .accessibilitySortPriority(2)
                         }
                         
                         Spacer()
@@ -213,6 +215,8 @@ struct SimulationView: View {
                                 action: viewModel.toggleRecording
                             )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing )
+                            .accessibilityLabel(viewModel.isRecording ? "Selesai Rekam" : "Mulai Rekam")
+                            .accessibilitySortPriority(viewModel.isRecording ? 3 : 1)
                             VStack(alignment: .leading) {
                                 if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
                                     Text(viewModel.whisperModelState.description)
@@ -226,7 +230,7 @@ struct SimulationView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .zIndex(10)
-
+                
                 if isProcessing && !showPauseModal {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
@@ -238,6 +242,7 @@ struct SimulationView: View {
                         .foregroundColor(.white)
                         .zIndex(12)
                         .accessibilityHidden(true)
+                        .accessibilityAddTraits(.isModal)
                 }
             }
             .overlay(alignment: .top) {
@@ -260,7 +265,7 @@ struct SimulationView: View {
                 hasShownOvertimeBanner = false
             }
             .overlay {
-                if viewModel.whisperKitVM.showEarlyStopModal && !showPauseModal {
+                if viewModel.whisperKitVM.showEarlyStopModal && !showPauseModal && !viewModel.isManualPause {
                     EarlyStopModalView(
                         onContinue: {
                             viewModel.resumeAfterEarlyStop()
@@ -271,9 +276,10 @@ struct SimulationView: View {
                     )
                     .transition(.opacity)
                     .zIndex(20)
+                    .accessibilityAddTraits(.isModal)
                 }
-                            
-                if viewModel.whisperKitVM.showEmptyTranscriptModal && !showPauseModal {
+                
+                if viewModel.whisperKitVM.showEmptyTranscriptModal && !showPauseModal && !viewModel.isManualPause {
                     EmptyTranscriptModalView(
                         onRestart: {
                             viewModel.restartAfterEmptyTranscript()
@@ -284,29 +290,37 @@ struct SimulationView: View {
                     )
                     .transition(.opacity)
                     .zIndex(20)
+                    .accessibilityAddTraits(.isModal)
                 }
                 
                 if showPauseModal {
-                    BackModalView(
-                        onBackHome: {
-                            showPauseModal = false
-                            onBack()
-                        },
-                        onPause: {
-                            showPauseModal = false
-                            // Prevent any pending modal flags from showing
-                            viewModel.whisperKitVM.showEarlyStopModal = false
-                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
-                            viewModel.resumeAfterEarlyStop()
-                        },
-                        onRetry: {
-                            showPauseModal = false
-                            viewModel.whisperKitVM.showEarlyStopModal = false
-                            viewModel.whisperKitVM.showEmptyTranscriptModal = false
-                            viewModel.restartAfterEmptyTranscript()
-                        }
-                    )
+                    ZStack {
+                        Color.black.opacity(0.5)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                            }
+                        
+                        BackModalView(
+                            onBackHome: {
+                                showPauseModal = false
+                                viewModel.isManualPause = false
+                                onBack()
+                            },
+                            onPause: {
+                                showPauseModal = false
+                                viewModel.resumeAfterEarlyStop()
+                            },
+                            
+                            
+                            onRetry: {
+                                showPauseModal = false
+                                viewModel.restartAfterEmptyTranscript()
+                            }
+                        )
+                    }
+                    .transition(.opacity)
                     .zIndex(20)
+                    .accessibilityAddTraits(.isModal)
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
@@ -370,7 +384,7 @@ extension SimulationView {
             showDontShowAgain: true
         )
     }
-
+    
     private func enqueueBanner(
         text: String,
         isOvertime: Bool,
@@ -384,15 +398,15 @@ extension SimulationView {
         bannerQueue.append(item)
         processQueueIfNeeded()
     }
-
+    
     private func processQueueIfNeeded() {
         guard currentBanner == nil, !bannerQueue.isEmpty else { return }
         currentBanner = bannerQueue.removeFirst()
     }
-
+    
     private func advanceBannerQueue() {
         currentBanner = nil
         processQueueIfNeeded()
     }
-
+    
 }

@@ -151,6 +151,9 @@ extension ModalView {
           
         case .cameraSetup:
             EyeContactMainView(viewModel: viewModel)
+        case .volumeCheck:
+            MicroAnimation(artboardName: "VOLUME")
+                .frame(height: 100)
         }
     }
     

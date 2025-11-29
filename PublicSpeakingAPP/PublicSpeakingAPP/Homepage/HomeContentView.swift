@@ -49,34 +49,38 @@ struct HomeContentView: View {
             
             Spacer()
             
-            ZStack {
-                VStack {
-                    Spacer()
-                    VStack(spacing: 0) {
-                        NameBanner(name: "Si Cupu (Kamu)")
+            ScrollView {
+                ZStack {
+                    VStack {
+                        Spacer()
+                        VStack(spacing: 0) {
+                            NameBanner(name: "Si Cupu (Kamu)")
 
-                        MicroAnimation(artboardName: "Home")
-                            .frame(height: 120)
+                            MicroAnimation(artboardName: "Home")
+                                .frame(height: 120)
+                        }
+                        .accessibilityHidden(true)
+                        
+                        Spacer()
+                        
+                        ButtonComponent(
+                            title: "Mulai Latihan",
+                            systemImage: nil,
+                            size: .large,
+                            kind: .primaryYellow,
+                            action: onStart
+                        )
+                        .padding(.top, 24)
+                        
+                        Spacer()
                     }
-                    .accessibilityHidden(true)
                     
-                    Spacer()
-                    
-                    ButtonComponent(
-                        title: "Mulai Latihan",
-                        systemImage: nil,
-                        size: .large,
-                        kind: .primaryYellow,
-                        action: onStart
-                    )
-                    .padding(.bottom, 12)
+                    SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
+                        .frame(maxWidth: .infinity)
+                        .padding(.leading, 440)
+                        .padding(.bottom, 160)
+                        .accessibilityLabel("Hari ini kamu belum latihan. Ayo mulai latihan")
                 }
-                
-                SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
-                    .frame(maxWidth: .infinity)
-                    .padding(.leading, 440)
-                    .padding(.bottom, 160)
-                    .accessibilityLabel("Hari ini kamu belum latihan. Ayo mulai latihan")
             }
         }
         .ignoresSafeArea(edges: .horizontal)
@@ -95,8 +99,8 @@ struct SpeechBubble: View {
                 .font(.body)
                 .bold()
                 .foregroundColor(Color(.baseColorBrown))
-                .frame(width: 198, height: 86, alignment: .center)
-                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .background(
@@ -130,27 +134,29 @@ struct NameBanner: View {
     var name: String
     
     var body: some View {
-        ZStack {
+        HStack(alignment: .top, spacing: -10) {
+            
             Image("Rectangle 10")
                 .resizable()
-                .frame(width: 34.44737, height: 27)
-                .offset(x: -74, y:4)
-            
-            Image("Rectangle 11")
-                .resizable()
-                .frame(width: 34.44737, height: 27)
-                .offset(x: 74, y:4)
+                .frame(width: 34.45, height: 27)
+                .offset(y: 6)
             
             Text(name)
                 .font(.footnoteBold)
                 .foregroundStyle(Color.darkBlue2)
-                .frame(width: 136.80527, height: 26)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 8)
                 .background(
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: 8)
                         .fill(Color(.lightBlue))
                 )
+                .zIndex(1)
+            
+            Image("Rectangle 11")
+                .resizable()
+                .frame(width: 34.45, height: 27)
+                .offset(y: 6)
         }
-        .frame(height: 27)
     }
 }
 

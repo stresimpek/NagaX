@@ -28,6 +28,8 @@ class SimulationViewModel: ObservableObject {
     
     @Published var recordedVideoURL: URL? = nil
     
+    @Published var isManualPause: Bool = false
+    
     @Published var isPaused: Bool = false {
         didSet {
             if isPaused {
@@ -344,6 +346,7 @@ class SimulationViewModel: ObservableObject {
         } else {
             NotificationCenter.default.post(name: NSNotification.Name("StopARRecording"), object: nil)
             
+            stopGame()
             whisperKitVM.toggleRecording(
                 shouldLoop: false,
                 timerSeconds: Double(timerSeconds),
@@ -356,6 +359,12 @@ class SimulationViewModel: ObservableObject {
         guard !isAnalysisComplete else { return }
         guard !isRecording else { return }
         guard !isStopModalActive else { return }
+        
+        guard !isManualPause else {
+            print("Evaluation skipped: manual pause active.")
+            return
+        }
+        
         guard recordingStartTime != nil else { return }
         
         recordingStartTime = nil
@@ -548,7 +557,14 @@ extension SimulationViewModel {
         whisperKitVM.showEarlyStopModal || whisperKitVM.showEmptyTranscriptModal
     }
     
+    func pauseForModal() {
+        guard isRecording else { return }
+        isManualPause = true  // Set flag BEFORE stopping
+        toggleRecording()      // Now stop recording
+    }
+    
     func resumeAfterEarlyStop() {
+        isManualPause = false  //  Clear the pause flag
         whisperKitVM.continueRecording(shouldLoop: true)
         if gameTimer == nil {
             gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -557,8 +573,10 @@ extension SimulationViewModel {
         }
         isPaused = false
     }
+
     
     func restartAfterEmptyTranscript() {
+        isManualPause = false  //  Clear the pause flag
         stopGame()
         whisperKitVM.restartSession(shouldLoop: true)
         startGame()
