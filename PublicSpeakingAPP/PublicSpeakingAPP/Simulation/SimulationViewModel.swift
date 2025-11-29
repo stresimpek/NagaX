@@ -518,14 +518,18 @@ extension SimulationViewModel {
     }
     
     func resumeAfterEarlyStop() {
-        isManualPause = false  //  Clear the pause flag
+        isManualPause = false
+        whisperKitVM.showEarlyStopModal = false  // Dismiss modal
+        whisperKitVM.showEmptyTranscriptModal = false  // Dismiss modal
+        
         whisperKitVM.continueRecording(shouldLoop: true)
+        
         if gameTimer == nil {
             gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
                 self?.updateGameLogic()
             }
+            startMoodTimer()
         }
-        isPaused = false
     }
 
     

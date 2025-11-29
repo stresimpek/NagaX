@@ -276,6 +276,8 @@ struct GuidanceView: View {
                     Image(systemName: isExpanded ? "minus" : "plus")
                         .foregroundColor(.baseColorBrown)
                         .font(.system(size: 18, weight: .bold))
+                        .frame(width: 44, height: 44)  
+                        .contentShape(Rectangle())
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -295,7 +297,6 @@ struct GuidanceView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .background(Color.baseColorWhite.opacity(0.5))

@@ -98,7 +98,7 @@ struct SimulationView: View {
                                 kind: .primaryYellow,
                                 action: {
                                                                                 viewModel.pauseForModal()  // Use new function
-                                                                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                                                                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
                                                                                     showPauseModal = true
                                     }
                                 }
