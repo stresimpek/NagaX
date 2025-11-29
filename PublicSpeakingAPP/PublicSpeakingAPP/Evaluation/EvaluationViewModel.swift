@@ -14,6 +14,8 @@ struct EvaluationViewModel {
         tempoVM: TempoViewModel,
         intonationVM: IntonationAnalyzerViewModel,
         fillerWordVM: FillerWordViewModel,
+        eyeContactVM: EyeContactViewModel,
+        videoURL: URL?,
         duration: TimeInterval,
         fullTranscript: String,
         articulationCount: Int,
@@ -21,6 +23,7 @@ struct EvaluationViewModel {
     ) -> EvaluationModel {
         
         let (tempoGrade, tempoFeedback, tempoScore) = gradeTempo(wpm: tempoVM.wpm)
+        
         let (fillerGrade, fillerFeedback, fillerCount, fillerWPM, fillerScore) = gradeFillerWords(
             totalCount: fillerWordVM.totalFillerCount,
             duration: duration
@@ -30,51 +33,65 @@ struct EvaluationViewModel {
         let (intonationGrade, intonationFeedback, intonationScore) = gradeIntonation(stdDev: finalStd)
         
         let stdSeries = intonationVM.stdTimeline.map {
-            PitchPoint(time: $0.time, pitch: $0.value) // pitch = std dev (semitone)
+            PitchPoint(time: $0.time, pitch: $0.value)
         }
-        
         let pitchSeries: [PitchPoint] = stdSeries
         
         let tempoSeries: [TempoPoint] = tempoVM.wpmHistory
             .map { TempoPoint(time: $0.timestamp, wpm: $0.wpm) }
             .sorted { $0.time < $1.time }
         
-        // Dummy Data
-        let eyeContactScore = 0.5
-        let eyeContactGrade = "C"
-        let eyeContactFeedback = "Kontak mata belum dianalisis"
+        let (eyeContactGrade, eyeContactFeedback, eyeContactScoreVal) = gradeEyeContact(
+            rating: eyeContactVM.eyeContactRating,
+            issueCount: eyeContactVM.issueHistory.count
+        )
         
-        // Rata-rata Nilai
-        let allScores = [tempoScore, fillerScore, intonationScore]
+        let allScores = [tempoScore, fillerScore, intonationScore, eyeContactScoreVal]
         let overallScore = allScores.reduce(0, +) / Double(allScores.count)
         let overallGrade = percentageToGrade(overallScore * 100)
         
-        // Dummy AI Feedback
-        let aiFeedback = "Secara keseluruhan, tempo Anda \(tempoFeedback.lowercased()) dan intonasi Anda \(intonationFeedback.lowercased()). Anda menggunakan \(fillerCount) kata pengisi."
+        let aiFeedback = "Secara keseluruhan, tempo Anda \(tempoFeedback.lowercased()) dan intonasi Anda \(intonationFeedback.lowercased()). Kontak mata \(eyeContactFeedback.lowercased())."
         
         return EvaluationModel(
             durationInSeconds: duration,
             overallGrade: overallGrade,
             overallScore: overallScore * 100,
             aiFeedback: aiFeedback,
+            
             tempoWPM: tempoVM.wpm,
             tempoGrade: tempoGrade,
             tempoFeedback: tempoFeedback,
+            
             fillerWordTotalCount: fillerCount,
             fillerWordsPerMinute: fillerWPM,
             fillerWordGrade: fillerGrade,
             fillerWordFeedback: fillerFeedback,
+            
             intonationStdDev: finalStd,
             intonationGrade: intonationGrade,
             intonationFeedback: intonationFeedback,
             pitchSeries: pitchSeries,
             tempoSeries: tempoSeries,
-            eyeContactScore: eyeContactScore * 100,
+            
+            eyeContactScore: eyeContactScoreVal * 100,
             eyeContactGrade: eyeContactGrade,
             eyeContactFeedback: eyeContactFeedback,
+            videoURL: videoURL,
+            gazeEvents: eyeContactVM.issueHistory,
+            
             articulationCount: articulationCount,
             articulationTotal: articulationTotal
         )
+    }
+    
+    private static func gradeEyeContact(rating: Int, issueCount: Int) -> (String, String, Double) {
+        if rating == 3 {
+            return ("A", "Sangat terjaga", 1.0)
+        } else {
+            let score = 0.5
+            let feedback = "Terdeteksi \(issueCount) gangguan"
+            return ("C", feedback, score)
+        }
     }
     
     private static func gradeTempo(wpm: Double) -> (String, String, Double) {

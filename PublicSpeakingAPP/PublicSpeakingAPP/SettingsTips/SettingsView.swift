@@ -17,6 +17,8 @@ struct SettingsView: View {
     
     @State private var showAspectInfo: Bool = false
     @State private var showPermissionAlert: Bool = false
+    // Menambahkan state untuk pesan alert yang dinamis
+    @State private var alertMessage: String = ""
     
     let onBack: () -> Void
     let onNext: (PracticeSettings) -> Void
@@ -269,7 +271,7 @@ struct SettingsView: View {
             .background(Color.baseColorBlue)
             .foregroundStyle(Color.baseColorWhite)
             .navigationBarBackButtonHidden(true)
-            
+           
             ButtonComponent(
                 title: nil,
                 systemImage: "arrow.uturn.left",
@@ -281,7 +283,7 @@ struct SettingsView: View {
             .padding(.top, 16)
             .accessibilityLabel("Kembali")
             .accessibilitySortPriority(3)
-            
+           
             if showAspectInfo {
                 Color.black.opacity(0.5)
                     .edgesIgnoringSafeArea(.all)
@@ -291,7 +293,7 @@ struct SettingsView: View {
                         }
                     }
                     .accessibilityHidden(true)
-                
+             
                 AspectInfoView(onDismiss: {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         showAspectInfo = false
@@ -302,19 +304,27 @@ struct SettingsView: View {
                 .accessibilityAddTraits(.isModal)
             }
         }
-        .alert("Izin Mikrofon Diperlukan", isPresented: $showPermissionAlert) {
-                Button("Batal", role: .cancel) { }
-                Button("Buka Pengaturan") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
-                    }
+        .alert("Izin Diperlukan", isPresented: $showPermissionAlert) {
+            Button("Batal", role: .cancel) { }
+            Button("Buka Pengaturan") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
                 }
-            } message: {
-                Text("Aspek yang kamu pilih memerlukan analisis suara. Harap izinkan akses mikrofon di Pengaturan.")
             }
+        } message: {
+            Text(alertMessage)
+        }
     }
     
     private func handleAspectSelection(for option: AspectOption) {
+        if option == .kontakMata {
+            requestCameraAndMicrophone(for: option)
+        } else {
+            requestMicrophoneOnly(for: option)
+        }
+    }
+    
+    private func requestMicrophoneOnly(for option: AspectOption) {
         let status = AVAudioApplication.shared.recordPermission
         
         switch status {
@@ -322,10 +332,60 @@ struct SettingsView: View {
             selectedAspects.insert(option)
             
         case .denied:
+            alertMessage = "Aspek ini memerlukan analisis suara. Harap izinkan akses mikrofon di Pengaturan."
             showPermissionAlert = true
             
         case .undetermined:
             AVAudioApplication.requestRecordPermission { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self.selectedAspects.insert(option)
+                    }
+                }
+            }
+        @unknown default:
+            break
+        }
+    }
+    
+    private func requestCameraAndMicrophone(for option: AspectOption) {
+        let micStatus = AVAudioApplication.shared.recordPermission
+        
+        switch micStatus {
+        case .granted:
+            checkCameraPermission(for: option)
+            
+        case .denied:
+            alertMessage = "Fitur Kontak Mata memerlukan akses Mikrofon dan Kamera. Harap izinkan di Pengaturan."
+            showPermissionAlert = true
+            
+        case .undetermined:
+            AVAudioApplication.requestRecordPermission { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self.checkCameraPermission(for: option)
+                    } else {
+                    }
+                }
+            }
+        @unknown default:
+            break
+        }
+    }
+    
+    private func checkCameraPermission(for option: AspectOption) {
+        let cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
+        
+        switch cameraStatus {
+        case .authorized:
+            selectedAspects.insert(option)
+            
+        case .denied, .restricted:
+            alertMessage = "Fitur Kontak Mata memerlukan akses Kamera. Harap izinkan di Pengaturan."
+            showPermissionAlert = true
+            
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
                 DispatchQueue.main.async {
                     if granted {
                         self.selectedAspects.insert(option)
