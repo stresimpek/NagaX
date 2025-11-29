@@ -25,6 +25,9 @@ class EyeContactViewModel: ObservableObject {
     private var badEventCounter: Int = 0
     private let badEventThreshold: Int = 2
     
+    private var lastLogTime: TimeInterval = 0
+    private let eventCooldown: TimeInterval = 3.0
+    
     private var currentActiveEvent: HeadGazeEvent? = nil
     
     func processEvent(_ event: HeadGazeEvent, at timestamp: TimeInterval) {
@@ -32,6 +35,7 @@ class EyeContactViewModel: ObservableObject {
         switch event {
         case .normal:
             badEventCounter = 0
+            
             if currentActiveEvent != nil {
                 currentActiveEvent = nil
                 print("[EyeContactVM] Recovered to Normal")
@@ -44,15 +48,13 @@ class EyeContactViewModel: ObservableObject {
             }
             
         case .headPitchUp, .headPitchDown, .gazeUp, .gazeDown:
+            
             if let active = currentActiveEvent, active == event {
                 return
             }
             
             if let active = currentActiveEvent {
-                if active == .headPitchUp && event == .gazeUp {
-                    return
-                }
-                if active == .headPitchDown && event == .gazeDown {
+                if (active == .headPitchUp || active == .headPitchDown) && (event == .gazeUp || event == .gazeDown) {
                     return
                 }
             }
@@ -61,18 +63,26 @@ class EyeContactViewModel: ObservableObject {
             
             if badEventCounter >= badEventThreshold {
                 
+                let isSpamming = (timestamp - lastLogTime) < eventCooldown
+                
+                currentActiveEvent = event
+                
                 if eyeContactRating != 1 {
                     eyeContactRating = 1
                 }
-                
                 updateStatusLabel(for: event)
-                currentActiveEvent = event
                 
-                let issueText = mapEventToString(event)
-                let newLog = GazeLogItem(timestamp: timestamp, event: issueText)
-                issueHistory.append(newLog)
-                
-                print("[EyeContactVM] Logged: \(issueText) at \(timestamp)")
+                if !isSpamming {
+                    let issueText = mapEventToString(event)
+                    let newLog = GazeLogItem(timestamp: timestamp, event: issueText)
+                    issueHistory.append(newLog)
+                    
+                    lastLogTime = timestamp
+                    
+                    print("[EyeContactVM] Logged: \(issueText) at \(timestamp)")
+                } else {
+                    print("[EyeContactVM] Skipped (Cooldown): \(event) at \(timestamp)")
+                }
             }
         }
     }
@@ -112,6 +122,7 @@ class EyeContactViewModel: ObservableObject {
         feedbackMessage = ""
         badEventCounter = 0
         currentActiveEvent = nil
+        lastLogTime = 0
         issueHistory.removeAll()
     }
 }

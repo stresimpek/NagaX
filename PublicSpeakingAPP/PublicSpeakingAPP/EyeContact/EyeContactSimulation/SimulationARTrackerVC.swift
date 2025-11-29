@@ -32,9 +32,9 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
     private var recentGazePoints: [CGPoint] = []
     private var lastLerpedGazePoint: CGPoint = .zero
 
-    let headPitchUpThreshold: Float = 0.12
-    let headPitchDownThreshold: Float = -0.12
-    private let gazeThresholdVertical: CGFloat = 25.0
+    let headPitchUpThreshold: Float = 0.2
+    let headPitchDownThreshold: Float = -0.2
+    private let gazeThresholdVertical: CGFloat = 40.0
     
     private var latestFaceAnchor: ARFaceAnchor?
     private var gazeOrigin: CGPoint?
