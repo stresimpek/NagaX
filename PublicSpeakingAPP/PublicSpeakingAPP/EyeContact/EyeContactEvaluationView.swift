@@ -13,9 +13,11 @@ struct EyeContactEvaluationView: View {
     
     @State private var player: AVPlayer?
     @State private var currentIssueIndex: Int = 0
+    @State private var timeObserverToken: Any?
+    @State private var isSeeking = false
     
     var issues: [GazeLogItem] {
-        return gazeEvents.sorted { $0.timestamp < $1.timestamp }
+        return gazeEvents.sorted { $0.startTime < $1.startTime }
     }
     
     var body: some View {
@@ -23,10 +25,10 @@ struct EyeContactEvaluationView: View {
             
             HStack {
                 if !issues.isEmpty {
-                    let currentTimestamp = issues[currentIssueIndex].timestamp
+                    let currentItem = issues[currentIssueIndex]
                     HStack(spacing: 4) {
                         Image(systemName: "clock")
-                        Text(formatTime(currentTimestamp))
+                        Text("\(formatTime(currentItem.startTime)) - \(formatTime(currentItem.endTime))")
                     }
                     .font(.footnote.bold())
                     .foregroundColor(Color("BaseColorBrown"))
@@ -39,7 +41,7 @@ struct EyeContactEvaluationView: View {
                 Spacer()
                 
                 HStack(spacing: 12) {
-                    Button(action: { jumpToIssue(index: currentIssueIndex - 1) }) {
+                    Button(action: { changeClip(to: currentIssueIndex - 1) }) {
                         Image(systemName: "chevron.left")
                             .font(.body)
                             .padding(8)
@@ -49,7 +51,6 @@ struct EyeContactEvaluationView: View {
                     .disabled(currentIssueIndex <= 0 || issues.isEmpty)
                     .opacity(currentIssueIndex <= 0 || issues.isEmpty ? 0.5 : 1.0)
                     
-                    // Indikator Posisi (e.g., 1 / 5)
                     if !issues.isEmpty {
                         Text("**\(currentIssueIndex + 1)** / \(issues.count)")
                             .font(.footnote.bold())
@@ -61,8 +62,7 @@ struct EyeContactEvaluationView: View {
                             .foregroundColor(.gray)
                     }
                     
-                    // Tombol Next
-                    Button(action: { jumpToIssue(index: currentIssueIndex + 1) }) {
+                    Button(action: { changeClip(to: currentIssueIndex + 1) }) {
                         Image(systemName: "chevron.right")
                             .font(.body)
                             .padding(8)
@@ -79,7 +79,7 @@ struct EyeContactEvaluationView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color.black.opacity(0.1))
-                    .frame(height: 400) // Tinggi Video
+                    .frame(height: 400)
                 
                 if let player = player {
                     VideoPlayer(player: player)
@@ -121,7 +121,6 @@ struct EyeContactEvaluationView: View {
                 }
             }
             
-
             if issues.isEmpty {
                 Text("Hebat! Kontak matamu sangat terjaga.")
                     .font(.subheadline)
@@ -130,7 +129,7 @@ struct EyeContactEvaluationView: View {
                     .background(Color.green.opacity(0.1))
                     .cornerRadius(8)
             } else {
-                Text("Tekan tombol panah di atas untuk melompat ke momen saat pandanganmu teralihkan.")
+                Text("Video dipotong khusus momen gangguan kontak mata.")
                     .font(.caption)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -142,38 +141,68 @@ struct EyeContactEvaluationView: View {
             setupPlayer()
         }
         .onDisappear {
-            player?.pause()
+            cleanUpPlayer()
         }
     }
-    
     
     private func setupPlayer() {
         guard let url = videoURL else { return }
         let avPlayer = AVPlayer(url: url)
         self.player = avPlayer
         
+        addPeriodicTimeObserver()
+        
         if !issues.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                jumpToIssue(index: 0)
+                changeClip(to: 0)
             }
         }
     }
     
-    private func jumpToIssue(index: Int) {
+    private func cleanUpPlayer() {
+        if let token = timeObserverToken {
+            player?.removeTimeObserver(token)
+            timeObserverToken = nil
+        }
+        player?.pause()
+        player = nil
+    }
+    
+    private func addPeriodicTimeObserver() {
+        let timeScale = CMTimeScale(NSEC_PER_SEC)
+        let time = CMTime(seconds: 0.1, preferredTimescale: timeScale)
+        
+        timeObserverToken = player?.addPeriodicTimeObserver(forInterval: time, queue: .main) { [weak player] time in
+            guard let player = player, !issues.isEmpty else { return }
+            guard !isSeeking else { return }
+            
+            let currentItem = issues[currentIssueIndex]
+            let currentTime = time.seconds
+            
+            if currentTime >= currentItem.endTime {
+                print("🔁 Loop clip back to start: \(currentItem.startTime)")
+                
+                let targetTime = CMTime(seconds: currentItem.startTime, preferredTimescale: 600)
+                player.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero)
+            }
+        }
+    }
+    
+    private func changeClip(to index: Int) {
         guard issues.indices.contains(index), let player = player else { return }
-   
+        
         withAnimation {
             currentIssueIndex = index
         }
         
+        isSeeking = true
         let issue = issues[index]
-        let timestamp = issue.timestamp
         
-        let seekTime = max(0, timestamp - 1.5)
-        let cmTime = CMTime(seconds: seekTime, preferredTimescale: 600)
+        let startTime = max(0, issue.startTime - 0.5)
+        let cmTime = CMTime(seconds: startTime, preferredTimescale: 600)
         
-        player.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
-        if player.timeControlStatus != .playing {
+        player.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero) { _ in
+            self.isSeeking = false
             player.play()
         }
     }
@@ -186,16 +215,11 @@ struct EyeContactEvaluationView: View {
     
     private func labelForEvent(_ event: String) -> String {
         switch event {
-        case "HeadUp":
-            return "Kepala Terlalu Naik"
-        case "HeadDown":
-            return "Kepala Menunduk"
-        case "GazeUp":
-            return "Mata Melihat ke Atas"
-        case "GazeDown":
-            return "Mata Melihat ke Bawah"
-        default:
-            return "Gangguan Kontak Mata"
+        case "HeadUp": return "Kepala Terlalu Naik"
+        case "HeadDown": return "Kepala Menunduk"
+        case "GazeUp": return "Mata Melihat ke Atas"
+        case "GazeDown": return "Mata Melihat ke Bawah"
+        default: return "Gangguan Kontak Mata"
         }
     }
 }
