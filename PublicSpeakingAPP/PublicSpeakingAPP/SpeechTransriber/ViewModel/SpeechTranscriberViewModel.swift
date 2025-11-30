@@ -73,8 +73,10 @@ final class SpeechTranscriberViewModel: ObservableObject {
     @Published var tokenConfirmationsNeeded: Double = 2
     @Published var concurrentWorkerCount: Double = 4
     @Published var chunkingStrategy: ChunkingStrategy = .vad
-    @Published var encoderComputeUnits: MLComputeUnits = .cpuAndNeuralEngine
+    @Published var encoderComputeUnits: MLComputeUnits = .cpuOnly
     @Published var decoderComputeUnits: MLComputeUnits = .cpuAndNeuralEngine
+    @Published var melComputeUnits: MLComputeUnits = .cpuAndNeuralEngine
+    @Published var prefillComputeUnits: MLComputeUnits = .cpuAndNeuralEngine
 
     // Transcription State & Stats
     @Published var currentText: String = ""
@@ -153,7 +155,11 @@ final class SpeechTranscriberViewModel: ObservableObject {
     }
     
     func getComputeOptions() -> ModelComputeOptions {
-        return ModelComputeOptions(audioEncoderCompute: encoderComputeUnits, textDecoderCompute: decoderComputeUnits)
+        return ModelComputeOptions(
+//            melCompute: melComputeUnits,
+            audioEncoderCompute: encoderComputeUnits, textDecoderCompute: decoderComputeUnits
+//            ,prefillCompute: prefillComputeUnits
+        )
     }
     
     private func resetSessionAggregation() {

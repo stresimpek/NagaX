@@ -11,6 +11,7 @@ import UIKit
 class ARVideoRecorder {
     private var assetWriter: AVAssetWriter?
     private var videoInput: AVAssetWriterInput?
+    private var audioInput: AVAssetWriterInput?
     private var pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor?
     
     private var isRecording = false
@@ -22,7 +23,7 @@ class ARVideoRecorder {
     private var totalPauseDuration: CMTime = .zero
     private var pauseStartTimestamp: CMTime? = nil
     
-    private let frameSize = CGSize(width: 1300, height: 720)
+    private let frameSize = CGSize(width: 1280, height: 720)
     
     func start(outputURL: URL) {
         self.outputURL = outputURL
@@ -57,14 +58,28 @@ class ARVideoRecorder {
                 sourcePixelBufferAttributes: sourcePixelBufferAttributes
             )
             
-            if let writer = assetWriter, let input = videoInput {
-                if writer.canAdd(input) {
-                    writer.add(input)
+            let audioSettings: [String: Any] = [
+                AVFormatIDKey: kAudioFormatMPEG4AAC,
+                AVNumberOfChannelsKey: 1,
+                AVSampleRateKey: 44100,
+                AVEncoderBitRateKey: 64000
+            ]
+            audioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: audioSettings)
+            audioInput?.expectsMediaDataInRealTime = true
+            
+            
+            if let writer = assetWriter {
+                if let vInput = videoInput, writer.canAdd(vInput) {
+                    writer.add(vInput)
+                }
+                
+                if let aInput = audioInput, writer.canAdd(aInput) {
+                    writer.add(aInput)
                 }
                 
                 if writer.startWriting() {
                     isRecording = true
-                    print("✅ ARVideoRecorder: Writer ready")
+                    print("✅ ARVideoRecorder: Writer Started (Video + Audio)")
                 }
             }
             
@@ -87,25 +102,32 @@ class ARVideoRecorder {
     }
     
     func stop(completion: @escaping (URL?) -> Void) {
-        guard isRecording, let writer = assetWriter, let input = videoInput else {
+        guard isRecording, let writer = assetWriter else {
             completion(nil)
             return
         }
         
         isRecording = false
         isPaused = false
-        input.markAsFinished()
+        
+        videoInput?.markAsFinished()
+        audioInput?.markAsFinished()
         
         writer.finishWriting { [weak self] in
             DispatchQueue.main.async {
                 guard let self = self else { return }
+                
                 if writer.status == .completed {
+                    print("✅ Video Recording Completed")
                     completion(self.outputURL)
                 } else {
+                    print("❌ Video Recording Failed: \(String(describing: writer.error))")
                     completion(nil)
                 }
+                
                 self.assetWriter = nil
                 self.videoInput = nil
+                self.audioInput = nil
                 self.pixelBufferAdaptor = nil
             }
         }
@@ -142,6 +164,36 @@ class ARVideoRecorder {
         if input.isReadyForMoreMediaData {
             if let start = sessionStartTime, adjustedTimestamp >= start {
                 adaptor.append(pixelBuffer, withPresentationTime: adjustedTimestamp)
+            }
+        }
+    }
+    
+    func recordAudio(sampleBuffer: CMSampleBuffer) {
+        guard isRecording,
+              let input = audioInput,
+              input.isReadyForMoreMediaData else { return }
+        
+        if isPaused { return }
+        
+        var timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        timestamp = CMTimeSubtract(timestamp, totalPauseDuration)
+        
+        if let start = sessionStartTime, timestamp >= start {
+            var count: CMItemCount = 0
+            CMSampleBufferGetSampleTimingInfoArray(sampleBuffer, entryCount: 0, arrayToFill: nil, entriesNeededOut: &count)
+            var info = [CMSampleTimingInfo](repeating: CMSampleTimingInfo(), count: Int(count))
+            CMSampleBufferGetSampleTimingInfoArray(sampleBuffer, entryCount: count, arrayToFill: &info, entriesNeededOut: nil)
+            
+            for i in 0..<Int(count) {
+                info[i].decodeTimeStamp = CMTimeSubtract(info[i].decodeTimeStamp, totalPauseDuration)
+                info[i].presentationTimeStamp = CMTimeSubtract(info[i].presentationTimeStamp, totalPauseDuration)
+            }
+            
+            var outputBuffer: CMSampleBuffer?
+            CMSampleBufferCreateCopyWithNewTiming(allocator: kCFAllocatorDefault, sampleBuffer: sampleBuffer, sampleTimingEntryCount: Int(count), sampleTimingArray: &info, sampleBufferOut: &outputBuffer)
+            
+            if let finalBuffer = outputBuffer {
+                input.append(finalBuffer)
             }
         }
     }
