@@ -90,6 +90,8 @@ struct SettingsView: View {
                                             .onChange(of: distractionLevel) { v, _ in
                                                 distractionLevel = v.rounded()
                                             }
+                                            .padding(.vertical, 20)
+                                            .contentShape(Rectangle())    
                                             .accessibilityElement(children: .ignore)
                                             .accessibilityLabel("Pilih tingkat distraksi suara")
                                             .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
@@ -97,6 +99,7 @@ struct SettingsView: View {
                                                 distractionLevel == 0 ? "Rendah" :
                                                 distractionLevel == 1 ? "Sedang" : "Tinggi"
                                             )
+
                                         
                                         HStack {
                                             VStack {
