@@ -190,7 +190,6 @@ struct ButtonComponent: View {
             return 20
         }
     }
-
     
     var body: some View {
         let isIconOnly = (title == nil && systemImage != nil)

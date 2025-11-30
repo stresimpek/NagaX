@@ -8,13 +8,18 @@
 import SwiftUI
 
 struct RoomPreview: View {
+    @Environment(\.horizontalSizeClass) var sizeClass
+    private var isiPad: Bool {
+        sizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
     var body: some View {
         VStack(spacing: 8) {
             Image(.ruangKelas)
                 .resizable()
-                .frame(width: 208, height: 144)
+                .frame(width: isiPad ? 328 : 208, height: isiPad ? 226 : 144)
             Text("Ruang Kelas")
-                .font(.title2)
+                .font(isiPad ? .title1 : .title2)
                 .bold()
                 .foregroundStyle(Color.baseColorWhite)
         }

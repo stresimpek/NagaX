@@ -519,7 +519,8 @@ struct EvaluationSectionView<Content: View>: View {
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
         .onAppear {
-            diffComponents = DiffComponent.generate(original: transcript, new: analysisText)
+            var transcriptText = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+            diffComponents = DiffComponent.generate(original: transcriptText, new: analysisText)
         }
     }
     

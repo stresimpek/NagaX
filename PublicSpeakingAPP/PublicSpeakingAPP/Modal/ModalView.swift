@@ -11,6 +11,10 @@ import AVFoundation
 struct ModalView: View {
      
     let onStart: () -> Void
+    @Environment(\.horizontalSizeClass) var sizeClass
+    private var isiPad: Bool {
+        sizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
+    }
     
     @StateObject private var viewModel = ModalViewModel()
     @AccessibilityFocusState private var isTitleFocused: Bool
@@ -42,44 +46,84 @@ struct ModalView: View {
                             .background(Color.clear)
                             .accessibilitySortPriority(3)
                             
-                            Spacer().frame(height: geometry.size.height * 0.035)
-                            
-                            ScrollView(.vertical, showsIndicators: false) {
-                                VStack(spacing: 0) {
-                                    
-                                    Spacer().frame(height: geometry.size.height * 0.02)
-                                    
-                                    VStack {
-                                        switch viewModel.currentStep {
-                                        case .quietRoom:
-                                            MicroAnimation(artboardName: "Kondusif")
-                                                .frame(height: 100)
+                            if isiPad {
+                                GeometryReader { geometry in
+                                    ScrollView(.vertical, showsIndicators: false) {                                        VStack(spacing: 0) {
+                                            Spacer()
                                             
-                                        case .micCheck:
-                                            MicSetupView(
-                                                micMonitor: viewModel.micMonitor,
-                                                showMicWarning: viewModel.showMicWarning,
-                                                imageName: viewModel.mainImageName
+                                            VStack {
+                                                switch viewModel.currentStep {
+                                                case .quietRoom:
+                                                    MicroAnimation(artboardName: "Kondusif")
+                                                        .frame(height: 100)
+                                                    
+                                                case .micCheck:
+                                                    MicSetupView(
+                                                        micMonitor: viewModel.micMonitor,
+                                                        showMicWarning: viewModel.showMicWarning,
+                                                        imageName: viewModel.mainImageName
+                                                    )
+                                                    
+                                                case .cameraPosition:
+                                                    MicroAnimation(artboardName: "ArmLength")
+                                                        .frame(height: 100)
+                                                }
+                                            }
+                                            .frame(height: 160)
+                                            .animation(.easeInOut, value: viewModel.currentStep)
+                                            
+                                            InstructionTextView(
+                                                message: viewModel.instructionText,
+                                                geometry: geometry
                                             )
-                                            
-                                        case .cameraPosition:
-                                            MicroAnimation(artboardName: "ArmLength")
-                                                .frame(height: 100)
+                                            .padding(.bottom, 80)
+                                            Spacer()
                                         }
+                                        .frame(minHeight: geometry.size.height)
+                                        .frame(maxWidth: .infinity)
                                     }
-                                    .frame(height: 150)
-                                    .animation(.easeInOut, value: viewModel.currentStep)
-                                    
-                                    Spacer().frame(height: geometry.size.height * 0.01)
-                                    
-                                    InstructionTextView(
-                                        message: viewModel.instructionText,
-                                        geometry: geometry
-                                    )
-                                    .padding(.bottom, 80)
+                                    .accessibilitySortPriority(2)
                                 }
+                            } else {
+                                Spacer().frame(height: geometry.size.height * 0.035)
+                                
+                                ScrollView(.vertical, showsIndicators: false) {
+                                    VStack(spacing: 0) {
+                                        
+                                        Spacer().frame(height: geometry.size.height * 0.02)
+                                        
+                                        VStack {
+                                            switch viewModel.currentStep {
+                                            case .quietRoom:
+                                                MicroAnimation(artboardName: "Kondusif")
+                                                    .frame(height: 100)
+                                                
+                                            case .micCheck:
+                                                MicSetupView(
+                                                    micMonitor: viewModel.micMonitor,
+                                                    showMicWarning: viewModel.showMicWarning,
+                                                    imageName: viewModel.mainImageName
+                                                )
+                                                
+                                            case .cameraPosition:
+                                                MicroAnimation(artboardName: "ArmLength")
+                                                    .frame(height: 100)
+                                            }
+                                        }
+                                        .frame(height: 150)
+                                        .animation(.easeInOut, value: viewModel.currentStep)
+                                        
+                                        Spacer().frame(height: geometry.size.height * 0.01)
+                                        
+                                        InstructionTextView(
+                                            message: viewModel.instructionText,
+                                            geometry: geometry
+                                        )
+                                        .padding(.bottom, 80)
+                                    }
+                                }
+                                .accessibilitySortPriority(2)
                             }
-                            .accessibilitySortPriority(2)
                         }
                     }
                     .frame(width: geometry.size.width * 0.85)
