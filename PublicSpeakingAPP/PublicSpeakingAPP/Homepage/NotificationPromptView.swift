@@ -21,9 +21,12 @@ struct NotificationPromptView: View {
             
             VStack() {
                 Text("Mau diingetin latihannya?")
-                    .font(.title2)
+                    .font(.title1)
                     .foregroundStyle(Color.white)
                     .bold()
+                Text("Kamu bakal diingetin h-1 sebelum waktu presentasimu dimulai.")
+                    .font(.body)
+                    .foregroundStyle(Color.white)
 
                 MicroAnimation(artboardName: "NotificationBell")
                     .frame(width: 200, height: 200)
