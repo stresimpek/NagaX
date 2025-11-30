@@ -16,6 +16,8 @@ struct ComponentObjective: View {
     let showDontShowAgain: Bool
 
     @State private var appear = false
+    
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     private var fadeMask: some View {
         LinearGradient(
@@ -36,7 +38,7 @@ struct ComponentObjective: View {
                 .opacity(appear ? 0.5 : 0.0)
                 .ignoresSafeArea()
 
-            (isOvertime ? Color.baseColorRed : Color.blue)
+            (isOvertime ? Color.baseColorRed : Color.darkBlue)
                 .mask(fadeMask)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
@@ -78,12 +80,14 @@ struct ComponentObjective: View {
                             }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
-                            .background(Color.blue)
+                            .background(Color.darkBlue3)
                             .cornerRadius(999)
                         }
                         .offset(y: appear ? 0 : 25)
                         .opacity(appear ? 1 : 0)
-                        .padding(.bottom, 24)
+                        .padding(.bottom, sizeClass == .regular ? 54 : 24)
+                        .padding(.trailing, sizeClass == .regular ? 60 : 0)
+                        
                     }
                 }
             }
