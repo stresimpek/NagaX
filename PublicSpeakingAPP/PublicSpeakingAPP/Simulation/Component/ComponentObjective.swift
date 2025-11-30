@@ -11,7 +11,7 @@ struct ComponentObjective: View {
     let text: String
     let isOvertime: Bool
     var onFinished: (() -> Void)? = nil
-    
+
     @Binding var dontShowAgain: Bool
     let showDontShowAgain: Bool
 
@@ -36,18 +36,20 @@ struct ComponentObjective: View {
                 .opacity(appear ? 0.5 : 0.0)
                 .ignoresSafeArea()
 
-            Text(text)
-                .padding(.horizontal, 64)
-                .padding(.vertical, 10)
-                .foregroundColor(.white)
-                .background(
-                    (isOvertime ? Color.baseColorRed : Color.blue)
-                        .mask(fadeMask)
-                )
+            (isOvertime ? Color.baseColorRed : Color.blue)
+                .mask(fadeMask)
                 .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .overlay {
+                    Text(text)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white)
+                        .font(.system(size: 16, weight: .semibold))
+                        .padding(.horizontal, 20)
+                }
                 .offset(y: appear ? 0 : -20)
                 .opacity(appear ? 1 : 0)
-            
+
             if showDontShowAgain {
                 VStack {
                     Spacer()
@@ -81,7 +83,6 @@ struct ComponentObjective: View {
                         }
                         .offset(y: appear ? 0 : 25)
                         .opacity(appear ? 1 : 0)
-//                        .padding(.trailing, 24)
                         .padding(.bottom, 24)
                     }
                 }
@@ -103,6 +104,7 @@ struct ComponentObjective: View {
         }
     }
 }
+
 
 
 struct BannerItem: Identifiable, Equatable {

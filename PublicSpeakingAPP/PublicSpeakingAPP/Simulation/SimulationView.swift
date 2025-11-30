@@ -251,6 +251,7 @@ struct SimulationView: View {
                         showDontShowAgain: banner.showDontShowAgain
                     )
                     .id(banner.id)
+                    .frame(maxWidth: .infinity)
                 }
             }
             .onAppear {
