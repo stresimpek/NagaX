@@ -237,14 +237,14 @@ private extension NewEvaluationView {
             ButtonComponent(
                 title: "Selesai",
                 systemImage: nil,
-                size: .largeIconCircle,
+                size: .medium,
                 kind: .secondaryBlue,
                 action: onBack
             )
             ButtonComponent(
                 title: "Latihan Lagi",
                 systemImage: nil,
-                size: .largeIconCircle,
+                size: .medium,
                 kind: .primaryYellow,
                 action: { onNext(viewModel.settings) }
             )
@@ -432,7 +432,7 @@ struct EvaluationSectionView<Content: View>: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, minHeight: 240)
+        .frame(maxWidth: .infinity)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
@@ -447,7 +447,7 @@ struct EvaluationSectionView<Content: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             content
         }
-        .frame(maxWidth: .infinity, minHeight: 240, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
