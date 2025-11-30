@@ -11,6 +11,11 @@ import SwiftData
 struct DatePickerView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) var sizeClass
+    
+    private var isiPad: Bool {
+        sizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
+    }
         
     let onBack: () -> Void
     let onComplete: (Date) -> Void
@@ -253,6 +258,8 @@ struct DatePickerView: View {
                     }
                     .padding(24)
                     .multilineTextAlignment(.center)
+                    .frame(minHeight: geometry.size.height)
+                    .frame(maxWidth: .infinity)
                 }
         }
             ButtonComponent(

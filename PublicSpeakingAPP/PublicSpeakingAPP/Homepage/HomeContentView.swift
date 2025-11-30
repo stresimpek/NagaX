@@ -25,6 +25,11 @@ struct HomeContentView: View {
     let onStart: () -> Void
     let onDatePicker: () -> Void
     
+    @Environment(\.horizontalSizeClass) var sizeClass
+    private var isiPad: Bool {
+        sizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
     @Query private var savedDates: [PresentationDateModel]
     private var targetDate: Date? { savedDates.first?.date }
     
@@ -49,37 +54,41 @@ struct HomeContentView: View {
             
             Spacer()
             
-            ScrollView {
-                ZStack {
-                    VStack {
-                        Spacer()
-                        VStack(spacing: 0) {
-                            NameBanner(name: "Si Cupu (Kamu)")
+            GeometryReader { geometry in
+                ScrollView {
+                    ZStack {
+                        VStack {
+                            Spacer()
+                            VStack(spacing: 40) {
+                                NameBanner(name: "Si Cupu (Kamu)")
 
-                            MicroAnimation(artboardName: "Home")
-                                .frame(height: 120)
+                                MicroAnimation(artboardName: "Home")
+                                    .frame(height: isiPad ? 160 : 120)
+                            }
+                            .accessibilityHidden(true)
+                            
+                            Spacer()
+                            
+                            ButtonComponent(
+                                title: "Mulai Latihan",
+                                systemImage: nil,
+                                size: .large,
+                                kind: .primaryYellow,
+                                action: onStart
+                            )
+                            .padding(.top, 24)
+                            
+                            Spacer()
                         }
-                        .accessibilityHidden(true)
-                        
-                        Spacer()
-                        
-                        ButtonComponent(
-                            title: "Mulai Latihan",
-                            systemImage: nil,
-                            size: .large,
-                            kind: .primaryYellow,
-                            action: onStart
-                        )
-                        .padding(.top, 24)
-                        
-                        Spacer()
-                    }
-                    
-                    SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
+                        .frame(minHeight: geometry.size.height)
                         .frame(maxWidth: .infinity)
-                        .padding(.leading, 440)
-                        .padding(.bottom, 160)
-                        .accessibilityLabel("Hari ini kamu belum latihan. Ayo mulai latihan")
+                        
+                        SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
+                            .frame(maxWidth: .infinity)
+                            .padding(.leading, 440)
+                            .padding(.bottom, 160)
+                            .accessibilityLabel("Hari ini kamu belum latihan. Ayo mulai latihan")
+                    }
                 }
             }
         }
