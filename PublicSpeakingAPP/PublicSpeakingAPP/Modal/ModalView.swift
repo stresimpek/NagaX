@@ -73,9 +73,14 @@ struct ModalView: View {
                                                         imageName: viewModel.mainImageName
                                                     )
                                                     
-                                                case .cameraPosition:
+                                                case .distanceCheck:
                                                     MicroAnimation(artboardName: "ArmLength")
                                                         .frame(height: 100)
+                                                case .volumeCheck:
+                                                    MicroAnimation(artboardName: "VOLUME")
+                                                        .frame(height: 100)
+                                                case .cameraSetup:
+                                                    EyeContactMainView(viewModel: viewModel)
                                                 }
                                             }
                                             .frame(height: 160)
@@ -114,9 +119,14 @@ struct ModalView: View {
                                                     imageName: viewModel.mainImageName
                                                 )
                                                 
-                                            case .cameraPosition:
+                                            case .distanceCheck:
                                                 MicroAnimation(artboardName: "ArmLength")
                                                     .frame(height: 100)
+                                            case .volumeCheck:
+                                                MicroAnimation(artboardName: "VOLUME")
+                                                    .frame(height: 100)
+                                            case .cameraSetup:
+                                                EyeContactMainView(viewModel: viewModel)
                                             }
                                         }
                                         .frame(height: 150)
