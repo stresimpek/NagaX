@@ -87,6 +87,12 @@ struct SimulationView: View {
                         newValue ? micMonitor.startMonitoring() : micMonitor.stopMonitoring()
                     }
                 
+                if viewModel.settings.selectedAspects.contains(.kontakMata) {
+                    SimulationARTrackerView(viewModel: viewModel)
+                        .edgesIgnoringSafeArea(.all)
+                        .zIndex(1)
+                }
+
                 VStack {
                     
                     if viewModel.isRecording && !showPauseModal {
@@ -97,9 +103,9 @@ struct SimulationView: View {
                                 size: .largeIconCircle,
                                 kind: .primaryYellow,
                                 action: {
-                                                                                viewModel.pauseForModal()  // Use new function
-                                                                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
-                                                                                    showPauseModal = true
+                                        viewModel.pauseForModal()  // Use new function
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+                                        showPauseModal = true
                                     }
                                 }
                             )
@@ -176,18 +182,18 @@ struct SimulationView: View {
                         Spacer()
                         
                         if viewModel.isRecording {
-                            ZStack(alignment: .leading) {
+                            HStack(alignment: .center, spacing: 16) {
+                                Image(systemName: "mic.fill")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.baseColorWhite)
                                 AudioVisualizerModalView(micMonitor: micMonitor)
-                                    .padding(.leading, 30)
-                                    .padding(.trailing, 0)
-                                    .frame(width: isAccessibilitySize ? 240 : 280, height: 50)
-                                    .frame(alignment: .leading)
-                                    .background(Color.black.opacity(0.27))
-                                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                                    .offset(x: 20)
-                                
-                                MicIconButton(showMicWarning: false)
                             }
+                            .padding(.horizontal, 8)
+                            .frame(width: 280, height: 50)
+                            .frame(alignment: .leading)
+                            .background(Color.black.opacity(0.27))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .offset(x: 20)
                             .accessibilityHidden(true)
                         }
                         

@@ -57,15 +57,17 @@ struct HomeView: View {
                             coordinator.goBack()
                         },
                         onNext: { settings in
-                            coordinator.goToModal(settings)
+                            coordinator.goToModal(settings: settings, startAtCameraStep: false)
                         }
                     )
                 
-                case .modal(let settings):
+                case .modal(let settings, let startAtCameraStep):
                     ModalView(
                         onStart: {
                             coordinator.goToSimulation(settings)
-                        }
+                        },
+                        settings: settings,
+                        startAtCameraStep: startAtCameraStep
                     )
                     
                 case .simulation(let settings):
@@ -99,7 +101,11 @@ struct HomeView: View {
                     EvaluationSummaryView(
                         viewModel: viewModel,
                         onPracticeAgain: {
-                            coordinator.retrySimulation(from: settings)
+                            if settings.selectedAspects.contains(.kontakMata) {
+                                coordinator.goToModal(settings: settings, startAtCameraStep: true)
+                            } else {
+                                coordinator.retrySimulation(from: settings)
+                            }
                         },
                         onViewDetails: {
                             coordinator.goToNewEvaluation(
@@ -122,7 +128,11 @@ struct HomeView: View {
                             coordinator.returnToHome()
                         },
                         onNext: { passedSettings in
-                            coordinator.retrySimulation(from: passedSettings)
+                            if passedSettings.selectedAspects.contains(.kontakMata) {
+                                coordinator.goToModal(settings: passedSettings, startAtCameraStep: true)
+                            } else {
+                                coordinator.retrySimulation(from: passedSettings)
+                            }
                         }
                     )
                     .navigationBarBackButtonHidden(true)

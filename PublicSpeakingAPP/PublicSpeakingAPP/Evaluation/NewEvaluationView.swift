@@ -262,7 +262,12 @@ private extension NewEvaluationView {
             .frame(maxWidth: .infinity)
             .padding()
         case .kontakMata:
-            Text("")
+            EyeContactEvaluationView(
+                videoURL: viewModel.result.videoURL,
+                gazeEvents: viewModel.result.gazeEvents
+            )
+            .frame(maxWidth: .infinity)
+            .padding()
         }
     }
     
@@ -289,7 +294,7 @@ private extension NewEvaluationView {
                     ButtonComponent(
                         title: "Latihan Lagi",
                         systemImage: nil,
-                        size: .largePill,
+                        size: .medium,
                         kind: .primaryYellow,
                         fullWidth: true,
                         action: { onNext(viewModel.settings) }
@@ -298,7 +303,7 @@ private extension NewEvaluationView {
                     ButtonComponent(
                         title: "Selesai",
                         systemImage: nil,
-                        size: .largePill,
+                        size: .medium,
                         kind: .secondaryBlue,
                         fullWidth: true,
                         action: onBack
@@ -313,14 +318,14 @@ private extension NewEvaluationView {
                     ButtonComponent(
                         title: "Selesai",
                         systemImage: nil,
-                        size: .largeIconCircle,
+                        size: .medium,
                         kind: .secondaryBlue,
                         action: onBack
                     )
                     ButtonComponent(
                         title: "Latihan Lagi",
                         systemImage: nil,
-                        size: .largeIconCircle,
+                        size: .medium,
                         kind: .primaryYellow,
                         action: { onNext(viewModel.settings) }
                     )
@@ -512,7 +517,7 @@ struct EvaluationSectionView<Content: View>: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, minHeight: 240)
+        .frame(maxWidth: .infinity)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
@@ -528,7 +533,7 @@ struct EvaluationSectionView<Content: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             content
         }
-        .frame(maxWidth: .infinity, minHeight: 240, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)

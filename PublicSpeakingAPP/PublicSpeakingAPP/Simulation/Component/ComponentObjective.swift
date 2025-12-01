@@ -63,7 +63,7 @@ struct ComponentObjective: View {
                             HStack(spacing: 10) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 6)
-                                        .stroke(Color.white, lineWidth: 2)
+//                                        .stroke(Color.white, lineWidth: 2)
                                         .background(.baseColorWhite)
                                         .frame(width: 22, height: 22)
 
@@ -83,6 +83,10 @@ struct ComponentObjective: View {
                             .background(Color.darkBlue3)
                             .cornerRadius(999)
                         }
+                        .shadow(color: .baseColorBlack,
+                                radius: 0,
+                                x: 0,
+                                y: 1)
                         .offset(y: appear ? 0 : 25)
                         .opacity(appear ? 1 : 0)
                         .padding(.bottom, sizeClass == .regular ? 54 : 24)

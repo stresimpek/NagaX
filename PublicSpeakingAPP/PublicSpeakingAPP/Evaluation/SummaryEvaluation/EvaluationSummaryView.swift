@@ -155,7 +155,7 @@ struct EvaluationSummaryView: View {
                     ButtonComponent(
                         title: "Latihan Lagi",
                         systemImage: nil,
-                        size: .largePill,
+                        size: .medium,
                         kind: .secondaryBlue,
                         fullWidth: false,
                         action: onPracticeAgain
@@ -164,7 +164,7 @@ struct EvaluationSummaryView: View {
                     ButtonComponent(
                         title: "Lihat Detail",
                         systemImage: nil,
-                        size: .largePill,
+                        size: .medium,
                         kind: .primaryYellow,
                         fullWidth: false,
                         action: onViewDetails
