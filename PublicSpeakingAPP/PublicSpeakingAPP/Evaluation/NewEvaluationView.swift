@@ -304,14 +304,14 @@ private extension NewEvaluationView {
                     ButtonComponent(
                         title: "Selesai",
                         systemImage: nil,
-                        size: .largeIconCircle,
+                        size: .largePill,
                         kind: .secondaryBlue,
                         action: onBack
                     )
                     ButtonComponent(
                         title: "Latihan Lagi",
                         systemImage: nil,
-                        size: .largeIconCircle,
+                        size: .largePill,
                         kind: .primaryYellow,
                         action: { onNext(viewModel.settings) }
                     )
