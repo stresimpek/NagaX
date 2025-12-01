@@ -10,61 +10,61 @@ import SwiftUI
 struct EarlyStopModalView: View {
     let onContinue: () -> Void
     let onViewEvaluation: () -> Void
-
+    
     private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
-
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 Color.black.opacity(0.45)
                     .ignoresSafeArea()
-
+                
                 VStack {
                     Spacer(minLength: 0)
-
+                    
                     VStack(spacing: isPad ? 40 : 24) {
                         VStack(spacing: 4) {
                             Text("Selesai Latihan?")
                                 .font(.title3)
                                 .foregroundColor(.baseColorBrown)
                                 .multilineTextAlignment(.center)
-
+                            
                             Text("Sesi latihanmu belum memenuhi durasi yang terpilih, kamu akan lanjut ke evaluasi setelah ini.")
                                 .font(.footnote)
                                 .foregroundColor(.baseColorBrown)
                                 .multilineTextAlignment(.center)
                         }
                         .padding(.horizontal, isPad ? 56 : 27)
-
+                        
                         if isPad {
                             VStack(spacing: 12) {
-                              
                                 
-                                    ButtonComponent(
-                                        title: "Lanjut Latihan",
-                                        systemImage: nil,
-                                        size: .medium,
-                                        kind: .secondaryBlue,
-                                        fullWidth: true,
-                                        action: onContinue
-                                    )
-                             
                                 
-
-                              
-                                    ButtonComponent(
-                                        title: "Lihat Evaluasi",
-                                        systemImage: nil,
-                                        size: .medium,
-                                        kind: .primaryYellow,
-                                        fullWidth: true,
-                                        action: onViewEvaluation
-                                    )
-                                  
+                                ButtonComponent(
+                                    title: "Lanjut Latihan",
+                                    systemImage: nil,
+                                    size: .medium,
+                                    kind: .secondaryBlue,
+                                    fullWidth: true,
+                                    action: onContinue
+                                )
+                                
+                                
+                                
+                                
+                                ButtonComponent(
+                                    title: "Lihat Evaluasi",
+                                    systemImage: nil,
+                                    size: .medium,
+                                    kind: .primaryYellow,
+                                    fullWidth: true,
+                                    action: onViewEvaluation
+                                )
+                                
                                 
                             }
                             .padding(.horizontal, 56)
-
+                            
                         } else {
                             HStack(spacing: 12) {
                                 ButtonComponent(
@@ -74,7 +74,7 @@ struct EarlyStopModalView: View {
                                     kind: .secondaryBlue,
                                     action: onContinue
                                 )
-                         
+                                
                                 ButtonComponent(
                                     title: "Lihat Evaluasi",
                                     systemImage: nil,
@@ -82,7 +82,7 @@ struct EarlyStopModalView: View {
                                     kind: .primaryYellow,
                                     action: onViewEvaluation
                                 )
-                              
+                                
                             }
                             .padding(.horizontal, 16)
                         }
@@ -99,7 +99,7 @@ struct EarlyStopModalView: View {
                         alignment: .center
                     )
                     .cornerRadius(24)
-
+                    
                     Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

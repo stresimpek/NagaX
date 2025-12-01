@@ -51,7 +51,6 @@ struct NewEvaluationView: View {
                             tabsAndPaperSection
                         }
                         .padding(.leading, 60)
-                        bottomButtons
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.horizontal, 16)
@@ -83,64 +82,56 @@ struct NewEvaluationView: View {
 }
 
 private extension NewEvaluationView {
-        var tabsAndPaperSection: some View {
-            Group {
-                if isIPadLike {
-                    GeometryReader { proxy in
-                        let topOffset: CGFloat = 28
-
-                        ScrollView(.vertical, showsIndicators: true) {
-                            HStack(spacing: 0) {
-                                Spacer(minLength: 0)
-
-                                VStack(spacing: 0) {
-                                    tabsView
-                                        .padding(.bottom, -4)
-
-                                    paperContent
-                                        .frame(maxWidth: .infinity, alignment: .topLeading)
-
-                                    disclaimerBanner
-                                        .padding(.horizontal, 0)
-                                        .padding(.top, 20)
-
-                                    VStack {
-                                        bottomButtons
-                                    }
-                                    .padding(.top, 8)
-                                    .padding(.bottom, 48)
-                                }
-                                .frame(width: 820)
-                                .frame(minHeight: max(proxy.size.height - topOffset, 0), alignment: .top)
-
-                                .cornerRadius(0)
-                                .shadow(color: .gray.opacity(0.3), radius: 4, x: 0, y: 3)
-                                .padding(.horizontal, 12)
-
-                                Spacer(minLength: 0)
-                            }
-                            .padding(.top, topOffset)
-                            .frame(minHeight: proxy.size.height)
-                        }
-                    }
-                    .frame(height: UIScreen.main.bounds.height)
-                } else {
+    var tabsAndPaperSection: some View {
+        Group {
+            if isIPadLike {
+                ScrollView(.vertical, showsIndicators: true) {
                     VStack(spacing: 0) {
-                        tabsView
-                            .padding(.bottom, -4)
-
-                        paperContent
-                            .padding(.bottom, 35)
-
-                        disclaimerBanner
+                        Spacer(minLength: 28)
+                        
+                        VStack(spacing: 0) {
+                            tabsView
+                                .padding(.bottom, -4)
+                            
+                            paperContent
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                            
+                            disclaimerBanner
+                                .padding(.horizontal, 0)
+                                .padding(.top, 20)
+                            
+                            bottomButtons
+                                .padding(.top, 8)
+                                .padding(.bottom, 48)
+                        }
+                        .frame(width: 820)
+                        .cornerRadius(0)
+                        .shadow(color: .gray.opacity(0.3), radius: 4, x: 0, y: 3)
+                        .padding(.horizontal, 12)
+                        .frame(maxWidth: .infinity)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 28)
                 }
+            } else {
+                VStack(spacing: 0) {
+                    tabsView
+                        .padding(.bottom, -4)
+                    
+                    paperContent
+                        .padding(.bottom, 35)
+                    
+                    disclaimerBanner
+                    
+                    bottomButtons
+                        .padding(.top, 64)
+
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 28)
             }
         }
+    }
     
-
+    
     var tabsView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
@@ -177,25 +168,25 @@ private extension NewEvaluationView {
     }
     
     @ViewBuilder
-        private var tabContent: some View {
-            EvaluationSectionView(
-                evaluatorNote: viewModel.currentEvaluatorNote,
-                sectionTitle: viewModel.currentSectionTitle,
-                showFullScreen: $viewModel.showFullScreen,
-                hasScrollableContent: viewModel.currentHasScrollableContent,
-                analysisText: viewModel.sentenceAnalysisResult,
-                transcript: viewModel.fullTranscript,
-                guidance: viewModel.currentGuidance,
-                showEmptyState: shouldShowEmptyStateForCurrentTab(),
-                emptyStateMessage: emptyStateMessageForCurrentTab(),
-                tabId: "\(viewModel.currentTab)"
-            ) {
-                contentForCurrentTab
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .padding(.horizontal, 18)
+    private var tabContent: some View {
+        EvaluationSectionView(
+            evaluatorNote: viewModel.currentEvaluatorNote,
+            sectionTitle: viewModel.currentSectionTitle,
+            showFullScreen: $viewModel.showFullScreen,
+            hasScrollableContent: viewModel.currentHasScrollableContent,
+            analysisText: viewModel.sentenceAnalysisResult,
+            transcript: viewModel.fullTranscript,
+            guidance: viewModel.currentGuidance,
+            showEmptyState: shouldShowEmptyStateForCurrentTab(),
+            emptyStateMessage: emptyStateMessageForCurrentTab(),
+            tabId: "\(viewModel.currentTab)"
+        ) {
+            contentForCurrentTab
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 18)
+    }
     
     private func emptyStateMessageForCurrentTab() -> String {
         switch viewModel.currentTab {
@@ -299,7 +290,7 @@ private extension NewEvaluationView {
                         fullWidth: true,
                         action: { onNext(viewModel.settings) }
                     )
-
+                    
                     ButtonComponent(
                         title: "Selesai",
                         systemImage: nil,
@@ -335,7 +326,7 @@ private extension NewEvaluationView {
             }
         }
     }
-
+    
 }
 
 struct GuidanceView: View {
@@ -365,7 +356,7 @@ struct GuidanceView: View {
                     Image(systemName: isExpanded ? "minus" : "plus")
                         .foregroundColor(.baseColorBrown)
                         .font(.system(size: 18, weight: .bold))
-                        .frame(width: 44, height: 44)  
+                        .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
                 .padding()
@@ -450,7 +441,7 @@ struct EvaluationSectionView<Content: View>: View {
                     .font(.body)
                     .foregroundColor(.darkBlue3)
                     .underline(true, color: Color.baseColorBrown)
-                  
+                
             }
             VStack (alignment: .leading){
                 Text(sectionTitle)
@@ -477,22 +468,22 @@ struct EvaluationSectionView<Content: View>: View {
     }
     
     private var emptyStateContent: some View {
-            HStack(alignment: .center, spacing: 12) {
-                Text(emptyStateMessage)
-                    .font(.title3)
-                    .foregroundColor(Color.baseColorBrown)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity, minHeight: 152.8125, maxHeight: 152.8125, alignment: .center)
-            .padding(.horizontal, 50)
-            .padding(.vertical, 53)
-            .background(Color.yellow2.opacity(0.2))
-            .cornerRadius(11.25)
-            .overlay(
-                RoundedRectangle(cornerRadius: 11.25)
-                    .stroke(Color.brown.opacity(0.4), lineWidth: 0.9375)
-            )
+        HStack(alignment: .center, spacing: 12) {
+            Text(emptyStateMessage)
+                .font(.title3)
+                .foregroundColor(Color.baseColorBrown)
+                .multilineTextAlignment(.center)
         }
+        .frame(maxWidth: .infinity, minHeight: 152.8125, maxHeight: 152.8125, alignment: .center)
+        .padding(.horizontal, 50)
+        .padding(.vertical, 53)
+        .background(Color.yellow2.opacity(0.2))
+        .cornerRadius(11.25)
+        .overlay(
+            RoundedRectangle(cornerRadius: 11.25)
+                .stroke(Color.brown.opacity(0.4), lineWidth: 0.9375)
+        )
+    }
     
     private var scrollableContentWithGradient: some View {
         ZStack(alignment: .bottomTrailing) {
