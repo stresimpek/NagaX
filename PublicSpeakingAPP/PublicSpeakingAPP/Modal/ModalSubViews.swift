@@ -32,19 +32,31 @@ struct MicSetupView: View {
     
     var body: some View {
         HStack(alignment: .center, spacing: 60) {
-
-            HStack(alignment: .center, spacing: 16) {
-                Image(systemName: "mic.fill")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.baseColorWhite)
-                AudioVisualizerModalView(micMonitor: micMonitor)
+            ZStack(alignment: .topLeading) {
+                HStack(alignment: .center, spacing: 16) {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.baseColorWhite)
+                    AudioVisualizerModalView(micMonitor: micMonitor)
+                }
+                .padding(.horizontal, 8)
+                .frame(width: 280, height: 50)
+                .frame(alignment: .leading)
+                .background(Color.black.opacity(0.27))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .offset(x: 20)
+                    
+                if showMicWarning {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.baseColorRed)
+                        .offset(x: 10, y: -5)
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
-            .padding(.horizontal, 8)
-            .frame(width: 280, height: 50)
-            .frame(alignment: .leading)
-            .background(Color.black.opacity(0.27))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .offset(x: 20)
+            .animation(.spring(), value: showMicWarning)
+
+            
 
             Image(imageName)
                 .resizable()
@@ -52,32 +64,6 @@ struct MicSetupView: View {
                 .frame(height: 150)
         }
         .accessibilityHidden(true)
-    }
-}
-
-struct MicIconButton: View {
-    let showMicWarning: Bool
-    
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            Image(systemName: "mic.fill")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.baseColorBrown)
-                .frame(width: 60, height: 60)
-                .background(Color.baseColorWhite)
-                .clipShape(Circle())
-                .shadow(color: .beige, radius: 0, x: 0, y: 3)
-
-            if showMicWarning {
-                Image(systemName: "exclamationmark.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(.baseColorRed)
-                    .background(Color.baseColorWhite.clipShape(Circle()))
-                    .offset(x: -5, y: -5)
-                    .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .animation(.spring(), value: showMicWarning)
     }
 }
 

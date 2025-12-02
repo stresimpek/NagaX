@@ -293,9 +293,14 @@ class NewEvaluationViewModel: ObservableObject {
         )
         
         // Filter out deleted words, excluding whitespace
-        let deletedCount = components.filter {
-            $0.type == .deleted && !$0.text.trimmingCharacters(in: .whitespaces).isEmpty
-        }.count
+        var deletedCount: Int = 0
+        if sentenceAnalysisResult.isEmpty || sentenceAnalysisResult == " " {
+            deletedCount = 0
+        } else {
+            deletedCount = components.filter {
+                $0.type == .deleted && !$0.text.trimmingCharacters(in: .whitespaces).isEmpty
+            }.count
+        }
         
         // Debug print
         print("=== DIFF DEBUG ===")

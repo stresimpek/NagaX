@@ -493,12 +493,23 @@ struct EvaluationSectionView<Content: View>: View {
                         .font(.body)
                         .foregroundColor(.baseColorBrown)
                         .padding()
-                    
                 } else {
-                    if !diffComponents.isEmpty {
+                   if analysisText.isEmpty || analysisText == " " {
+                       var transcriptText = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+                        Text("\(transcriptText)")
+                            .font(.body)
+                            .foregroundColor(.baseColorBrown)
+                            .padding()
+                   } else if !diffComponents.isEmpty {
                         DiffRenderView(components: diffComponents)
+                   } else if transcript.isEmpty {
+                        Text("Tidak ada transkrip yang terekam. Yuk ulangi lagi!")
+                            .font(.body)
+                            .foregroundColor(.textGrey)
+                            .padding()
                     } else {
-                        Text("\(transcript)")
+                        var transcriptText = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+                        Text("\(transcriptText)")
                             .font(.body)
                             .foregroundColor(.baseColorBrown)
                             .padding()

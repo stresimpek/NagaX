@@ -30,72 +30,72 @@ struct AspectInfoView: View {
     var body: some View {
         GeometryReader { geo in
             VStack {
-                Spacer().frame(height: geo.size.height * 0.08)
+                if isIpad {
+                    Spacer()
+                } else {
+                    Spacer()
+                        .frame(height: geo.size.height * 0.08)
+                }
+                
                 ZStack(alignment: .topLeading) {
-                    VStack(spacing: 0) {
-                        
-                        Text("ASPEK PRESENTASI")
-                            .font(.title3)
-                            .foregroundColor(Color("BaseColorBrown"))
-                            .underline()
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 20)
-                            .padding(.bottom, 15)
+                    SetupPaperCard(geo: geo) {
+                        VStack(spacing: 0) {
+                            Text("ASPEK PRESENTASI")
+                                .font(.title3)
+                                .foregroundColor(Color("BaseColorBrown"))
+                                .underline()
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.top, 20)
+                                .padding(.bottom, 15)
 
-                        ScrollView {
-                            Grid(horizontalSpacing: 16, verticalSpacing: 10) {
-                                ForEach(stride(from: 0, to: aspectInfoData.count, by: 2).map { $0 }, id: \.self) { index in
-                                    GridRow {
-                                        AspectInfoCard(
-                                            item: aspectInfoData[index],
-                                            fixedHeight: maxCardHeight == 0 ? nil : maxCardHeight
-                                        )
-                                        if index + 1 < aspectInfoData.count {
+                            ScrollView {
+                                Grid(horizontalSpacing: 16, verticalSpacing: 10) {
+                                    ForEach(stride(from: 0, to: aspectInfoData.count, by: 2).map { $0 }, id: \.self) { index in
+                                        GridRow {
                                             AspectInfoCard(
-                                                item: aspectInfoData[index + 1],
+                                                item: aspectInfoData[index],
                                                 fixedHeight: maxCardHeight == 0 ? nil : maxCardHeight
                                             )
-                                        } else {
-                                            Color.clear.gridCellUnsizedAxes([.vertical, .horizontal])
+                                            if index + 1 < aspectInfoData.count {
+                                                AspectInfoCard(
+                                                    item: aspectInfoData[index + 1],
+                                                    fixedHeight: maxCardHeight == 0 ? nil : maxCardHeight
+                                                )
+                                            } else {
+                                                Color.clear.gridCellUnsizedAxes([.vertical, .horizontal])
+                                            }
                                         }
                                     }
                                 }
+                                .padding(.horizontal, 24)
+                                .padding(.bottom, 12)
                             }
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 12)
-                        }
-                        .fixedSize(horizontal: false, vertical: false)
-                        .mask(
-                            LinearGradient(
-                                gradient: Gradient(stops: [
-                                    .init(color: .black, location: 0.0),
-                                    .init(color: .black, location: 0.9),
-                                    .init(color: .clear, location: 1.0)
-                                ]),
-                                startPoint: .top,
-                                endPoint: .bottom
+                            .mask(
+                                LinearGradient(
+                                    gradient: Gradient(stops: [
+                                        .init(color: .black, location: 0.0),
+                                        .init(color: .black, location: 0.9),
+                                        .init(color: .clear, location: 1.0)
+                                    ]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
                             )
-                        )
-                        .padding(.bottom, 15)
-                        .onPreferenceChange(AspectCardHeightPreferenceKey.self) { newHeight in
-                            if newHeight > 0 {
-                                maxCardHeight = newHeight
+                            .padding(.bottom, 15)
+                            .onPreferenceChange(AspectCardHeightPreferenceKey.self) { newHeight in
+                                if newHeight > 0 {
+                                    maxCardHeight = newHeight
+                                }
                             }
                         }
+                        .padding(.top)
                     }
-                    .frame(width: geo.size.width * 0.85)
-                    .background(
-                        Image("SetupPaper")
-                            .resizable()
-                            .scaledToFit()
-                            .clipped()
-                            .accessibilityHidden(true)
-                    )
+
                     HeaderBackButton(action: onDismiss)
-                        .offset(x: -20, y: -20)
+                        .offset(x: isIpad ? -15 : 30, y: -15)
                 }
-                
+
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

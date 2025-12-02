@@ -45,6 +45,19 @@ struct OnboardingView: View {
                             .accessibilityHidden(true)
                             .padding(.top, 16)
                         
+                        if !isIpad {
+                            ButtonComponent(
+                                title: "Mulai",
+                                systemImage: nil,
+                                size: .large,
+                                kind: .primaryYellow,
+                                fullWidth: false,
+                                isLoading: false,
+                                isEnabled: true,
+                                action: onStartTapped
+                            )
+                        }
+                        
                         Spacer()
                     }
                     .padding(.horizontal, 16)
@@ -53,22 +66,24 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .safeAreaInset(edge: .bottom) {
-                    HStack {
-                        Spacer()
-                        
-                        ButtonComponent(
-                            title: "Mulai",
-                            systemImage: nil,
-                            size: .large,
-                            kind: .primaryYellow,
-                            fullWidth: false,
-                            isLoading: false,
-                            isEnabled: true,
-                            action: onStartTapped
-                        )
+                    if isIpad {
+                        HStack {
+                            Spacer()
+                            
+                            ButtonComponent(
+                                title: "Mulai",
+                                systemImage: nil,
+                                size: .large,
+                                kind: .primaryYellow,
+                                fullWidth: false,
+                                isLoading: false,
+                                isEnabled: true,
+                                action: onStartTapped
+                            )
+                        }
+                        .padding(.bottom, 52)
+                        .padding(.trailing, 44)
                     }
-                    .padding(.bottom, 52)
-                    .padding(.trailing, 44)
                 }
             }
         }

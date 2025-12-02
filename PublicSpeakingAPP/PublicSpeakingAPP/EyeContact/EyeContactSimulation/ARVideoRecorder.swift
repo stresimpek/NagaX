@@ -2,7 +2,7 @@
 //  ARVideoRecorder.swift
 //  PublicSpeakingAPP
 //
-//  Created by Gemini on 19/11/25.
+//  Created by Jordan on 19/11/25.
 //
 
 import AVFoundation
