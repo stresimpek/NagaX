@@ -198,14 +198,18 @@ struct SimulationView: View {
                                 if viewModel.isRecording {
 
                                     ZStack(alignment: .leading) {
-                                    AudioVisualizerModalView(micMonitor: micMonitor)
-                                        .padding(.leading, 30)
+                                        HStack {
+                                            Image(systemName: "mic.fill")
+                                                .font(.system(size: 24, weight: .bold))
+                                                .foregroundColor(.baseColorWhite)
+                                            
+                                            AudioVisualizerModalView(micMonitor: micMonitor)
+                                        }
+                                        .padding(.horizontal, 8)
                                         .frame(width: isAccessibilitySize ? 240 : 280, height: 50)
                                         .frame(alignment: .leading)
                                         .background(Color.black.opacity(0.27))
                                         .clipShape(RoundedRectangle(cornerRadius: 16))
-                                    
-                                    MicIconButton(showMicWarning: false)
                                 }
                                     .accessibilityHidden(true)
                                 }
@@ -232,16 +236,19 @@ struct SimulationView: View {
                             
                             if viewModel.isRecording {
                                 ZStack(alignment: .leading) {
-                                    AudioVisualizerModalView(micMonitor: micMonitor)
-                                        .padding(.leading, 30)
-                                        .padding(.trailing, 0)
-                                        .frame(width: isAccessibilitySize ? 240 : 280, height: 50)
-                                        .frame(alignment: .leading)
-                                        .background(Color.black.opacity(0.27))
-                                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                                        .offset(x: 20)
-                                    
-                                    MicIconButton(showMicWarning: false)
+                                    HStack {
+                                        Image(systemName: "mic.fill")
+                                            .font(.system(size: 24, weight: .bold))
+                                            .foregroundColor(.baseColorWhite)
+                                        
+                                        AudioVisualizerModalView(micMonitor: micMonitor)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .frame(width: isAccessibilitySize ? 240 : 280, height: 50)
+                                    .frame(alignment: .leading)
+                                    .background(Color.black.opacity(0.27))
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                                    .offset(x: 20)
                                 }
                                 .accessibilityHidden(true)
                             }
