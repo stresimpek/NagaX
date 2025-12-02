@@ -50,6 +50,11 @@ struct SimulationView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private var isAccessibilitySize: Bool { dynamicTypeSize.isAccessibilitySize }
     
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var isIPad: Bool {
+        horizontalSizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
     private var isProcessing: Bool {
         let status = viewModel.whisperKitVM.recordingStatus
         return !viewModel.isRecording
@@ -79,6 +84,10 @@ struct SimulationView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
+                
+                Color(.darkBlue3)   // bg
+                        .ignoresSafeArea()
+                
                 TeacherRiveView(sim: viewModel)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .ignoresSafeArea()
@@ -89,7 +98,7 @@ struct SimulationView: View {
                 
                 VStack {
                     
-                    if viewModel.isRecording && !showPauseModal {
+                    if viewModel.isRecording && !showPauseModal && !viewModel.isOvertime {
                         HStack {
                             ButtonComponent(
                                 title: nil,
@@ -104,7 +113,8 @@ struct SimulationView: View {
                                 }
                             )
                             .disabled(viewModel.whisperModelState != .loaded || isProcessing)
-                            .padding(.top, 16)
+                            .padding(.leading, isIPad ? 45 : 0)
+                            .padding(.top, isIPad ? 25 : 16)
                             .accessibilityLabel("Jeda")
                             .accessibilitySortPriority(4)
                             
@@ -143,6 +153,8 @@ struct SimulationView: View {
                             HStack(alignment: .center, spacing: 6) {
                                 Image(systemName: "alarm.fill")
                                     .font(.system(size: alarmIconSize, weight: .semibold))
+                                    
+
                                 Text(viewModel.formattedTime)
                                     .font(timerFont)
                             }
@@ -152,6 +164,8 @@ struct SimulationView: View {
                             .background(.coral)
                             .cornerRadius(24)
                             .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
+                            .padding(.bottom, isIPad ? 160 : 0)
+                            .padding(.leading, isIPad ? 45 : 0)
                             .accessibilityElement(children: .combine)
                             .accessibilityLabel("Telah merekam selama \(viewModel.formattedTime)")
                             .accessibilitySortPriority(2)
@@ -162,12 +176,15 @@ struct SimulationView: View {
                                 Text(viewModel.formattedTime)
                                     .font(timerFont)
                             }
+                            
                             .font(.title2)
                             .padding(12)
                             .foregroundColor(.baseColorWhite)
                             .background(.darkBlue)
                             .cornerRadius(24)
                             .shadow(color: .darkBlue2, radius: 0, x: 0, y: 4)
+                            .padding(.bottom, isIPad ? 160 : 0)
+                            .padding(.leading, isIPad ? 45 : 0)
                             .accessibilityElement(children: .combine)
                             .accessibilityLabel("Telah merekam selama \(viewModel.formattedTime)")
                             .accessibilitySortPriority(2)
@@ -175,52 +192,94 @@ struct SimulationView: View {
                         
                         Spacer()
                         
-                        if viewModel.isRecording {
-                            ZStack(alignment: .leading) {
-                                AudioVisualizerModalView(micMonitor: micMonitor)
-                                    .padding(.leading, 30)
-                                    .padding(.trailing, 0)
-                                    .frame(width: isAccessibilitySize ? 240 : 280, height: 50)
-                                    .frame(alignment: .leading)
-                                    .background(Color.black.opacity(0.27))
-                                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                                    .offset(x: 20)
-                                
-                                MicIconButton(showMicWarning: false)
-                            }
-                            .accessibilityHidden(true)
-                        }
-                        
-                        Spacer()
-                        
-                        HStack(spacing: 5) {
-                            let recordTitle: String = {
+                        if isIPad {
+                            VStack(alignment: .trailing, spacing: 68) {
+
                                 if viewModel.isRecording {
-                                    return isAccessibilitySize ? "Selesai\nRekam" : "Selesai Rekam"
-                                } else {
-                                    return isAccessibilitySize ? "Mulai\nRekam" : "Mulai Rekam"
+
+                                    ZStack(alignment: .leading) {
+                                    AudioVisualizerModalView(micMonitor: micMonitor)
+                                        .padding(.leading, 30)
+                                        .frame(width: isAccessibilitySize ? 240 : 280, height: 50)
+                                        .frame(alignment: .leading)
+                                        .background(Color.black.opacity(0.27))
+                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                    
+                                    MicIconButton(showMicWarning: false)
                                 }
-                            }()
-                            ButtonRecord(
-                                title: recordTitle,
-                                systemImage: viewModel.isRecording ? "stop.fill" : "circle.fill",
-                                size: .large,
-                                kind: .primaryYellow,
-                                action: viewModel.toggleRecording
-                            )
-                            .disabled(viewModel.whisperModelState != .loaded || isProcessing )
-                            .accessibilityLabel(viewModel.isRecording ? "Selesai Rekam" : "Mulai Rekam")
-                            .accessibilitySortPriority(viewModel.isRecording ? 3 : 1)
-                            VStack(alignment: .leading) {
-                                if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
-                                    Text(viewModel.whisperModelState.description)
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
+                                    .accessibilityHidden(true)
+                                }
+
+                                let recordTitle: String = {
+                                    viewModel.isRecording
+                                    ? (isAccessibilitySize ? "Selesai\nRekam" : "Selesai Rekam")
+                                    : (isAccessibilitySize ? "Mulai\nRekam" : "Mulai Rekam")
+                                }()
+
+                                ButtonRecord(
+                                    title: recordTitle,
+                                    systemImage: viewModel.isRecording ? "stop.fill" : "circle.fill",
+                                    size: .large,
+                                    kind: .primaryYellow,
+                                    action: viewModel.toggleRecording
+                                )
+                                .disabled(viewModel.whisperModelState != .loaded || isProcessing)
+                                .padding(.bottom, 35)
+                                
+                            }.padding(.trailing, 40)
+
+                        } else {
+                            
+                            if viewModel.isRecording {
+                                ZStack(alignment: .leading) {
+                                    AudioVisualizerModalView(micMonitor: micMonitor)
+                                        .padding(.leading, 30)
+                                        .padding(.trailing, 0)
+                                        .frame(width: isAccessibilitySize ? 240 : 280, height: 50)
+                                        .frame(alignment: .leading)
+                                        .background(Color.black.opacity(0.27))
+                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                        .offset(x: 20)
+                                    
+                                    MicIconButton(showMicWarning: false)
+                                }
+                                .accessibilityHidden(true)
+                            }
+                            
+                            Spacer()
+                            
+                            HStack(spacing: 5) {
+                                let recordTitle: String = {
+                                    if viewModel.isRecording {
+                                        return isAccessibilitySize ? "Selesai\nRekam" : "Selesai Rekam"
+                                    } else {
+                                        return isAccessibilitySize ? "Mulai\nRekam" : "Mulai Rekam"
+                                    }
+                                }()
+
+                                ButtonRecord(
+                                    title: recordTitle,
+                                    systemImage: viewModel.isRecording ? "stop.fill" : "circle.fill",
+                                    size: .large,
+                                    kind: .primaryYellow,
+                                    action: viewModel.toggleRecording
+                                )
+                                .padding(.trailing, 0)
+                                .padding(.bottom, 10)
+                                .disabled(viewModel.whisperModelState != .loaded || isProcessing)
+
+                                VStack(alignment: .leading) {
+                                    if viewModel.whisperModelState != .loaded && !viewModel.isRecording {
+                                        Text(viewModel.whisperModelState.description)
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
                                 }
                             }
                         }
+
                     }
-                    .padding(.bottom, 10)
+                    
                     .frame(maxWidth: .infinity)
                 }
                 .zIndex(10)
