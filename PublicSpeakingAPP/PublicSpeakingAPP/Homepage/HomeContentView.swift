@@ -49,18 +49,32 @@ struct HomeContentView: View {
             
             Spacer()
             
-            ScrollView {
-                ZStack {
-                    VStack {
-                        Spacer()
-                        VStack(spacing: 0) {
-                            NameBanner(name: "Si Cupu (Kamu)")
+            GeometryReader { geometry in
+                ScrollView {
+                    ZStack {
+                        VStack {
+                            Spacer()
+                            VStack(spacing: 40) {
+                                NameBanner(name: "Si Cupu (Kamu)")
 
-                            MicroAnimation(artboardName: "Home")
-                                .frame(height: 120)
+                                MicroAnimation(artboardName: "Home")
+                                    .frame(height: isIpad ? 180 : 120)
+                            }
+                            .accessibilityHidden(true)
+                            
+                            Spacer()
                         }
-                        .accessibilityHidden(true)
+                        .frame(minHeight: geometry.size.height)
                         
+                        SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
+                            .padding(.leading, isIpad ? 490 : 440)
+                            .padding(.bottom, isIpad ? 40: 160)
+                            .accessibilityLabel("Hari ini kamu belum latihan. Ayo mulai latihan")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    HStack {
                         Spacer()
                         
                         ButtonComponent(
@@ -70,16 +84,9 @@ struct HomeContentView: View {
                             kind: .primaryYellow,
                             action: onStart
                         )
-                        .padding(.top, 24)
-                        
-                        Spacer()
                     }
-                    
-                    SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
-                        .frame(maxWidth: .infinity)
-                        .padding(.leading, 440)
-                        .padding(.bottom, 160)
-                        .accessibilityLabel("Hari ini kamu belum latihan. Ayo mulai latihan")
+                    .padding(.bottom, 52)
+                    .padding(.trailing, 44)
                 }
             }
         }
@@ -96,7 +103,7 @@ struct SpeechBubble: View {
         ZStack(alignment: .bottomLeading) {
             // Main bubble background + text
             Text(text)
-                .font(.body)
+                .font(isIpad ? .title3 : .footnoteBold)
                 .bold()
                 .foregroundColor(Color(.baseColorBrown))
                 .fixedSize(horizontal: false, vertical: true)
@@ -138,14 +145,14 @@ struct NameBanner: View {
             
             Image("Rectangle 10")
                 .resizable()
-                .frame(width: 34.45, height: 27)
+                .frame(width: isIpad ? 56.37 : 34.45, height: isIpad ? 44.18 : 27)
                 .offset(y: 6)
             
             Text(name)
-                .font(.footnoteBold)
+                .font(isIpad ? .title1 : .footnoteBold)
                 .foregroundStyle(Color.darkBlue2)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 8)
+                .padding(.horizontal, isIpad ? 40 : 24)
+                .padding(.vertical, isIpad ? 14 : 8)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color(.lightBlue))
@@ -154,7 +161,7 @@ struct NameBanner: View {
             
             Image("Rectangle 11")
                 .resizable()
-                .frame(width: 34.45, height: 27)
+                .frame(width: isIpad ? 56.37 : 34.45, height: isIpad ? 44.18 : 27)
                 .offset(y: 6)
         }
     }
@@ -206,3 +213,4 @@ struct CardButton: View {
         }
     }
 }
+

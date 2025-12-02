@@ -211,7 +211,7 @@ class NewEvaluationViewModel: ObservableObject {
     
             
         if finalstd < 1.5 {
-            return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cenderung datar**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
+            return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cenderung monoton**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
         }
         else if finalstd <= 2.5 {
             return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cukup bervariasi**. Yuk cek tips & rekaman, lihat bagian mana yang bisa kamu mainkan naik-turun suaranya sesuai pesan yang dibawa.")
@@ -367,7 +367,7 @@ extension NewEvaluationViewModel {
             let finalstd = result.intonationStdDev
 
             if finalstd < 1.5 {
-                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cenderung datar**.")
+                return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cenderung monoton**.")
             } else if finalstd <= 2.5 {
                 return try! AttributedString(markdown: "Intonasimu paling sering terdengar **cukup bervariasi**.")
             } else if finalstd <= 4.5 {

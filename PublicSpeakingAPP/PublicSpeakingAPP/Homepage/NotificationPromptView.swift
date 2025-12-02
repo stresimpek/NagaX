@@ -29,7 +29,7 @@ struct NotificationPromptView: View {
                     .foregroundStyle(Color.white)
 
                 MicroAnimation(artboardName: "NotificationBell")
-                    .frame(width: 200, height: 200)
+                    .frame(width: isIpad ? 260: 200, height: isIpad ? 260 : 200)
 
                 HStack(spacing: 20) {
                     ButtonComponent(

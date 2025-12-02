@@ -11,66 +11,99 @@ struct EmptyTranscriptModalView: View {
     let onRestart: () -> Void
     let onContinue: () -> Void
     
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+    
     var body: some View {
         GeometryReader { geometry in
-            ScrollView {
+            ZStack {
+                Color.black.opacity(0.45)
+                    .ignoresSafeArea()
+                
                 VStack {
-                    Spacer()
+                    Spacer(minLength: 0)
                     
-                    VStack(spacing: 24) {
+                    VStack(spacing: isPad ? 40 : 24) {
                         VStack(spacing: 4) {
                             Text("Sepertinya kamu belum mulai bicara")
-                                .font(.title2)
+                                .font(.title3)
                                 .foregroundColor(.baseColorBrown)
                                 .multilineTextAlignment(.center)
                             
                             Text("Silakan lakukan presentasi terlebih dahulu agar hasil evaluasi bisa muncul.")
-                                .font(.subheadline)
+                                .font(.footnote)
                                 .foregroundColor(.baseColorBrown)
                                 .multilineTextAlignment(.center)
                         }
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, isPad ? 56 : 27)
                         
-                        HStack(spacing: 12) {
-                            buttonsContent
+                        if isPad {
+                            VStack(spacing: 12) {
+                                
+                                
+                                ButtonComponent(
+                                    title: "Ulang Sesi",
+                                    systemImage: nil,
+                                    size: .medium,
+                                    kind: .secondaryBlue,
+                                    fullWidth: true,
+                                    action: onRestart
+                                )
+                                
+                                
+                                
+                                
+                                ButtonComponent(
+                                    title: "Lanjut Latihan",
+                                    systemImage: nil,
+                                    size: .medium,
+                                    kind: .primaryYellow,
+                                    fullWidth: true,
+                                    action: onContinue
+                                )
+                                
+                                
+                            }
+                            .padding(.horizontal, 56)
+                            
+                        } else {
+                            HStack(spacing: 12) {
+                                ButtonComponent(
+                                    title: "Ulang Sesi",
+                                    systemImage: nil,
+                                    size: .medium,
+                                    kind: .secondaryBlue,
+                                    action: onRestart
+                                )
+                                
+                                ButtonComponent(
+                                    title: "Lanjut Latihan",
+                                    systemImage: nil,
+                                    size: .medium,
+                                    kind: .primaryYellow,
+                                    action: onContinue
+                                )
+                                
+                            }
+                            .padding(.horizontal, 16)
                         }
                     }
-                    .frame(width: 370)
-                    .padding(.vertical, 30)
+                    .padding(.vertical, isPad ? 30 : 18)
                     .background(
                         Image("SetupPaper")
-                            .resizable()
                             .resizable(resizingMode: .stretch)
-                            .accessibilityHidden(true)
-
+                            .scaledToFill()
                     )
-                    .frame(width: 450)
+                    .frame(
+                        width: isPad ? 429 : 370,
+                        height: isPad ? 296 : 190,
+                        alignment: .center
+                    )
+                    .cornerRadius(24)
                     
-                    Spacer()
+                    Spacer(minLength: 0)
                 }
-                .frame(minHeight: geometry.size.height)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-        }
-    }
-    
-    var buttonsContent: some View {
-        Group {
-            ButtonComponent(
-                title: "Ulang Sesi",
-                systemImage: nil,
-                size: .medium,
-                kind: .secondaryBlue,
-                action: onRestart
-            )
-            
-            ButtonComponent(
-                title: "Lanjut Latihan",
-                systemImage: nil,
-                size: .medium,
-                kind: .primaryYellow,
-                action: onContinue
-            )
         }
     }
 }

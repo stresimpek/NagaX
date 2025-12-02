@@ -20,3 +20,9 @@ extension Font {
     static let caption = Font.custom("Nunito-Regular", size: 12)
     static let label = Font.custom("Nunito-Medium", size: 10)
 }
+
+extension View {
+    var isIpad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+}

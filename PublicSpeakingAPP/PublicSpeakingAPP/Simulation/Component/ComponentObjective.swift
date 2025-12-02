@@ -11,11 +11,13 @@ struct ComponentObjective: View {
     let text: String
     let isOvertime: Bool
     var onFinished: (() -> Void)? = nil
-    
+
     @Binding var dontShowAgain: Bool
     let showDontShowAgain: Bool
 
     @State private var appear = false
+    
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     private var fadeMask: some View {
         LinearGradient(
@@ -36,18 +38,20 @@ struct ComponentObjective: View {
                 .opacity(appear ? 0.5 : 0.0)
                 .ignoresSafeArea()
 
-            Text(text)
-                .padding(.horizontal, 64)
-                .padding(.vertical, 10)
-                .foregroundColor(.white)
-                .background(
-                    (isOvertime ? Color.baseColorRed : Color.blue)
-                        .mask(fadeMask)
-                )
+            (isOvertime ? Color.baseColorRed : Color.darkBlue)
+                .mask(fadeMask)
                 .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .overlay {
+                    Text(text)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white)
+                        .font(.system(size: 16, weight: .semibold))
+                        .padding(.horizontal, 20)
+                }
                 .offset(y: appear ? 0 : -20)
                 .opacity(appear ? 1 : 0)
-            
+
             if showDontShowAgain {
                 VStack {
                     Spacer()
@@ -85,7 +89,9 @@ struct ComponentObjective: View {
                         }
                         .offset(y: appear ? 0 : 25)
                         .opacity(appear ? 1 : 0)
-                        .padding(.bottom, 24)
+                        .padding(.bottom, sizeClass == .regular ? 54 : 24)
+                        .padding(.trailing, sizeClass == .regular ? 60 : 0)
+                        
                     }
                 }
             }
@@ -106,6 +112,7 @@ struct ComponentObjective: View {
         }
     }
 }
+
 
 
 struct BannerItem: Identifiable, Equatable {
