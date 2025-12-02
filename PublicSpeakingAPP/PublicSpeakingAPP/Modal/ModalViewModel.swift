@@ -50,17 +50,17 @@ class ModalViewModel: ObservableObject {
     // UBAH: Dictionary menggunakan AttributedString
     private let instructions: [InstructionStep: AttributedString] = [
         .micCheck: try! AttributedString(
-            markdown: "Nyalakan mikrofonmu, letakan HPmu, lalu cobalah berbicara! Pastikan suaramu sudah bisa didengar **Prof. Belagu!**"
+            markdown: "Nyalakan mikrofonmu, lalu cobalah berbicara! Pastikan suaramu sudah bisa didengar Prof. Belagu."
         ),
-        .cameraSetup: try! AttributedString(markdown: ""), // Kosong karena dinamis
+        .cameraSetup: try! AttributedString(markdown: ""),
         .quietRoom: try! AttributedString(
             markdown: "Pastikan kamu di ruangan yang kondusif. **Gunakan headset** untuk pengalaman yang lebih maksimal!"
         ),
         .distanceCheck: try! AttributedString(
-            markdown: "Letakan HP di posisi **sejajar dengan matamu** dan nyalakan kameramu!"
+            markdown: "Letakan HP di posisi stabil yang sejajar dengan matamu dengan **jarak maksimal satu lengan**."
         ),
         .volumeCheck: try! AttributedString(
-            markdown: "Aktifkan volume HP-mu agar suara distraksi dapat terdengar dengan jelas."
+            markdown: "Aktifkan volume device-mu agar suara distraksi dapat terdengar dengan jelas."
         )
     ]
     
@@ -124,7 +124,7 @@ class ModalViewModel: ObservableObject {
         switch step {
         case .micCheck:
             stopAllTimers()
-            mainImageName = "ProfessorEar_Angry" // Fallback icon
+            mainImageName = "ProfessorEar_Angry"
             animationName = ""
             buttonTitle = "Lanjut"
             isButtonEnabled = false

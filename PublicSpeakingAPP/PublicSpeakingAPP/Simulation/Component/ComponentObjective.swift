@@ -59,7 +59,7 @@ struct ComponentObjective: View {
                             HStack(spacing: 10) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 6)
-//                                        .stroke(Color.white, lineWidth: 2)
+                                        .stroke(Color.white, lineWidth: 2)
                                         .background(.baseColorWhite)
                                         .frame(width: 22, height: 22)
 
@@ -72,17 +72,17 @@ struct ComponentObjective: View {
 
                                 Text("Jangan tampilkan lagi")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.baseColorWhite)
                             }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
-                            .background(Color.blue)
+                            .background(.darkBlue3)
                             .cornerRadius(999)
+                            .shadow(color: .baseColorBlack,
+                                    radius: 0,
+                                    x: 0,
+                                    y: 1)
                         }
-                        .shadow(color: .baseColorBlack,
-                                radius: 0,
-                                x: 0,
-                                y: 1)
                         .offset(y: appear ? 0 : 25)
                         .opacity(appear ? 1 : 0)
                         .padding(.bottom, 24)
