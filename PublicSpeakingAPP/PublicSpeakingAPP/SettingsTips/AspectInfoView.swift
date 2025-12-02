@@ -51,11 +51,13 @@ struct AspectInfoView: View {
                                             item: aspectInfoData[index],
                                             fixedHeight: maxCardHeight == 0 ? nil : maxCardHeight
                                         )
+//                                        .fixedSize(horizontal: false, vertical: true)
                                         if index + 1 < aspectInfoData.count {
                                             AspectInfoCard(
                                                 item: aspectInfoData[index + 1],
                                                 fixedHeight: maxCardHeight == 0 ? nil : maxCardHeight
                                             )
+//                                            .fixedSize(horizontal: false, vertical: true)
                                         } else {
                                             Color.clear.gridCellUnsizedAxes([.vertical, .horizontal])
                                         }

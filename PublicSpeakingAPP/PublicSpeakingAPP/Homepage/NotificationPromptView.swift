@@ -26,12 +26,9 @@ struct NotificationPromptView: View {
             
             VStack() {
                 Text("Mau diingetin latihannya?")
-                    .font(.title1)
+                    .font(isiPad ? .title1 :.title2)
                     .foregroundStyle(Color.white)
                     .bold()
-                Text("Kamu bakal diingetin h-1 sebelum waktu presentasimu dimulai.")
-                    .font(.body)
-                    .foregroundStyle(Color.white)
 
                 MicroAnimation(artboardName: "NotificationBell")
                     .frame(width: isiPad ? 260: 200, height: isiPad ? 260 : 200)

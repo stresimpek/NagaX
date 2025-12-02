@@ -57,17 +57,15 @@ struct HomeView: View {
                             coordinator.goBack()
                         },
                         onNext: { settings in
-                            coordinator.goToModal(settings: settings, startAtCameraStep: false)
+                            coordinator.goToModal(settings)
                         }
                     )
                 
-                case .modal(let settings, let startAtCameraStep):
+                case .modal(let settings):
                     ModalView(
                         onStart: {
                             coordinator.goToSimulation(settings)
-                        },
-                        settings: settings,
-                        startAtCameraStep: startAtCameraStep
+                        }
                     )
                     
                 case .simulation(let settings):
@@ -101,11 +99,7 @@ struct HomeView: View {
                     EvaluationSummaryView(
                         viewModel: viewModel,
                         onPracticeAgain: {
-                            if settings.selectedAspects.contains(.kontakMata) {
-                                coordinator.goToModal(settings: settings, startAtCameraStep: true)
-                            } else {
-                                coordinator.retrySimulation(from: settings)
-                            }
+                            coordinator.retrySimulation(from: settings)
                         },
                         onViewDetails: {
                             coordinator.goToNewEvaluation(
@@ -128,11 +122,7 @@ struct HomeView: View {
                             coordinator.returnToHome()
                         },
                         onNext: { passedSettings in
-                            if passedSettings.selectedAspects.contains(.kontakMata) {
-                                coordinator.goToModal(settings: passedSettings, startAtCameraStep: true)
-                            } else {
-                                coordinator.retrySimulation(from: passedSettings)
-                            }
+                            coordinator.retrySimulation(from: passedSettings)
                         }
                     )
                     .navigationBarBackButtonHidden(true)

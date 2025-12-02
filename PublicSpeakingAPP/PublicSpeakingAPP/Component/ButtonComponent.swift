@@ -12,16 +12,16 @@ enum AppButtonSize {
     
     var cornerRadius: CGFloat {
         switch self {
-        case .large: 24
-        case .medium: 24
-        case .small: 24
+        case .large: 20
+        case .medium: 16
+        case .small: 14
         case .largeIconCircle: 25
         case .largePill: 100
         }
     }
     var horizontalPadding: CGFloat {
         switch self {
-        case .large: 32
+        case .large: 20
         case .medium: 16
         case .small: 12
         case .largeIconCircle: 14
@@ -30,8 +30,8 @@ enum AppButtonSize {
     }
     var verticalPadding: CGFloat {
         switch self {
-        case .large: 16
-        case .medium: 11
+        case .large: 14
+        case .medium: 10
         case .small: 8
         case .largeIconCircle: 14
         case .largePill: 14

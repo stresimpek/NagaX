@@ -99,7 +99,7 @@ struct TranscriptBuilder {
                     totalProblematicWordCount += 1
                 } else {
                     str.foregroundColor = .primary
-                    str.font = .body
+                    str.font = .system(.body, design: .serif)
                 }
                 
                 pageString.append(str)

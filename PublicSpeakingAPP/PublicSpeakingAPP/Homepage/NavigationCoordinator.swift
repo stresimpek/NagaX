@@ -15,7 +15,7 @@ enum Route: Hashable {
     case simulation(PracticeSettings)
     case evaluationSummary(EvaluationModel, String, String, PracticeSettings)
     case newEvaluation(EvaluationModel, String, String, PracticeSettings)
-    case modal(PracticeSettings, Bool)
+    case modal(PracticeSettings)
     case notificationPrompt(Date)
 }
 
@@ -36,8 +36,8 @@ class NavigationCoordinator: ObservableObject {
         path.append(.settings)
     }
     
-    func goToModal(settings: PracticeSettings, startAtCameraStep: Bool) {
-        path.append(Route.modal(settings, startAtCameraStep))
+    func goToModal(_ settings: PracticeSettings) {
+        path.append(Route.modal(settings))
     }
     
     func goToSimulation(_ settings: PracticeSettings) {
