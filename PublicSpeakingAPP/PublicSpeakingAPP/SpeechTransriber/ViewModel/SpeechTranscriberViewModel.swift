@@ -451,62 +451,49 @@ final class SpeechTranscriberViewModel: ObservableObject {
     
     func proceedToEvaluation(loop: Bool) {
         // Save the final audio for playback
-        Task(priority: .background) {
+        Task {
             let url = await saveSessionAudioAsWavFile()
             await MainActor.run {
                 self.savedRecordingURL = url
             }
             
-            do {
-                if let audioURL = url {
-                    print("--- [Evaluation] Mulai Dual-Pass (KHUSUS FILLER) ---")
-                    
+            if let audioURL = url {
+                print("--- [Evaluation] Mulai Dual-Pass (KHUSUS FILLER) ---")
+                do {
                     let (fillerText, fillerWords) = try await transcribeForEvaluation(audioURL: audioURL)
                     
                     await MainActor.run {
                         self.fillerAnalysisWords = fillerWords
                         if let asset = try? AVAudioFile(forReading: audioURL) {
-                            
-                            
                             let duration = Double(asset.length) / asset.fileFormat.sampleRate
                             self.fillerWordVM?.analyze(text: fillerText, duration: duration)
                         }
                     }
-                    print("--- [Evaluation] Selesai. Filler pakai Re-transcribe, sisanya pakai Live. ---")
-                    
-                } else {
-                    print("Warning: Gagal menyimpan audio, Filler menggunakan data live.")
-                }}}
-        
-        
-        
-
-        if loop {
-            stopRealtimeTranscription()
+                    print("--- [Evaluation] Selesai Filler Analysis ---")
+                } catch {
+                    print("Warning: Gagal Dual-Pass Filler: \(error.localizedDescription)")
+                }
+            } else {
+                print("Warning: Gagal menyimpan audio, skip Filler Dual-Pass.")
+            }
             
-            // Check if we need to re-transcribe for pause/resume case
-            if !sessionSamples.isEmpty {
-                // Pause/resume case: re-transcribe the full session
-                Task {
+            await MainActor.run { isTranscribing = true }
+            
+            if loop {
+                stopRealtimeTranscription()
+                
+                // Check if we need to re-transcribe for pause/resume case
+                if !sessionSamples.isEmpty {
+                    // Pause/resume case: re-transcribe the full session
                     do {
                         try await transcribeFullSession()
-                        await finalizeText()
-                        await self.analyzeTranscriptSentence()
                     } catch {
-                        print("Error during full session transcription: \(error.localizedDescription)")
+                        print("Error full session transcription: \(error)")
                     }
                 }
             } else {
-                // Normal case: use existing transcription
-                finalizeText()
-                Task { await self.analyzeTranscriptSentence() }
-            }
-        } else {
-            transcriptionTask?.cancel()
-
-            transcribeTask = Task {
-                await MainActor.run { isTranscribing = true }
-
+                transcriptionTask?.cancel()
+                
                 do {
                     // Check if we need to re-transcribe for pause/resume case
                     if !sessionSamples.isEmpty {
@@ -517,24 +504,17 @@ final class SpeechTranscriberViewModel: ObservableObject {
                         try await transcribeCurrentBuffer()
                     }
                 } catch {
-                    print("Error during final transcription: \(error.localizedDescription)")
-                }
-                await finalizeText()
-                await self.analyzeTranscriptSentence()
-
-                await MainActor.run {
-                    isTranscribing = false
+                    print("Error final transcription: \(error)")
                 }
             }
-        }
-
-        Task {
-            try? await Task.sleep(nanoseconds: 100_000_000)
+            
+            await finalizeText()
+            await self.analyzeTranscriptSentence()
+            
             await MainActor.run {
-                if !self.isTranscribing {
-                    self.recordingStatus = .stopped
-                    print("[SpeechTranscriber] Status -> .stopped")
-                }
+                self.isTranscribing = false
+                self.recordingStatus = .stopped
+                print("[SpeechTranscriber] All Analysis Done. Status -> .stopped")
             }
         }
     }
@@ -692,27 +672,24 @@ final class SpeechTranscriberViewModel: ObservableObject {
             proceedToEvaluation(loop: loop)
         }
 
-    func finalizeText() {
-        Task {
-            await MainActor.run {
-                if hypothesisText != "" {
-                    confirmedText += hypothesisText
-                    hypothesisText = ""
-                }
-
-                    
-                if !hypothesisWords.isEmpty {
-                    confirmedWords.append(contentsOf: hypothesisWords)
-                    hypothesisWords = []
-                }
-                
-                if !unconfirmedSegments.isEmpty {
-                    confirmedSegments.append(contentsOf: unconfirmedSegments)
-                    unconfirmedSegments = []
-                }
-                
-                self.updateFinalizedStyledTranscript()
+    func finalizeText() async {
+        await MainActor.run {
+            if hypothesisText != "" {
+                confirmedText += hypothesisText
+                hypothesisText = ""
             }
+                
+            if !hypothesisWords.isEmpty {
+                confirmedWords.append(contentsOf: hypothesisWords)
+                hypothesisWords = []
+            }
+            
+            if !unconfirmedSegments.isEmpty {
+                confirmedSegments.append(contentsOf: unconfirmedSegments)
+                unconfirmedSegments = []
+            }
+            
+            self.updateFinalizedStyledTranscript()
         }
     }
     

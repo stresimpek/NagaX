@@ -13,6 +13,11 @@ struct NewEvaluationView: View {
     let onBack: () -> Void
     let onNext: (PracticeSettings) -> Void
     
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var isIPadLike: Bool {
+        horizontalSizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
     init(
         result: EvaluationModel,
         fullTranscript: String,
@@ -44,10 +49,8 @@ struct NewEvaluationView: View {
                     VStack(spacing: 49){
                         VStack(spacing: 21){
                             tabsAndPaperSection
-                            disclaimerBanner
                         }
                         .padding(.leading, 60)
-                        bottomButtons
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.horizontal, 16)
@@ -80,14 +83,54 @@ struct NewEvaluationView: View {
 
 private extension NewEvaluationView {
     var tabsAndPaperSection: some View {
-        VStack(spacing: 0) {
-            tabsView
-                .padding(.bottom, -4)
-            
-            paperContent
-        }.frame(maxWidth: .infinity)
-            .padding(.top, 28)
+        Group {
+            if isIPadLike {
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 28)
+                        
+                        VStack(spacing: 0) {
+                            tabsView
+                                .padding(.bottom, -4)
+                            
+                            paperContent
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                            
+                            disclaimerBanner
+                                .padding(.horizontal, 0)
+                                .padding(.top, 20)
+                            
+                            bottomButtons
+                                .padding(.top, 8)
+                                .padding(.bottom, 48)
+                        }
+                        .frame(width: 820)
+                        .cornerRadius(0)
+                        .shadow(color: .gray.opacity(0.3), radius: 4, x: 0, y: 3)
+                        .padding(.horizontal, 12)
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+            } else {
+                VStack(spacing: 0) {
+                    tabsView
+                        .padding(.bottom, -4)
+                    
+                    paperContent
+                        .padding(.bottom, 35)
+                    
+                    disclaimerBanner
+                    
+                    bottomButtons
+                        .padding(.top, 64)
+
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 28)
+            }
+        }
     }
+    
     
     var tabsView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -140,6 +183,9 @@ private extension NewEvaluationView {
         ) {
             contentForCurrentTab
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 18)
     }
     
     private func emptyStateMessageForCurrentTab() -> String {
@@ -233,25 +279,54 @@ private extension NewEvaluationView {
     }
     
     var bottomButtons: some View {
-        HStack(spacing: 16) {
-            ButtonComponent(
-                title: "Selesai",
-                systemImage: nil,
-                size: .medium,
-                kind: .secondaryBlue,
-                action: onBack
-            )
-            ButtonComponent(
-                title: "Latihan Lagi",
-                systemImage: nil,
-                size: .medium,
-                kind: .primaryYellow,
-                action: { onNext(viewModel.settings) }
-            )
+        Group {
+            if isIPadLike {
+                VStack(spacing: 16) {
+                    ButtonComponent(
+                        title: "Latihan Lagi",
+                        systemImage: nil,
+                        size: .medium,
+                        kind: .primaryYellow,
+                        fullWidth: true,
+                        action: { onNext(viewModel.settings) }
+                    )
+                    
+                    ButtonComponent(
+                        title: "Selesai",
+                        systemImage: nil,
+                        size: .medium,
+                        kind: .secondaryBlue,
+                        fullWidth: true,
+                        action: onBack
+                    )
+                }
+                .frame(width: 480)
+                .padding(.top, 34)
+                .padding(.bottom, 60)
+                .padding(.horizontal, 52)
+            } else {
+                HStack(spacing: 16) {
+                    ButtonComponent(
+                        title: "Selesai",
+                        systemImage: nil,
+                        size: .medium,
+                        kind: .secondaryBlue,
+                        action: onBack
+                    )
+                    ButtonComponent(
+                        title: "Latihan Lagi",
+                        systemImage: nil,
+                        size: .medium,
+                        kind: .primaryYellow,
+                        action: { onNext(viewModel.settings) }
+                    )
+                }
+                .padding(.top, 16)
+                .padding(.bottom, 60)
+            }
         }
-        .padding(.top, 16)
-        .padding(.bottom, 60)
     }
+    
 }
 
 struct GuidanceView: View {
@@ -271,7 +346,7 @@ struct GuidanceView: View {
                             .frame(width: 48, height: 48)
                         
                         Text("Tips dari CAKO")
-                            .font(.subheadline)
+                            .font(.title3)
                             .bold()
                             .foregroundColor(.baseColorBrown)
                     }
@@ -281,6 +356,8 @@ struct GuidanceView: View {
                     Image(systemName: isExpanded ? "minus" : "plus")
                         .foregroundColor(.baseColorBrown)
                         .font(.system(size: 18, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -300,7 +377,6 @@ struct GuidanceView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .background(Color.baseColorWhite.opacity(0.5))
@@ -365,7 +441,7 @@ struct EvaluationSectionView<Content: View>: View {
                     .font(.body)
                     .foregroundColor(.darkBlue3)
                     .underline(true, color: Color.baseColorBrown)
-                  
+                
             }
             VStack (alignment: .leading){
                 Text(sectionTitle)
@@ -392,22 +468,22 @@ struct EvaluationSectionView<Content: View>: View {
     }
     
     private var emptyStateContent: some View {
-            HStack(alignment: .center, spacing: 12) {
-                Text(emptyStateMessage)
-                    .font(.title3)
-                    .foregroundColor(Color.baseColorBrown)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity, minHeight: 152.8125, maxHeight: 152.8125, alignment: .center)
-            .padding(.horizontal, 50)
-            .padding(.vertical, 53)
-            .background(Color.yellow2.opacity(0.2))
-            .cornerRadius(11.25)
-            .overlay(
-                RoundedRectangle(cornerRadius: 11.25)
-                    .stroke(Color.brown.opacity(0.4), lineWidth: 0.9375)
-            )
+        HStack(alignment: .center, spacing: 12) {
+            Text(emptyStateMessage)
+                .font(.title3)
+                .foregroundColor(Color.baseColorBrown)
+                .multilineTextAlignment(.center)
         }
+        .frame(maxWidth: .infinity, minHeight: 152.8125, maxHeight: 152.8125, alignment: .center)
+        .padding(.horizontal, 50)
+        .padding(.vertical, 53)
+        .background(Color.yellow2.opacity(0.2))
+        .cornerRadius(11.25)
+        .overlay(
+            RoundedRectangle(cornerRadius: 11.25)
+                .stroke(Color.brown.opacity(0.4), lineWidth: 0.9375)
+        )
+    }
     
     private var scrollableContentWithGradient: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -439,7 +515,8 @@ struct EvaluationSectionView<Content: View>: View {
                 .stroke(Color.brown.opacity(0.5), lineWidth: 1)
         )
         .onAppear {
-            diffComponents = DiffComponent.generate(original: transcript, new: analysisText)
+            var transcriptText = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+            diffComponents = DiffComponent.generate(original: transcriptText, new: analysisText)
         }
     }
     

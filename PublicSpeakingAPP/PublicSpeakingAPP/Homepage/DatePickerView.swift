@@ -124,7 +124,7 @@ struct DatePickerView: View {
                     VStack(alignment: .center, spacing: 24) {
                         Spacer ()
                         Text("Tanggal dan jam berapakah kamu akan presentasi?")
-                            .font(.title2)
+                            .font(.title1)
                             .foregroundStyle(Color.white)
                             .bold()
                             .padding(.horizontal)
@@ -253,6 +253,8 @@ struct DatePickerView: View {
                     }
                     .padding(24)
                     .multilineTextAlignment(.center)
+                    .frame(minHeight: geometry.size.height)
+                    .frame(maxWidth: .infinity)
                 }
         }
             ButtonComponent(

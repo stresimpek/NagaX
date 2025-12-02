@@ -35,8 +35,114 @@ struct ModalView: View {
                 VStack(spacing: 0) {
                     Spacer().frame(height: geometry.size.height * 0.1)
 
-                    paperContentView(geometry: geometry)
-                        .zIndex(0)
+                    ZStack(alignment: .top) {
+                        Image("SetupPaper")
+                            .resizable()
+                            .scaledToFill()
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .accessibilityHidden(true)
+                        
+                        VStack(spacing: 0) {
+                            VStack {
+                                Spacer().frame(height: geometry.size.height * 0.05)
+                                TitleView()
+                                    .accessibilityFocused($isTitleFocused)
+                            }
+                            .background(Color.clear)
+                            .accessibilitySortPriority(3)
+                            
+                            if isIpad {
+                                GeometryReader { geometry in
+                                    ScrollView(.vertical, showsIndicators: false) {                                        VStack(spacing: 0) {
+                                            Spacer()
+                                            
+                                            VStack {
+                                                switch viewModel.currentStep {
+                                                case .quietRoom:
+                                                    MicroAnimation(artboardName: "Kondusif")
+                                                        .frame(height: 100)
+                                                case .micCheck:
+                                                    MicSetupView(
+                                                        micMonitor: viewModel.micMonitor,
+                                                        showMicWarning: viewModel.showMicWarning,
+                                                        imageName: viewModel.mainImageName
+                                                    )
+                                                case .distanceCheck:
+                                                    MicroAnimation(artboardName: "ArmLength")
+                                                        .frame(height: 100)
+                                                case .volumeCheck:
+                                                    MicroAnimation(artboardName: "VOLUME")
+                                                        .frame(height: 100)
+                                                case .cameraSetup:
+                                                    EyeContactMainView(viewModel: viewModel)
+                                                }
+                                            }
+                                            .frame(height: 160)
+                                            .animation(.easeInOut, value: viewModel.currentStep)
+                                            
+                                            InstructionTextView(
+                                                message: viewModel.instructionText,
+                                                geometry: geometry
+                                            )
+                                            .padding(.bottom, 80)
+                                        
+                                            Spacer()
+                                        }
+                                        .frame(minHeight: geometry.size.height)
+                                        .frame(maxWidth: .infinity)
+                                    }
+                                    .accessibilitySortPriority(2)
+                                }
+                            } else {
+                                Spacer().frame(height: geometry.size.height * 0.035)
+                                
+                                ScrollView(.vertical, showsIndicators: false) {
+                                    VStack(spacing: 0) {
+                                        
+                                        Spacer().frame(height: geometry.size.height * 0.02)
+                                        
+                                        VStack {
+                                            switch viewModel.currentStep {
+                                            case .quietRoom:
+                                                MicroAnimation(artboardName: "Kondusif")
+                                                    .frame(height: 100)
+                                                
+                                            case .micCheck:
+                                                MicSetupView(
+                                                    micMonitor: viewModel.micMonitor,
+                                                    showMicWarning: viewModel.showMicWarning,
+                                                    imageName: viewModel.mainImageName
+                                                )
+                                                
+                                            case .distanceCheck:
+                                                MicroAnimation(artboardName: "ArmLength")
+                                                    .frame(height: 100)
+                                            case .volumeCheck:
+                                                MicroAnimation(artboardName: "VOLUME")
+                                                    .frame(height: 100)
+                                            case .cameraSetup:
+                                                EyeContactMainView(viewModel: viewModel)
+                                            }
+                                        }
+                                        .frame(height: 150)
+                                        .animation(.easeInOut, value: viewModel.currentStep)
+                                        
+                                        Spacer().frame(height: geometry.size.height * 0.01)
+                                        
+                                        InstructionTextView(
+                                            message: viewModel.instructionText,
+                                            geometry: geometry
+                                        )
+                                        .padding(.bottom, 80)
+                                    }
+                                }
+                                .accessibilitySortPriority(2)
+                            }
+                        }
+                    }
+                    .frame(width: isIpad ? 784 : geometry.size.width * 0.85)
+                    .frame(maxHeight: isIpad ? 434 : geometry.size.height * 0.75)
+                    .zIndex(0)
 
                     bottomButtonView(geometry: geometry)
                         .zIndex(1)

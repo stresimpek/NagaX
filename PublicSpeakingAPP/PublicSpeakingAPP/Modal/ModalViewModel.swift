@@ -57,7 +57,7 @@ class ModalViewModel: ObservableObject {
             markdown: "Pastikan kamu di ruangan yang kondusif. **Gunakan headset** untuk pengalaman yang lebih maksimal!"
         ),
         .distanceCheck: try! AttributedString(
-            markdown: "Letakan HP di posisi **sejajar dengan matamu** dan nyalakan kameramu!"
+            markdown: "Letakan HP di posisi stabil yang sejajar dengan matamu dengan **jarak maksimal satu lengan**."
         ),
         .volumeCheck: try! AttributedString(
             markdown: "Aktifkan volume HP-mu agar suara distraksi dapat terdengar dengan jelas."

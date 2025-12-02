@@ -11,7 +11,7 @@ struct TitleView: View {
     var body: some View {
         VStack(spacing: 4) {
             Text("INSTRUKSI")
-                .font(.title2.weight(.black))
+                .font(isIpad ? .title1 : .title2.weight(.black))
                 .foregroundColor(Color("BaseColorBrown"))
                 .padding(.bottom, 1)
                 .background(
@@ -62,7 +62,7 @@ struct MicIconButton: View {
         ZStack(alignment: .topLeading) {
             Image(systemName: "mic.fill")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.baseColorWhite)
+                .foregroundColor(.baseColorBrown)
                 .frame(width: 60, height: 60)
                 .background(Color.baseColorWhite)
                 .clipShape(Circle())
@@ -88,7 +88,7 @@ struct InstructionTextView: View {
     var body: some View {
         VStack {
             Text(message)
-                .font(.subheadline)
+                .font(isIpad ? .body : .subheadline)
                 .lineSpacing(4)
                 .foregroundColor(.baseColorBrown)
                 .multilineTextAlignment(.center)

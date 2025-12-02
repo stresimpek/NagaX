@@ -12,9 +12,9 @@ struct RoomPreview: View {
         VStack(spacing: 8) {
             Image(.ruangKelas)
                 .resizable()
-                .frame(width: 208, height: 144)
+                .frame(width: isIpad ? 328 : 208, height: isIpad ? 226 : 144)
             Text("Ruang Kelas")
-                .font(.title2)
+                .font(isIpad ? .title1 : .title2)
                 .bold()
                 .foregroundStyle(Color.baseColorWhite)
         }

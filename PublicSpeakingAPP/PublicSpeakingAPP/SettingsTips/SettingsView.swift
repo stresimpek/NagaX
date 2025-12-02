@@ -40,188 +40,208 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 HStack(alignment: .center) {
                     RoomPreview()
-                        .frame(width: dynamicTypeSize.isAccessibilitySize ? 200 : 280)
+                        .padding(.horizontal, isIpad ? 80 : 0)
                         .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 8 : 12)
                         .accessibilitySortPriority(2)
-                    ScrollView {                        
-
-                        VStack(alignment: .leading, spacing: 18) {
-                            HStack(alignment: .top) {
-                                Text("Durasi")
-                                    .font(.headline)
-                                    .fixedSize(horizontal: false, vertical: true)
-//                                    .lineLimit(2)
-//                                    .minimumScaleFactor(0.7)
-                                    .layoutPriority(1)
-                                    .accessibilityHidden(true)
+                    
+                    GeometryReader { geometry in
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: isIpad ? 60 : 18) {
+                                Spacer()
                                
-                            Spacer()
-                               
-                                Picker("Pilih Durasi", selection: $durationMinutes) {
-                                    Text("1 menit").tag(1)
-                                    Text("2 menit").tag(2)
-                                    Text("3 menit").tag(3)
-                                    Text("5 menit").tag(5)
-                                    Text("10 menit").tag(10)
-                
-                                }
-                                .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 120 : 90)
-                                .tint(Color.white)
-                                .pickerStyle(.menu)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 6)
-                                .background(Color.darkBlue2)
-                                .cornerRadius(24)
-                                .shadow(color: Color.darkBlue3, radius: 0, x: 0, y: 4)
-                            }
-
-                            // MARK: - Distraksi simulasi
-                            if isAccessibilitySize {
-                                // ⚠️ Mode teks besar: label di atas, slider di bawah
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Distraksi simulasi")
-                                        .font(.headline)
-//                                        .lineLimit(2)
-//                                        .minimumScaleFactor(0.7)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    
-                                    VStack(spacing: 4) {
-                                        Slider(value: $distractionLevel, in: 0...2, step: 1)
-                                            .tint(.darkBlue)
-                                            .onChange(of: distractionLevel) { v, _ in
-                                                distractionLevel = v.rounded()
-                                            }
-                                            .accessibilityElement(children: .ignore)
-                                            .accessibilityLabel("Pilih tingkat distraksi suara")
-                                            .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
-                                            .accessibilityValue(
-                                                distractionLevel == 0 ? "Rendah" :
-                                                distractionLevel == 1 ? "Sedang" : "Tinggi"
-                                            )
-                                        
-                                        HStack {
-                                            VStack {
-                                                Circle().frame(width: 8, height: 8)
-                                                Text("Rendah")
-                                            }
-                                            Spacer()
-                                            VStack {
-                                                Circle().frame(width: 8, height: 8)
-                                                Text("Sedang")
-                                            }
-                                            Spacer()
-                                            VStack {
-                                                Circle().frame(width: 8, height: 8)
-                                                Text("Tinggi")
-                                            }
-                                        }
-                                        .font(.subheadline)
-                                        .foregroundStyle(.baseColorWhite)
-                                        .accessibilityHidden(true)
-                                    }
-                                }
-                            } else {
-                                HStack(alignment: .top, spacing: 40) {
-                                    Text("Distraksi simulasi")
-                                        .font(.headline)
-//                                        .lineLimit(2)
-//                                        .minimumScaleFactor(0.7)
+                                HStack(alignment: .top) {
+                                    Text("Durasi")
+                                        .font(isIpad ? .title3 : .headline)
                                         .fixedSize(horizontal: false, vertical: true)
                                         .layoutPriority(1)
                                         .accessibilityHidden(true)
-                                    
-                                    VStack(spacing: 4) {
-                                        Slider(value: $distractionLevel, in: 0...2, step: 1)
-                                            .tint(.darkBlue)
-                                            .onChange(of: distractionLevel) { v, _ in
-                                                distractionLevel = v.rounded()
-                                            }
-                                            .accessibilityElement(children: .ignore)
-                                            .accessibilityLabel("Pilih tingkat distraksi suara")
-                                            .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
-                                            .accessibilityValue(
-                                                distractionLevel == 0 ? "Rendah" :
-                                                distractionLevel == 1 ? "Sedang" : "Tinggi"
-                                            )
-                                        
-                                        HStack {
-                                            VStack {
-                                                Circle().frame(width: 8, height: 8)
-                                                Text("Rendah")
-                                            }
-                                            Spacer()
-                                            VStack {
-                                                Circle().frame(width: 8, height: 8)
-                                                Text("Sedang")
-                                            }
-                                            Spacer()
-                                            VStack {
-                                                Circle().frame(width: 8, height: 8)
-                                                Text("Tinggi")
-                                            }
-                                        }
-                                        .font(.subheadline)
-                                        .foregroundStyle(.baseColorWhite)
-                                        .accessibilityHidden(true)
-                                    }
-                                }
-                            }
-                            
-                            HStack {
-                                Text("Aspek yang dievaluasi")
-                                    .font(.headline)
-//                                    .lineLimit(2)
-//                                    .minimumScaleFactor(0.7)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .accessibilityLabel("Pilih aspek yang ingin dievaluasi")
-                            
+                                   
                                 Spacer()
-                                
-                                Button(action: {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        showAspectInfo = true
+                                   
+                                    Picker("Pilih Durasi", selection: $durationMinutes) {
+                                        Text("1 menit").tag(1)
+                                        Text("2 menit").tag(2)
+                                        Text("3 menit").tag(3)
+                                        Text("5 menit").tag(5)
+                                        Text("10 menit").tag(10)
+                    
                                     }
-                                }) {
-                                    Image(systemName: "info.circle.fill")
-                                        .font(.title)
-                                        .foregroundColor(Color.baseColorWhite)
+                                    .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 120 : 90)
+                                    .font(isIpad ? .title3 : .headline)
+                                    .tint(Color.white)
+                                    .pickerStyle(.menu)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 6)
+                                    .background(Color.darkBlue2)
+                                    .cornerRadius(24)
+                                    .shadow(color: Color.darkBlue3, radius: 0, x: 0, y: 4)
                                 }
-                                .accessibilityLabel("Info aspek")
-                        }
+                                .padding(.trailing, 44)
 
-                            HStack {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 12) {
-                                        ForEach(aspectOptions) { opt in
-                                            AspectCheckTile(
-                                                option: opt,
-                                                isSelected: Binding(
-                                                    get: { selectedAspects.contains(opt) },
-                                                    set: { shouldSelect in
-                                                        if shouldSelect {
-                                                            handleAspectSelection(for: opt)
-                                                        } else {
-                                                            selectedAspects.remove(opt)
-                                                        }
-                                                    }
-                                                ),
-                                                fixedHeight: maxTileHeight == 0 ? nil : maxTileHeight
-                                            )
+                                if isAccessibilitySize {
+                                    // Mode teks besar: label di atas, slider di bawah
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("Distraksi simulasi")
+                                            .font(isIpad ? .title3 : .headline)
+    //                                        .lineLimit(2)
+    //                                        .minimumScaleFactor(0.7)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        
+                                        VStack(spacing: 4) {
+                                            Slider(value: $distractionLevel, in: 0...2, step: 1)
+                                                .tint(.darkBlue)
+                                                .onChange(of: distractionLevel) { v, _ in
+                                                    distractionLevel = v.rounded()
+                                                }
+                                                .padding(.vertical, 20)
+                                                .contentShape(Rectangle())
+                                                .accessibilityElement(children: .ignore)
+                                                .accessibilityLabel("Pilih tingkat distraksi suara")
+                                                .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
+                                                .accessibilityValue(
+                                                    distractionLevel == 0 ? "Rendah" :
+                                                    distractionLevel == 1 ? "Sedang" : "Tinggi"
+                                                )
+
+                                            
+                                            HStack {
+                                                VStack {
+                                                    Circle().frame(width: 8, height: 8)
+                                                    Text("Rendah")
+                                                }
+                                                Spacer()
+                                                VStack {
+                                                    Circle().frame(width: 8, height: 8)
+                                                    Text("Sedang")
+                                                }
+                                                Spacer()
+                                                VStack {
+                                                    Circle().frame(width: 8, height: 8)
+                                                    Text("Tinggi")
+                                                }
+                                            }
+                                            .font(.subheadline)
+                                            .foregroundStyle(.baseColorWhite)
+                                            .accessibilityHidden(true)
                                         }
                                     }
-                                    .padding(.vertical, 4)
-                                }
-                                .onPreferenceChange(AspectTileHeightPreferenceKey.self) { height in
-                                    if height > 0 {
-                                        maxTileHeight = height
+                                    .padding(.trailing, 44)
+                                } else {
+                                    HStack(alignment: .top, spacing: 40) {
+                                        Text("Distraksi simulasi")
+                                            .font(isIpad ? .title3 : .headline)
+    //                                        .lineLimit(2)
+    //                                        .minimumScaleFactor(0.7)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                            .layoutPriority(1)
+                                            .accessibilityHidden(true)
+                                        
+                                        VStack(spacing: 4) {
+                                            Slider(value: $distractionLevel, in: 0...2, step: 1)
+                                                .tint(.darkBlue)
+                                                .onChange(of: distractionLevel) { v, _ in
+                                                    distractionLevel = v.rounded()
+                                                }
+                                                .accessibilityElement(children: .ignore)
+                                                .accessibilityLabel("Pilih tingkat distraksi suara")
+                                                .accessibilityHint("Tap 2 kali lalu geser dengan satu jari untuk mengatur nilai")
+                                                .accessibilityValue(
+                                                    distractionLevel == 0 ? "Rendah" :
+                                                    distractionLevel == 1 ? "Sedang" : "Tinggi"
+                                                )
+                                            
+                                            HStack {
+                                                VStack {
+                                                    Circle().frame(width: 8, height: 8)
+                                                    Text("Rendah")
+                                                }
+                                                Spacer()
+                                                VStack {
+                                                    Circle().frame(width: 8, height: 8)
+                                                    Text("Sedang")
+                                                }
+                                                Spacer()
+                                                VStack {
+                                                    Circle().frame(width: 8, height: 8)
+                                                    Text("Tinggi")
+                                                }
+                                            }
+                                            .font(.subheadline)
+                                            .foregroundStyle(.baseColorWhite)
+                                            .accessibilityHidden(true)
+                                        }
                                     }
+                                    .padding(.trailing, 44)
+                                }
+                                
+                                VStack (alignment: .leading, spacing: 16) {
+                                    HStack {
+                                        Text("Aspek yang dievaluasi")
+                                            .font(isIpad ? .title3 : .headline)
+        //                                    .lineLimit(2)
+        //                                    .minimumScaleFactor(0.7)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                            .accessibilityLabel("Pilih aspek yang ingin dievaluasi")
+                                    
+                                        Spacer()
+                                        
+                                        Button(action: {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                showAspectInfo = true
+                                            }
+                                        }) {
+                                            Image(systemName: "info.circle.fill")
+                                                .font(.title)
+                                                .foregroundColor(Color.baseColorWhite)
+                                        }
+                                        .accessibilityLabel("Info aspek")
+                                    }
+                                    .padding(.trailing, 44)
+                                    
+                                    HStack {
+                                        ScrollView(.horizontal, showsIndicators: false) {
+                                            HStack(spacing: 12) {
+                                                ForEach(aspectOptions) { opt in
+                                                    AspectCheckTile(
+                                                        option: opt,
+                                                        isSelected: Binding(
+                                                            get: { selectedAspects.contains(opt) },
+                                                            set: { shouldSelect in
+                                                                if shouldSelect {
+                                                                    handleAspectSelection(for: opt)
+                                                                } else {
+                                                                    selectedAspects.remove(opt)
+                                                                }
+                                                            }
+                                                        ),
+                                                        fixedHeight: maxTileHeight == 0 ? nil : maxTileHeight
+                                                    )
+                                                }
+                                            }
+                                            .padding(.vertical, 4)
+                                        }
+                                        .onPreferenceChange(AspectTileHeightPreferenceKey.self) { height in
+                                            if height > 0 {
+                                                maxTileHeight = height
+                                            }
+                                        }
+                                        Spacer()
+                                    }
+                                    .frame(height: 96)
                                 }
                                 Spacer()
                             }
-                           
+                            .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 0 : 8)
+                            .padding(.trailing, 16)
+                            .frame(minHeight: geometry.size.height)
+                            .frame(maxWidth: .infinity)
+                        }
+                        .accessibilitySortPriority(1)
+                        .safeAreaInset(edge: .bottom) {
                             HStack {
                                 Spacer()
+            
                                 if shouldDisableNext {
                                     ButtonComponent(
                                         title: "Pilih Aspek",
@@ -239,7 +259,7 @@ struct SettingsView: View {
                                         }
                                     )
                                     .accessibilityLabel("Pilih aspek untuk lanjut simulasi")
-                            } else {
+                                } else {
                                     ButtonComponent(
                                         title: "Mulai Latihan",
                                         systemImage: nil,
@@ -257,17 +277,14 @@ struct SettingsView: View {
                                     )
                                 }
                             }
-                            
+                            .padding(.bottom, 52)
+                            .padding(.trailing, 44)
                         }
-                        .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 0 : 8)
-                        .padding(.trailing, 16)
                     }
-                    .accessibilitySortPriority(1)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .padding(.top, 24)
             .background(Color.baseColorBlue)
             .foregroundStyle(Color.baseColorWhite)
             .navigationBarBackButtonHidden(true)
@@ -281,6 +298,7 @@ struct SettingsView: View {
                 action: onBack
             )
             .padding(.top, 16)
+            .padding(.leading, 22)
             .accessibilityLabel("Kembali")
             .accessibilitySortPriority(3)
            
