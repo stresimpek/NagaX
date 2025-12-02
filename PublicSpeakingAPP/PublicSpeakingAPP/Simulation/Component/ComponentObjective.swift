@@ -80,7 +80,7 @@ struct ComponentObjective: View {
                             }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
-                            .background(Color.baseColorWhite)
+                            .background(Color.darkBlue3)
                             .cornerRadius(999)
                         }
                         .offset(y: appear ? 0 : 25)
