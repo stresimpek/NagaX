@@ -332,6 +332,8 @@ class SimulationViewModel: ObservableObject {
         }
 
         let shouldStart = (whisperKitVM.recordingStatus == .stopped)
+        
+        let fillerSelected = settings.selectedAspects.contains(.fillerWords)
 
         if shouldStart {
             startGame()
@@ -341,7 +343,8 @@ class SimulationViewModel: ObservableObject {
             whisperKitVM.toggleRecording(
                 shouldLoop: true,
                 timerSeconds: Double(timerSeconds),
-                durationLimitSeconds: durationLimitSeconds
+                durationLimitSeconds: durationLimitSeconds,
+                needsFillerAnalysis: fillerSelected
             )
         } else {
             NotificationCenter.default.post(name: NSNotification.Name("StopARRecording"), object: nil)
@@ -350,7 +353,8 @@ class SimulationViewModel: ObservableObject {
             whisperKitVM.toggleRecording(
                 shouldLoop: false,
                 timerSeconds: Double(timerSeconds),
-                durationLimitSeconds: durationLimitSeconds
+                durationLimitSeconds: durationLimitSeconds,
+                needsFillerAnalysis: fillerSelected
             )
         }
     }

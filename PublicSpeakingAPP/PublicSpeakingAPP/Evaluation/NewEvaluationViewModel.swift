@@ -140,21 +140,32 @@ class NewEvaluationViewModel: ObservableObject {
     }
     
     var currentEvaluatorNote: AttributedString {
-            switch currentTab {
-            case .strukturKalimat:
-                return strukturKalimatEvaluatorNote
-            case .artikulasi:
-                return articulationEvaluatorNote
-            case .fillerWords:
-                return fillerWordEvaluatorNote
-            case .tempo:
-                return tempoEvaluatorNote
-            case .intonasi:
-                return intonationEvaluatorNote
-            case .kontakMata:
-                return try! AttributedString(markdown: result.eyeContactFeedback)
-            }
+        switch currentTab {
+        case .strukturKalimat:
+            return strukturKalimatEvaluatorNote
+        case .artikulasi:
+            return articulationEvaluatorNote
+        case .fillerWords:
+            return fillerWordEvaluatorNote
+        case .tempo:
+            return tempoEvaluatorNote
+        case .intonasi:
+            return intonationEvaluatorNote
+        case .kontakMata:
+            return eyeContactEvaluatorNote
         }
+    }
+    
+    private var eyeContactEvaluatorNote: AttributedString {
+        let grade = result.eyeContactGrade
+        let count = result.gazeEvents.count
+        
+        if grade == "A" {
+            return try! AttributedString(markdown: "Kamu sempat **melihat ke atap/lantai sebanyak 0 kali.**")
+        } else {
+            return try! AttributedString(markdown: "Kamu sempat **melihat ke atap/lantai sebanyak \(count) kali.** Menyadari ini bisa membantu fokus pandangan.")
+        }
+    }
     
     private var strukturKalimatEvaluatorNote: AttributedString {
         let count = ineffectiveSentenceCount
@@ -377,13 +388,8 @@ extension NewEvaluationViewModel {
             }
             
         case .kontakMata:
-            let grade = result.eyeContactGrade
-            if grade == "A" {
-                 return try! AttributedString(markdown: "Kontak matamu **sangat terjaga** sepanjang presentasi.")
-            } else {
-                 let issuesCount = result.gazeEvents.count
-                 return try! AttributedString(markdown: "Terdeteksi **\(issuesCount)** kali gangguan kontak mata.")
-            }
+            let count = result.gazeEvents.count
+            return try! AttributedString(markdown: "Kamu sempat melihat ke atap/lantai sebanyak **\(count) kali.**")
         }
     }
 

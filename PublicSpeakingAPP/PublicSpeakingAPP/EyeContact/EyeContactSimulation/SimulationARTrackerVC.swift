@@ -230,10 +230,12 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         var headEvent: HeadGazeEvent = .normal
         if let headOrigin = self.headOriginEulerAngles {
             let pitch = currentHeadEulerAngles.x - headOrigin.x
+            
             if pitch < headPitchDownThreshold {
-                headEvent = .headPitchDown
-            } else if pitch > headPitchUpThreshold {
                 headEvent = .headPitchUp
+            }
+            else if pitch > headPitchUpThreshold {
+                headEvent = .headPitchDown
             } else {
                 headEvent = .normal
             }

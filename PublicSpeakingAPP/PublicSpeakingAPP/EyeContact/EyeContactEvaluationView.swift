@@ -33,15 +33,11 @@ struct EyeContactEvaluationView: View {
         VStack(spacing: 0) {
             
             HStack {
-                if !issues.isEmpty {
+                if issues.indices.contains(currentIssueIndex) {
                     let currentItem = issues[currentIssueIndex]
                     Text(formatTimestamp(currentItem.startTime, currentItem.endTime))
                         .font(.footnoteBold)
                         .foregroundColor(.baseColorBrown)
-                } else {
-                    Text("00:00 - 00:00")
-                        .font(.footnoteBold)
-                        .foregroundColor(.gray)
                 }
                 
                 Spacer()
@@ -50,24 +46,18 @@ struct EyeContactEvaluationView: View {
                     Button(action: { loadClip(at: currentIssueIndex - 1) }) {
                         Image(systemName: "chevron.left")
                     }
-                    .disabled(currentIssueIndex <= 0 || issues.isEmpty)
-                    .opacity(currentIssueIndex <= 0 || issues.isEmpty ? 0.5 : 1.0)
+                    .disabled(currentIssueIndex <= 0)
+                    .opacity(currentIssueIndex <= 0 ? 0.5 : 1.0)
                     
-                    if !issues.isEmpty {
-                        Text("**\(currentIssueIndex + 1)** / \(issues.count)")
-                            .font(.footnoteBold)
-                            .monospacedDigit()
-                    } else {
-                        Text("**0** / 0")
-                            .font(.footnoteBold)
-                            .monospacedDigit()
-                    }
+                    Text("**\(currentIssueIndex + 1)** / \(issues.count)")
+                        .font(.footnoteBold)
+                        .monospacedDigit()
                     
                     Button(action: { loadClip(at: currentIssueIndex + 1) }) {
                         Image(systemName: "chevron.right")
                     }
-                    .disabled(currentIssueIndex >= issues.count - 1 || issues.isEmpty)
-                    .opacity(currentIssueIndex >= issues.count - 1 || issues.isEmpty ? 0.5 : 1.0)
+                    .disabled(currentIssueIndex >= issues.count - 1)
+                    .opacity(currentIssueIndex >= issues.count - 1 ? 0.5 : 1.0)
                 }
                 .foregroundColor(.baseColorBrown)
             }
@@ -100,7 +90,7 @@ struct EyeContactEvaluationView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 
-                if !issues.isEmpty {
+                if issues.indices.contains(currentIssueIndex) {
                     VStack {
                         Spacer()
                         HStack(alignment: .bottom) {
@@ -144,7 +134,8 @@ struct EyeContactEvaluationView: View {
             player.pause()
         }
         .fullScreenCover(isPresented: $isFullScreen) {
-            ZStack {
+            ZStack(alignment: .topLeading) {
+                
                 Color.black.edgesIgnoringSafeArea(.all)
                 
                 if videoURL != nil {
@@ -152,37 +143,21 @@ struct EyeContactEvaluationView: View {
                         .edgesIgnoringSafeArea(.all)
                 }
                 
-                VStack {
-                    HStack {
-                        Spacer()
-                        ButtonComponent(
-                            title: nil,
-                            systemImage: "xmark",
-                            size: .medium,
-                            kind: .secondaryBlue,
-                            action: { isFullScreen = false }
-                        )
-                        .padding()
-                    }
-                    Spacer()
-                    
-                    if !issues.isEmpty {
-                        HStack {
-                            let type = issues[currentIssueIndex].event
-                            Text(labelForEvent(type))
-                                .font(.subheadline).bold()
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 14)
-                                .background(Color.red.opacity(0.8))
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                            Spacer()
-                        }
-                        .padding()
-                        .padding(.bottom, 30)
-                    }
+                Button(action: {
+                    isFullScreen = false
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.title3)
+                        .bold()
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(Color.black.opacity(0.6))
+                        .clipShape(Circle())
                 }
+                .padding(.leading, 20)
+                .padding(.top, 10)
             }
+            .ignoresSafeArea()
         }
     }
     
@@ -209,10 +184,8 @@ struct EyeContactEvaluationView: View {
             }
         }
         
-        if !issues.isEmpty {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                loadClip(at: 0)
-            }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            loadClip(at: 0)
         }
     }
     

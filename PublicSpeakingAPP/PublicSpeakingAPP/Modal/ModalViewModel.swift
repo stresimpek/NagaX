@@ -245,11 +245,8 @@ class ModalViewModel: ObservableObject {
         holdTask?.cancel()
     }
     
-    // MARK: - Logic Eye Contact (Updated to use AttributedString)
-    
     func startPreparing() {
         cameraCheckState = .preparing
-        // UBAH: Menggunakan AttributedString(markdown:)
         instructionText = try! AttributedString(markdown: "Nyalakan kamera dan posisikan dirimu supaya terlihat dalam frame. Perhatikan **titik merah ini** selama 3 detik.")
         
         stopAllTimers()

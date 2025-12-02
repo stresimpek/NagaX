@@ -413,14 +413,14 @@ final class SpeechTranscriberViewModel: ObservableObject {
     }
     
     // Recording Logic
-    func toggleRecording(shouldLoop: Bool, timerSeconds: Double, durationLimitSeconds: Int) {
+    func toggleRecording(shouldLoop: Bool, timerSeconds: Double, durationLimitSeconds: Int, needsFillerAnalysis: Bool) {
         isRecording.toggle()
 
         if isRecording {
             resetState()
             startRecording(shouldLoop)
         } else {
-            stopRecording(shouldLoop, timerSeconds: timerSeconds, durationLimitSeconds: durationLimitSeconds)
+            stopRecording(shouldLoop, timerSeconds: timerSeconds, durationLimitSeconds: durationLimitSeconds, needsFillerAnalysis: needsFillerAnalysis)
         }
     }
 
@@ -455,45 +455,48 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
     }
     
-    func proceedToEvaluation(loop: Bool) {
-        // Save the final audio for playback
-        Task(priority: .background) {
+    func proceedToEvaluation(loop: Bool, needsFillerAnalysis: Bool) {
+        // We use a single large Task to ensure sequential execution and waiting
+        Task(priority: .userInitiated) {
+            
+            // 1. Save Session Audio
             let url = await saveSessionAudioAsWavFile()
             await MainActor.run {
                 self.savedRecordingURL = url
             }
             
-            do {
+            // 2. Dual-Pass Filler Analysis (CONDITIONAL WAIT)
+            if needsFillerAnalysis {
                 if let audioURL = url {
-                    print("--- [Evaluation] Mulai Dual-Pass (KHUSUS FILLER) ---")
-                    
-                    let (fillerText, fillerWords) = try await transcribeForEvaluation(audioURL: audioURL)
-                    
-                    await MainActor.run {
-                        self.fillerAnalysisWords = fillerWords
-                        if let asset = try? AVAudioFile(forReading: audioURL) {
-                            
-                            
-                            let duration = Double(asset.length) / asset.fileFormat.sampleRate
-                            self.fillerWordVM?.analyze(text: fillerText, duration: duration)
+                    print("⏳ [Evaluation] Menunggu Dual-Pass Filler Transcription selesai...")
+                    do {
+                        let (fillerText, fillerWords) = try await transcribeForEvaluation(audioURL: audioURL)
+                        
+                        await MainActor.run {
+                            self.fillerAnalysisWords = fillerWords
+                            if let asset = try? AVAudioFile(forReading: audioURL) {
+                                let duration = Double(asset.length) / asset.fileFormat.sampleRate
+                                self.fillerWordVM?.analyze(text: fillerText, duration: duration)
+                            }
                         }
+                        print("✅ [Evaluation] Dual-Pass Selesai.")
+                    } catch {
+                        print("⚠️ [Evaluation] Dual-Pass Gagal: \(error). Fallback ke Live data.")
                     }
-                    print("--- [Evaluation] Selesai. Filler pakai Re-transcribe, sisanya pakai Live. ---")
-                    
                 } else {
-                    print("Warning: Gagal menyimpan audio, Filler menggunakan data live.")
-                }}}
-        
-        
-        
-
-        if loop {
-            stopRealtimeTranscription()
+                    print("⚠️ [Evaluation] URL Audio nil, skip Dual-Pass.")
+                }
+            } else {
+                print("⏩ [Evaluation] Filler Aspect tidak dipilih. Skip Dual-Pass (Gunakan Eager/Live).")
+            }
             
-            // Check if we need to re-transcribe for pause/resume case
-            if !sessionSamples.isEmpty {
-                // Pause/resume case: re-transcribe the full session
-                Task {
+            // 3. Finalize Transcript
+            if loop {
+                stopRealtimeTranscription()
+                
+                // Check if we need to re-transcribe for pause/resume case
+                if !sessionSamples.isEmpty {
+                    // Pause/resume case: re-transcribe the full session
                     do {
                         try await transcribeFullSession()
                         await finalizeText()
@@ -501,16 +504,14 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     } catch {
                         print("Error during full session transcription: \(error.localizedDescription)")
                     }
+                } else {
+                    // Normal case: use existing transcription
+                    finalizeText()
+                    await self.analyzeTranscriptSentence()
                 }
             } else {
-                // Normal case: use existing transcription
-                finalizeText()
-                Task { await self.analyzeTranscriptSentence() }
-            }
-        } else {
-            transcriptionTask?.cancel()
+                transcriptionTask?.cancel()
 
-            transcribeTask = Task {
                 await MainActor.run { isTranscribing = true }
 
                 do {
@@ -532,14 +533,13 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     isTranscribing = false
                 }
             }
-        }
-
-        Task {
+            
+            // 4. Update Status to Trigger Navigation
             try? await Task.sleep(nanoseconds: 100_000_000)
             await MainActor.run {
                 if !self.isTranscribing {
                     self.recordingStatus = .stopped
-                    print("[SpeechTranscriber] Status -> .stopped")
+                    print("[SpeechTranscriber] Status -> .stopped (Navigation Triggered)")
                 }
             }
         }
@@ -603,7 +603,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
         }
     }
     
-    func stopRecording(_ loop: Bool, timerSeconds: Double, durationLimitSeconds: Int) {
+    func stopRecording(_ loop: Bool, timerSeconds: Double, durationLimitSeconds: Int, needsFillerAnalysis: Bool) {
         recordingStatus = .stopping
         isRecording = false
         whisperKit?.audioProcessor.stopRecording()
@@ -633,7 +633,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
             
             // Normal stop (no pause) - proceed directly to evaluation
-            await MainActor.run { proceedToEvaluation(loop: loop) }
+            await MainActor.run { proceedToEvaluation(loop: loop, needsFillerAnalysis: needsFillerAnalysis) }
         }
     }
 
@@ -691,11 +691,11 @@ final class SpeechTranscriberViewModel: ObservableObject {
         startRecording(shouldLoop)
     }
 
-        func proceedToEvaluationFromModal(loop: Bool) {
+        func proceedToEvaluationFromModal(loop: Bool, needsFillerAnalysis: Bool) {
             showEmptyTranscriptModal = false
             showEarlyStopModal = false
             isPaused = false
-            proceedToEvaluation(loop: loop)
+            proceedToEvaluation(loop: loop, needsFillerAnalysis: needsFillerAnalysis)
         }
 
     func finalizeText() {
