@@ -40,6 +40,9 @@ struct EvaluationModel: Identifiable, Hashable {
     let eyeContactGrade: String
     let eyeContactFeedback: String
     
+    let videoURL: URL?
+    let gazeEvents: [GazeLogItem]
+    
     let articulationCount: Int
     let articulationTotal: Int
 
@@ -65,6 +68,8 @@ struct EvaluationModel: Identifiable, Hashable {
         eyeContactScore: Double = 0.0,
         eyeContactGrade: String = "D",
         eyeContactFeedback: String = "N/A",
+        videoURL: URL? = nil,
+        gazeEvents: [GazeLogItem] = [],
         articulationCount: Int = 0,
         articulationTotal: Int = 0
     ) {
@@ -89,6 +94,8 @@ struct EvaluationModel: Identifiable, Hashable {
         self.eyeContactScore = eyeContactScore
         self.eyeContactGrade = eyeContactGrade
         self.eyeContactFeedback = eyeContactFeedback
+        self.videoURL = videoURL
+        self.gazeEvents = gazeEvents
         self.articulationCount = articulationCount
         self.articulationTotal = articulationTotal
     }

@@ -96,6 +96,12 @@ struct SimulationView: View {
                         newValue ? micMonitor.startMonitoring() : micMonitor.stopMonitoring()
                     }
                 
+                if viewModel.settings.selectedAspects.contains(.kontakMata) {
+                    SimulationARTrackerView(viewModel: viewModel)
+                        .edgesIgnoringSafeArea(.all)
+                        .zIndex(1)
+                }
+
                 VStack {
                     
                     if viewModel.isRecording && !showPauseModal && !viewModel.isOvertime {
@@ -106,9 +112,9 @@ struct SimulationView: View {
                                 size: .largeIconCircle,
                                 kind: .primaryYellow,
                                 action: {
-                                                                                viewModel.pauseForModal()  // Use new function
-                                                                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
-                                                                                    showPauseModal = true
+                                        viewModel.pauseForModal()  // Use new function
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+                                        showPauseModal = true
                                     }
                                 }
                             )

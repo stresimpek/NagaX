@@ -32,18 +32,20 @@ struct MicSetupView: View {
     
     var body: some View {
         HStack(alignment: .center, spacing: 60) {
-            ZStack(alignment: .leading) {
+
+            HStack(alignment: .center, spacing: 16) {
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.baseColorWhite)
                 AudioVisualizerModalView(micMonitor: micMonitor)
-                    .padding(.leading, 30)
-                    .padding(.trailing, 0)
-                    .frame(width: 280, height: 50)
-                    .frame(alignment: .leading)
-                    .background(Color.black.opacity(0.27))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .offset(x: 20)
-                   
-                MicIconButton(showMicWarning: showMicWarning)
             }
+            .padding(.horizontal, 8)
+            .frame(width: 280, height: 50)
+            .frame(alignment: .leading)
+            .background(Color.black.opacity(0.27))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .offset(x: 20)
+
             Image(imageName)
                 .resizable()
                 .scaledToFit()
@@ -60,7 +62,7 @@ struct MicIconButton: View {
         ZStack(alignment: .topLeading) {
             Image(systemName: "mic.fill")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.baseColorBrown)
+                .foregroundColor(.baseColorWhite)
                 .frame(width: 60, height: 60)
                 .background(Color.baseColorWhite)
                 .clipShape(Circle())
