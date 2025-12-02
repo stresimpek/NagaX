@@ -118,20 +118,20 @@ struct SimulationView: View {
                         }
                     }
                     
-                    Group {
-                        if isOverOneMinutes {
-                            Text("WAKTU HABIS!")
-                                .padding()
-                                .foregroundColor(.baseColorRed)
-                                .frame(height: 42)
-                                .background(.coral)
-                                .cornerRadius(24)
-                                .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
-                        }
-                    }
-                    .font(.headline)
-                    .animation(.easeInOut, value: isOverOneMinutes)
-                    .padding(.top, 16)
+//                    Group {
+//                        if isOverOneMinutes {
+//                            Text("WAKTU HABIS!")
+//                                .padding()
+//                                .foregroundColor(.baseColorRed)
+//                                .frame(height: 42)
+//                                .background(.coral)
+//                                .cornerRadius(24)
+//                                .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
+//                        }
+//                    }
+//                    .font(.headline)
+//                    .animation(.easeInOut, value: isOverOneMinutes)
+//                    .padding(.top, 16)
                     
                     
                     Spacer()
@@ -246,6 +246,21 @@ struct SimulationView: View {
                 }
             }
             .overlay(alignment: .top) {
+                if isOverOneMinutes {
+                    Text("WAKTU HABIS!")
+                        .padding()
+                        .foregroundColor(.baseColorRed)
+                        .frame(height: 42)
+                        .background(.coral)
+                        .cornerRadius(24)
+                        .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
+                        .font(.headline)
+                        .padding(.top, 20)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .animation(.easeInOut(duration: 0.35), value: isOverOneMinutes)
+                }
+            }
+            .overlay(alignment: .top) {
                 if let banner = currentBanner {
                     ComponentObjective(
                         text: banner.text,
@@ -341,7 +356,7 @@ struct SimulationView: View {
             }
             .onReceive(viewModel.$isOverOneMinuteTrigger) { isOverOneMinute in
                 if isOverOneMinute {
-                    isOverOneMinutes = !isOverOneMinutes
+                    isOverOneMinutes = true
                 }
             }
             .onReceive(viewModel.$isOvertimeTrigger) { isOver in
