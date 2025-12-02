@@ -224,7 +224,7 @@ struct SimulationView: View {
                                     action: viewModel.toggleRecording
                                 )
                                 .disabled(viewModel.whisperModelState != .loaded || isProcessing)
-                                .padding(.bottom, 35)
+                                .padding(.bottom, 20)
                                 
                             }.padding(.trailing, 40)
 
