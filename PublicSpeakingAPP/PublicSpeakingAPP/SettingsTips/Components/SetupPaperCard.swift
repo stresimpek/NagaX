@@ -19,19 +19,34 @@ struct SetupPaperCard<Content: View>: View {
 
     var body: some View {
         let paperWidth = geo.size.width * 0.85
-
-        ZStack(alignment: .topLeading) {
-            Image("SetupPaper")
-                .resizable()
-                .scaledToFit()
-                .frame(width: paperWidth)
-                .accessibilityHidden(true)
-            
-            VStack(spacing: 0) {
-                content()
+        
+        if isIpad {
+            ZStack(alignment: .topLeading) {
+                Image("SetupPaper")
+                    .resizable()
+                    .frame(width: 784, height: 434)
+                    .accessibilityHidden(true)
+                
+                VStack(spacing: 0) {
+                    content()
+                        .padding(.horizontal, 20)
+                }
+                .frame(width: 784, height: 434)
             }
-            .frame(width: paperWidth)
+        } else {
+            ZStack(alignment: .topLeading) {
+                Image("SetupPaper")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: paperWidth)
+                    .accessibilityHidden(true)
+                
+                VStack(spacing: 0) {
+                    content()
+                }
+                .frame(width: paperWidth)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

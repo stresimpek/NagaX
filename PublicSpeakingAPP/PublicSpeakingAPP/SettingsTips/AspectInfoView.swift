@@ -30,9 +30,13 @@ struct AspectInfoView: View {
     var body: some View {
         GeometryReader { geo in
             VStack {
-                Spacer()
-                    .frame(height: geo.size.height * 0.08)
-
+                if isIpad {
+                    Spacer()
+                } else {
+                    Spacer()
+                        .frame(height: geo.size.height * 0.08)
+                }
+                
                 ZStack(alignment: .topLeading) {
                     SetupPaperCard(geo: geo) {
                         VStack(spacing: 0) {
@@ -89,7 +93,7 @@ struct AspectInfoView: View {
                     }
 
                     HeaderBackButton(action: onDismiss)
-                        .offset(x: 25, y: -15)
+                        .offset(x: isIpad ? -15 : 30, y: -15)
                 }
 
                 Spacer()

@@ -52,9 +52,9 @@ struct HomeContentView: View {
             GeometryReader { geometry in
                 ScrollView {
                     ZStack {
-                        VStack {
+                        VStack(spacing: isIpad ? 0 : 20) {
                             Spacer()
-                            VStack(spacing: 40) {
+                            VStack(spacing: isIpad ? 40 : 12) {
                                 NameBanner(name: "Si Cupu (Kamu)")
 
                                 MicroAnimation(artboardName: "Home")
@@ -62,6 +62,15 @@ struct HomeContentView: View {
                             }
                             .accessibilityHidden(true)
                             
+                            if !isIpad {
+                                ButtonComponent(
+                                    title: "Mulai Latihan",
+                                    systemImage: nil,
+                                    size: .large,
+                                    kind: .primaryYellow,
+                                    action: onStart
+                                )
+                            }
                             Spacer()
                         }
                         .frame(minHeight: geometry.size.height)
@@ -74,19 +83,21 @@ struct HomeContentView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 .safeAreaInset(edge: .bottom) {
-                    HStack {
-                        Spacer()
-                        
-                        ButtonComponent(
-                            title: "Mulai Latihan",
-                            systemImage: nil,
-                            size: .large,
-                            kind: .primaryYellow,
-                            action: onStart
-                        )
+                    if isIpad {
+                        HStack {
+                            Spacer()
+                            
+                            ButtonComponent(
+                                title: "Mulai Latihan",
+                                systemImage: nil,
+                                size: .large,
+                                kind: .primaryYellow,
+                                action: onStart
+                            )
+                        }
+                        .padding(.bottom, 52)
+                        .padding(.trailing, 44)
                     }
-                    .padding(.bottom, 52)
-                    .padding(.trailing, 44)
                 }
             }
         }
