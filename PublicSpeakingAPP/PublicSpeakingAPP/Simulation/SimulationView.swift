@@ -199,7 +199,7 @@ struct SimulationView: View {
                         Spacer()
                         
                         if isIPad {
-                            VStack(alignment: .trailing, spacing: 65) {
+                            VStack(alignment: .trailing, spacing: 68) {
 
                                 if viewModel.isRecording {
 
@@ -230,7 +230,7 @@ struct SimulationView: View {
                                     action: viewModel.toggleRecording
                                 )
                                 .disabled(viewModel.whisperModelState != .loaded || isProcessing)
-                                .padding(.bottom, 28)
+                                .padding(.bottom, 35)
                                 
                             }.padding(.trailing, 40)
 

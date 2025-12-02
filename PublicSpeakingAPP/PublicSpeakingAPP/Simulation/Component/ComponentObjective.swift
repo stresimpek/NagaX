@@ -80,7 +80,7 @@ struct ComponentObjective: View {
                             }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
-                            .background(Color.darkBlue3)
+                            .background(Color.baseColorWhite)
                             .cornerRadius(999)
                         }
                         .shadow(color: .baseColorBlack,
