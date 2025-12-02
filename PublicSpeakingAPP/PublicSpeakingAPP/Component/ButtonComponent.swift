@@ -104,7 +104,12 @@ struct AppButtonStyle: ButtonStyle {
     let isEnabled: Bool
     let isIconOnly: Bool
     var overrideCircleSize: CGFloat? = nil
+    
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
+    private var isIpad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
        
     private var circleBase: CGFloat {
         switch dynamicTypeSize {
@@ -129,13 +134,16 @@ struct AppButtonStyle: ButtonStyle {
         let circleSize = baseCircleSize
         
         return configuration.label
-            .font(size.font)
+            .font(isIpad ? .title1 : size.font)
             .foregroundStyle(kind.foreground)
             .padding(.horizontal, size.horizontalPadding)
             .padding(.vertical, size.verticalPadding)
             .frame(
-                width: isCircle ? circleSize : nil,
-                height: isCircle ? circleSize : nil
+                minWidth: isCircle ? circleSize : (isIpad ? 219 : nil),
+                maxWidth: isCircle ? circleSize : nil,
+                
+                minHeight: isCircle ? circleSize : (isIpad ? 60 : nil),
+                maxHeight: isCircle ? circleSize : nil
             )
             .background(
                 Group {
@@ -208,8 +216,6 @@ struct ButtonComponent: View {
                 if let title {
                     Text(title)
                         .font(size.font)
-//                        .lineLimit(1)
-//                        .minimumScaleFactor(0.8)
                 }
             }
             .frame(maxWidth: fullWidth ? .infinity : nil)

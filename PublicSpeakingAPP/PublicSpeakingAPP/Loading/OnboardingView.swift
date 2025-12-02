@@ -10,11 +10,6 @@ import SwiftUI
 struct OnboardingView: View {
     var onStartTapped: () -> Void
     
-    @Environment(\.horizontalSizeClass) var sizeClass
-    private var isiPad: Bool {
-        sizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
-    }
-    
     var body: some View {
         ZStack {
             Color("BaseColorBlue")
@@ -26,7 +21,7 @@ struct OnboardingView: View {
                         Spacer()
                         VStack(spacing: 8) {
                             Text("Latihan dengan simulasi & review penyampaianmu")
-                                .font(isiPad ? .title1 : .title2)
+                                .font(isIpad ? .title1 : .title2)
                                 .fontWeight(.black)
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
@@ -37,7 +32,7 @@ struct OnboardingView: View {
                             Setelah latihan, kamu dapat melihat kembali penyampaian presentasimu.
                             Refleksikan dan latihan terus sampai kamu merasa siap!
                             """)
-                            .font(isiPad ? .headline : .subheadline)
+                            .font(isIpad ? .headline : .subheadline)
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
@@ -46,7 +41,7 @@ struct OnboardingView: View {
                         .padding(.top, 32)
                         
                         MicroAnimation(artboardName: "Onboarding")
-                            .frame(height: isiPad ? 160 : 120)
+                            .frame(height: isIpad ? 160 : 120)
                             .accessibilityHidden(true)
                             .padding(.top, 16)
                         
@@ -72,9 +67,8 @@ struct OnboardingView: View {
                             action: onStartTapped
                         )
                     }
-                    .padding(.top, 8)
-                    .padding(.bottom, 16)
-                    .padding(.horizontal, 16)
+                    .padding(.bottom, 52)
+                    .padding(.trailing, 44)
                 }
             }
         }

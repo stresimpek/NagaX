@@ -25,11 +25,6 @@ struct HomeContentView: View {
     let onStart: () -> Void
     let onDatePicker: () -> Void
     
-    @Environment(\.horizontalSizeClass) var sizeClass
-    private var isiPad: Bool {
-        sizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
-    }
-    
     @Query private var savedDates: [PresentationDateModel]
     private var targetDate: Date? { savedDates.first?.date }
     
@@ -63,32 +58,35 @@ struct HomeContentView: View {
                                 NameBanner(name: "Si Cupu (Kamu)")
 
                                 MicroAnimation(artboardName: "Home")
-                                    .frame(height: isiPad ? 160 : 120)
+                                    .frame(height: isIpad ? 180 : 120)
                             }
                             .accessibilityHidden(true)
                             
                             Spacer()
-                            
-                            ButtonComponent(
-                                title: "Mulai Latihan",
-                                systemImage: nil,
-                                size: .large,
-                                kind: .primaryYellow,
-                                action: onStart
-                            )
-                            .padding(.top, 24)
-                            
-                            Spacer()
                         }
                         .frame(minHeight: geometry.size.height)
-                        .frame(maxWidth: .infinity)
                         
                         SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
-                            .frame(maxWidth: .infinity)
-                            .padding(.leading, 440)
-                            .padding(.bottom, 160)
+                            .padding(.leading, isIpad ? 490 : 440)
+                            .padding(.bottom, isIpad ? 40: 160)
                             .accessibilityLabel("Hari ini kamu belum latihan. Ayo mulai latihan")
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    HStack {
+                        Spacer()
+                        
+                        ButtonComponent(
+                            title: "Mulai Latihan",
+                            systemImage: nil,
+                            size: .large,
+                            kind: .primaryYellow,
+                            action: onStart
+                        )
+                    }
+                    .padding(.bottom, 52)
+                    .padding(.trailing, 44)
                 }
             }
         }
@@ -105,7 +103,7 @@ struct SpeechBubble: View {
         ZStack(alignment: .bottomLeading) {
             // Main bubble background + text
             Text(text)
-                .font(.body)
+                .font(isIpad ? .title3 : .footnoteBold)
                 .bold()
                 .foregroundColor(Color(.baseColorBrown))
                 .fixedSize(horizontal: false, vertical: true)
@@ -147,14 +145,14 @@ struct NameBanner: View {
             
             Image("Rectangle 10")
                 .resizable()
-                .frame(width: 34.45, height: 27)
+                .frame(width: isIpad ? 56.37 : 34.45, height: isIpad ? 44.18 : 27)
                 .offset(y: 6)
             
             Text(name)
-                .font(.footnoteBold)
+                .font(isIpad ? .title1 : .footnoteBold)
                 .foregroundStyle(Color.darkBlue2)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 8)
+                .padding(.horizontal, isIpad ? 40 : 24)
+                .padding(.vertical, isIpad ? 14 : 8)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color(.lightBlue))
@@ -163,7 +161,7 @@ struct NameBanner: View {
             
             Image("Rectangle 11")
                 .resizable()
-                .frame(width: 34.45, height: 27)
+                .frame(width: isIpad ? 56.37 : 34.45, height: isIpad ? 44.18 : 27)
                 .offset(y: 6)
         }
     }
@@ -215,3 +213,4 @@ struct CardButton: View {
         }
     }
 }
+

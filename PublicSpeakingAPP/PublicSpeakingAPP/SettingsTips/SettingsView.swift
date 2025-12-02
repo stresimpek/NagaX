@@ -40,19 +40,19 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 HStack(alignment: .center) {
                     RoomPreview()
+                        .padding(.horizontal, isIpad ? 80 : 0)
                         .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 8 : 12)
                         .accessibilitySortPriority(2)
                     
                     GeometryReader { geometry in
                         ScrollView {
-                            VStack(alignment: .leading, spacing: 18) {
+                            VStack(alignment: .leading, spacing: isIpad ? 60 : 18) {
                                 Spacer()
+                               
                                 HStack(alignment: .top) {
                                     Text("Durasi")
-                                        .font(.headline)
+                                        .font(isIpad ? .title3 : .headline)
                                         .fixedSize(horizontal: false, vertical: true)
-    //                                    .lineLimit(2)
-    //                                    .minimumScaleFactor(0.7)
                                         .layoutPriority(1)
                                         .accessibilityHidden(true)
                                    
@@ -67,6 +67,7 @@ struct SettingsView: View {
                     
                                     }
                                     .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 120 : 90)
+                                    .font(isIpad ? .title3 : .headline)
                                     .tint(Color.white)
                                     .pickerStyle(.menu)
                                     .foregroundColor(.white)
@@ -76,12 +77,13 @@ struct SettingsView: View {
                                     .cornerRadius(24)
                                     .shadow(color: Color.darkBlue3, radius: 0, x: 0, y: 4)
                                 }
+                                .padding(.trailing, 44)
 
                                 if isAccessibilitySize {
                                     // Mode teks besar: label di atas, slider di bawah
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("Distraksi simulasi")
-                                            .font(.headline)
+                                            .font(isIpad ? .title3 : .headline)
     //                                        .lineLimit(2)
     //                                        .minimumScaleFactor(0.7)
                                             .fixedSize(horizontal: false, vertical: true)
@@ -124,10 +126,11 @@ struct SettingsView: View {
                                             .accessibilityHidden(true)
                                         }
                                     }
+                                    .padding(.trailing, 44)
                                 } else {
                                     HStack(alignment: .top, spacing: 40) {
                                         Text("Distraksi simulasi")
-                                            .font(.headline)
+                                            .font(isIpad ? .title3 : .headline)
     //                                        .lineLimit(2)
     //                                        .minimumScaleFactor(0.7)
                                             .fixedSize(horizontal: false, vertical: true)
@@ -169,97 +172,63 @@ struct SettingsView: View {
                                             .accessibilityHidden(true)
                                         }
                                     }
+                                    .padding(.trailing, 44)
                                 }
                                 
-                                HStack {
-                                    Text("Aspek yang dievaluasi")
-                                        .font(.headline)
-    //                                    .lineLimit(2)
-    //                                    .minimumScaleFactor(0.7)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                        .accessibilityLabel("Pilih aspek yang ingin dievaluasi")
-                                
-                                    Spacer()
+                                VStack (alignment: .leading, spacing: 16) {
+                                    HStack {
+                                        Text("Aspek yang dievaluasi")
+                                            .font(isIpad ? .title3 : .headline)
+        //                                    .lineLimit(2)
+        //                                    .minimumScaleFactor(0.7)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                            .accessibilityLabel("Pilih aspek yang ingin dievaluasi")
                                     
-                                    Button(action: {
-                                        withAnimation(.easeInOut(duration: 0.2)) {
-                                            showAspectInfo = true
+                                        Spacer()
+                                        
+                                        Button(action: {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                showAspectInfo = true
+                                            }
+                                        }) {
+                                            Image(systemName: "info.circle.fill")
+                                                .font(.title)
+                                                .foregroundColor(Color.baseColorWhite)
                                         }
-                                    }) {
-                                        Image(systemName: "info.circle.fill")
-                                            .font(.title)
-                                            .foregroundColor(Color.baseColorWhite)
+                                        .accessibilityLabel("Info aspek")
                                     }
-                                    .accessibilityLabel("Info aspek")
-                            }
-
-                                HStack {
-                                    ScrollView(.horizontal, showsIndicators: false) {
-                                        HStack(spacing: 12) {
-                                            ForEach(aspectOptions) { opt in
-                                                AspectCheckTile(
-                                                    option: opt,
-                                                    isSelected: Binding(
-                                                        get: { selectedAspects.contains(opt) },
-                                                        set: { shouldSelect in
-                                                            if shouldSelect {
-                                                                handleAspectSelection(for: opt)
-                                                            } else {
-                                                                selectedAspects.remove(opt)
+                                    .padding(.trailing, 44)
+                                    
+                                    HStack {
+                                        ScrollView(.horizontal, showsIndicators: false) {
+                                            HStack(spacing: 12) {
+                                                ForEach(aspectOptions) { opt in
+                                                    AspectCheckTile(
+                                                        option: opt,
+                                                        isSelected: Binding(
+                                                            get: { selectedAspects.contains(opt) },
+                                                            set: { shouldSelect in
+                                                                if shouldSelect {
+                                                                    handleAspectSelection(for: opt)
+                                                                } else {
+                                                                    selectedAspects.remove(opt)
+                                                                }
                                                             }
-                                                        }
-                                                    ),
-                                                    fixedHeight: maxTileHeight == 0 ? nil : maxTileHeight
-                                                )
+                                                        ),
+                                                        fixedHeight: maxTileHeight == 0 ? nil : maxTileHeight
+                                                    )
+                                                }
+                                            }
+                                            .padding(.vertical, 4)
+                                        }
+                                        .onPreferenceChange(AspectTileHeightPreferenceKey.self) { height in
+                                            if height > 0 {
+                                                maxTileHeight = height
                                             }
                                         }
-                                        .padding(.vertical, 4)
+                                        Spacer()
                                     }
-                                    .onPreferenceChange(AspectTileHeightPreferenceKey.self) { height in
-                                        if height > 0 {
-                                            maxTileHeight = height
-                                        }
-                                    }
-                                    Spacer()
-                                }
-                                .frame(height: 96)
-                               
-                                HStack {
-                                    Spacer()
-                                    if shouldDisableNext {
-                                        ButtonComponent(
-                                            title: "Pilih Aspek",
-                                            systemImage: nil,
-                                            size: .medium,
-                                            kind: .primaryYellow,
-                                            isEnabled: !shouldDisableNext,
-                                            action: {
-                                                let settings = PracticeSettings(
-                                                    durationMinutes: durationMinutes,
-                                                    distractionLevel: distractionLevel,
-                                                    selectedAspects: selectedAspects
-                                                )
-                                                onNext(settings)
-                                            }
-                                        )
-                                        .accessibilityLabel("Pilih aspek untuk lanjut simulasi")
-                                } else {
-                                        ButtonComponent(
-                                            title: "Mulai Latihan",
-                                            systemImage: nil,
-                                            size: .medium,
-                                            kind: .primaryYellow,
-                                            isEnabled: true,
-                                            action: {
-                                                let settings = PracticeSettings(
-                                                    durationMinutes: durationMinutes,
-                                                    distractionLevel: distractionLevel,
-                                                    selectedAspects: selectedAspects
-                                                )
-                                                onNext(settings)
-                                            }
-                                        )
-                                    }
+                                    .frame(height: 96)
                                 }
                                 Spacer()
                             }
@@ -269,12 +238,53 @@ struct SettingsView: View {
                             .frame(maxWidth: .infinity)
                         }
                         .accessibilitySortPriority(1)
+                        .safeAreaInset(edge: .bottom) {
+                            HStack {
+                                Spacer()
+            
+                                if shouldDisableNext {
+                                    ButtonComponent(
+                                        title: "Pilih Aspek",
+                                        systemImage: nil,
+                                        size: .medium,
+                                        kind: .primaryYellow,
+                                        isEnabled: !shouldDisableNext,
+                                        action: {
+                                            let settings = PracticeSettings(
+                                                durationMinutes: durationMinutes,
+                                                distractionLevel: distractionLevel,
+                                                selectedAspects: selectedAspects
+                                            )
+                                            onNext(settings)
+                                        }
+                                    )
+                                    .accessibilityLabel("Pilih aspek untuk lanjut simulasi")
+                                } else {
+                                    ButtonComponent(
+                                        title: "Mulai Latihan",
+                                        systemImage: nil,
+                                        size: .medium,
+                                        kind: .primaryYellow,
+                                        isEnabled: true,
+                                        action: {
+                                            let settings = PracticeSettings(
+                                                durationMinutes: durationMinutes,
+                                                distractionLevel: distractionLevel,
+                                                selectedAspects: selectedAspects
+                                            )
+                                            onNext(settings)
+                                        }
+                                    )
+                                }
+                            }
+                            .padding(.bottom, 52)
+                            .padding(.trailing, 44)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .padding(24)
             .background(Color.baseColorBlue)
             .foregroundStyle(Color.baseColorWhite)
             .navigationBarBackButtonHidden(true)
@@ -288,6 +298,7 @@ struct SettingsView: View {
                 action: onBack
             )
             .padding(.top, 16)
+            .padding(.leading, 22)
             .accessibilityLabel("Kembali")
             .accessibilitySortPriority(3)
            

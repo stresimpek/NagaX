@@ -14,11 +14,6 @@ struct NotificationPromptView: View {
     let onBack: () -> Void
     let onComplete: () -> Void
     
-    @Environment(\.horizontalSizeClass) var sizeClass
-    private var isiPad: Bool {
-        sizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
-    }
-    
     var body: some View {
         ZStack(alignment: .topLeading) {
             Color(.baseColorBlue)
@@ -34,7 +29,7 @@ struct NotificationPromptView: View {
                     .foregroundStyle(Color.white)
 
                 MicroAnimation(artboardName: "NotificationBell")
-                    .frame(width: isiPad ? 260: 200, height: isiPad ? 260 : 200)
+                    .frame(width: isIpad ? 260: 200, height: isIpad ? 260 : 200)
 
                 HStack(spacing: 20) {
                     ButtonComponent(

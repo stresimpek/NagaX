@@ -11,10 +11,6 @@ import AVFoundation
 struct ModalView: View {
      
     let onStart: () -> Void
-    @Environment(\.horizontalSizeClass) var sizeClass
-    private var isiPad: Bool {
-        sizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
-    }
     
     @StateObject private var viewModel: ModalViewModel
     
@@ -55,7 +51,7 @@ struct ModalView: View {
                             .background(Color.clear)
                             .accessibilitySortPriority(3)
                             
-                            if isiPad {
+                            if isIpad {
                                 GeometryReader { geometry in
                                     ScrollView(.vertical, showsIndicators: false) {                                        VStack(spacing: 0) {
                                             Spacer()
@@ -65,14 +61,12 @@ struct ModalView: View {
                                                 case .quietRoom:
                                                     MicroAnimation(artboardName: "Kondusif")
                                                         .frame(height: 100)
-                                                    
                                                 case .micCheck:
                                                     MicSetupView(
                                                         micMonitor: viewModel.micMonitor,
                                                         showMicWarning: viewModel.showMicWarning,
                                                         imageName: viewModel.mainImageName
                                                     )
-                                                    
                                                 case .distanceCheck:
                                                     MicroAnimation(artboardName: "ArmLength")
                                                         .frame(height: 100)
@@ -91,6 +85,7 @@ struct ModalView: View {
                                                 geometry: geometry
                                             )
                                             .padding(.bottom, 80)
+                                        
                                             Spacer()
                                         }
                                         .frame(minHeight: geometry.size.height)
@@ -145,8 +140,8 @@ struct ModalView: View {
                             }
                         }
                     }
-                    .frame(width: geometry.size.width * 0.85)
-                    .frame(maxHeight: geometry.size.height * 0.75)
+                    .frame(width: isIpad ? 784 : geometry.size.width * 0.85)
+                    .frame(maxHeight: isIpad ? 434 : geometry.size.height * 0.75)
                     .zIndex(0)
 
                     bottomButtonView(geometry: geometry)

@@ -29,18 +29,18 @@ struct CountdownRow: View {
         
         HStack(spacing: 4) {
             Text("Waktu menuju presentasimu:")
-                .font(.body)
+                .font(isIpad ? .title3 : .body)
                 .fixedSize(horizontal: false, vertical: true)
                 .multilineTextAlignment(.leading)
             CountdownBox(text: "\(r.d)")
             Text("hari")
-                .font(.body)
+                .font(isIpad ? .title3 : .body)
             CountdownBox(text: "\(r.h)")
             Text("jam")
-                .font(.body)
+                .font(isIpad ? .title3 : .body)
             CountdownBox(text: "\(r.m)")
             Text("menit")
-                .font(.body)
+                .font(isIpad ? .title3 : .body)
         }
         .onReceive(timer) { _ in now = Date() }
         .opacity(r.done ? 0.6 : 1)

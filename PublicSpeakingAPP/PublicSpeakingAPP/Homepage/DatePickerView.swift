@@ -11,11 +11,6 @@ import SwiftData
 struct DatePickerView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
-    @Environment(\.horizontalSizeClass) var sizeClass
-    
-    private var isiPad: Bool {
-        sizeClass == .regular && UIDevice.current.userInterfaceIdiom == .pad
-    }
         
     let onBack: () -> Void
     let onComplete: (Date) -> Void
@@ -129,7 +124,7 @@ struct DatePickerView: View {
                     VStack(alignment: .center, spacing: 24) {
                         Spacer ()
                         Text("Tanggal dan jam berapakah kamu akan presentasi?")
-                            .font(.title2)
+                            .font(.title1)
                             .foregroundStyle(Color.white)
                             .bold()
                             .padding(.horizontal)
