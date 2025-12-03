@@ -499,8 +499,10 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     // Pause/resume case: re-transcribe the full session
                     do {
                         try await transcribeFullSession()
+                        await finalizeText()
+                        await self.analyzeTranscriptSentence()
                     } catch {
-                        print("Error full session transcription: \(error)")
+                        print("Error during full session transcription: \(error.localizedDescription)")
                     }
                 } else {
                     // Normal case: use existing transcription
@@ -522,7 +524,13 @@ final class SpeechTranscriberViewModel: ObservableObject {
                         try await transcribeCurrentBuffer()
                     }
                 } catch {
-                    print("Error final transcription: \(error)")
+                    print("Error during final transcription: \(error.localizedDescription)")
+                }
+                await finalizeText()
+                await self.analyzeTranscriptSentence()
+
+                await MainActor.run {
+                    isTranscribing = false
                 }
             }
             
@@ -690,24 +698,27 @@ final class SpeechTranscriberViewModel: ObservableObject {
             proceedToEvaluation(loop: loop, needsFillerAnalysis: needsFillerAnalysis)
         }
 
-    func finalizeText() async {
-        await MainActor.run {
-            if hypothesisText != "" {
-                confirmedText += hypothesisText
-                hypothesisText = ""
-            }
+    func finalizeText() {
+        Task {
+            await MainActor.run {
+                if hypothesisText != "" {
+                    confirmedText += hypothesisText
+                    hypothesisText = ""
+                }
+
+                    
+                if !hypothesisWords.isEmpty {
+                    confirmedWords.append(contentsOf: hypothesisWords)
+                    hypothesisWords = []
+                }
                 
-            if !hypothesisWords.isEmpty {
-                confirmedWords.append(contentsOf: hypothesisWords)
-                hypothesisWords = []
+                if !unconfirmedSegments.isEmpty {
+                    confirmedSegments.append(contentsOf: unconfirmedSegments)
+                    unconfirmedSegments = []
+                }
+                
+                self.updateFinalizedStyledTranscript()
             }
-            
-            if !unconfirmedSegments.isEmpty {
-                confirmedSegments.append(contentsOf: unconfirmedSegments)
-                unconfirmedSegments = []
-            }
-            
-            self.updateFinalizedStyledTranscript()
         }
     }
     
