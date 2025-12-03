@@ -75,6 +75,8 @@ struct NewEvaluationView: View {
             return viewModel.fillerWordCalculated && viewModel.fillerWordCount == 0
         case .strukturKalimat:
             return viewModel.ineffectiveSentenceCount == 0
+        case .kontakMata:
+            return viewModel.result.gazeEvents.isEmpty
         default:
             return false
         }
@@ -196,6 +198,8 @@ private extension NewEvaluationView {
             return "Tidak ada kata jeda yang terdeteksi."
         case .strukturKalimat:
             return "Tidak ada pemborosan kata yang terdeteksi."
+        case .kontakMata:
+            return "Tidak ada gangguan kontak mata yang terdeteksi."
         default:
             return ""
         }

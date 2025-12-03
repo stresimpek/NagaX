@@ -10,8 +10,13 @@ import Combine
 
 struct GazeLogItem: Identifiable, Hashable {
     let id = UUID()
-    let timestamp: TimeInterval
+    let startTime: TimeInterval
+    let endTime: TimeInterval
     let event: String
+    
+    var duration: TimeInterval {
+        return endTime - startTime
+    }
 }
 
 @MainActor
@@ -25,69 +30,84 @@ class EyeContactViewModel: ObservableObject {
     private var badEventCounter: Int = 0
     private let badEventThreshold: Int = 2
     
-    private var lastLogTime: TimeInterval = 0
-    private let eventCooldown: TimeInterval = 3.0
-    
+    private var currentEventStartTime: TimeInterval? = nil
     private var currentActiveEvent: HeadGazeEvent? = nil
     
     func processEvent(_ event: HeadGazeEvent, at timestamp: TimeInterval) {
         
-        switch event {
-        case .normal:
-            badEventCounter = 0
-            
-            if currentActiveEvent != nil {
-                currentActiveEvent = nil
-                print("[EyeContactVM] Recovered to Normal")
-            }
-            
-            if eyeContactRating != 3 {
-                eyeContactRating = 3
-                statusLabel = "Kontak Mata Bagus"
-                feedbackMessage = ""
-            }
-            
-        case .headPitchUp, .headPitchDown, .gazeUp, .gazeDown:
-            
-            if let active = currentActiveEvent, active == event {
+        if let active = currentActiveEvent {
+            if (active == .headPitchUp || active == .headPitchDown) && (event == .gazeUp || event == .gazeDown) {
+                handleStateChange(newState: active, at: timestamp)
                 return
             }
+        }
+        
+        handleStateChange(newState: event, at: timestamp)
+    }
+    
+    private func handleStateChange(newState: HeadGazeEvent, at timestamp: TimeInterval) {
+        
+        if newState != currentActiveEvent {
             
-            if let active = currentActiveEvent {
-                if (active == .headPitchUp || active == .headPitchDown) && (event == .gazeUp || event == .gazeDown) {
-                    return
+            if let activeEvent = currentActiveEvent, let startTime = currentEventStartTime {
+                
+                if (timestamp - startTime) > 0.5 {
+                    let issueText = mapEventToString(activeEvent)
+                    let newLog = GazeLogItem(
+                        startTime: startTime,
+                        endTime: timestamp,
+                        event: issueText
+                    )
+                    issueHistory.append(newLog)
+                    print("[EyeContactVM] CLIP SAVED: \(issueText) | \(startTime) -> \(timestamp)")
                 }
             }
             
-            badEventCounter += 1
-            
-            if badEventCounter >= badEventThreshold {
+            if newState == .normal {
+                currentActiveEvent = nil
+                currentEventStartTime = nil
+                badEventCounter = 0
                 
-                let isSpamming = (timestamp - lastLogTime) < eventCooldown
+                resetUI()
                 
-                currentActiveEvent = event
+            } else {
+                badEventCounter += 1
                 
-                if eyeContactRating != 1 {
-                    eyeContactRating = 1
+                if badEventCounter >= badEventThreshold {
+                    currentActiveEvent = newState
+                    currentEventStartTime = timestamp
+                    
+                    updateUI(for: newState)
                 }
-                updateStatusLabel(for: event)
-                
-                if !isSpamming {
-                    let issueText = mapEventToString(event)
-                    let newLog = GazeLogItem(timestamp: timestamp, event: issueText)
-                    issueHistory.append(newLog)
-                    
-                    lastLogTime = timestamp
-                    
-                    print("[EyeContactVM] Logged: \(issueText) at \(timestamp)")
-                } else {
-                    print("[EyeContactVM] Skipped (Cooldown): \(event) at \(timestamp)")
+            }
+        }
+        else {
+            if currentActiveEvent == nil && newState != .normal {
+                badEventCounter += 1
+                if badEventCounter >= badEventThreshold {
+                    currentActiveEvent = newState
+                    currentEventStartTime = timestamp
+                    updateUI(for: newState)
                 }
             }
         }
     }
     
-    private func updateStatusLabel(for event: HeadGazeEvent) {
+    func finalizeSession(at finalTimestamp: TimeInterval) {
+        if let activeEvent = currentActiveEvent, let startTime = currentEventStartTime {
+            let issueText = mapEventToString(activeEvent)
+            let newLog = GazeLogItem(
+                startTime: startTime,
+                endTime: finalTimestamp,
+                event: issueText
+            )
+            issueHistory.append(newLog)
+        }
+    }
+    
+    private func updateUI(for event: HeadGazeEvent) {
+        if eyeContactRating != 1 { eyeContactRating = 1 }
+        
         switch event {
         case .headPitchUp:
             statusLabel = "Kepala Terlalu Naik"
@@ -101,8 +121,15 @@ class EyeContactViewModel: ObservableObject {
         case .gazeDown:
             statusLabel = "Mata Melihat Bawah"
             feedbackMessage = "Hindari membaca teks terus menerus."
-        default:
-            break
+        default: break
+        }
+    }
+    
+    private func resetUI() {
+        if eyeContactRating != 3 {
+            eyeContactRating = 3
+            statusLabel = "Kontak Mata Bagus"
+            feedbackMessage = ""
         }
     }
     
@@ -122,7 +149,7 @@ class EyeContactViewModel: ObservableObject {
         feedbackMessage = ""
         badEventCounter = 0
         currentActiveEvent = nil
-        lastLogTime = 0
+        currentEventStartTime = nil
         issueHistory.removeAll()
     }
 }
