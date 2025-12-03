@@ -504,7 +504,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     }
                 } else {
                     // Normal case: use existing transcription
-                    finalizeText()
+                    await finalizeText()
                     await self.analyzeTranscriptSentence()
                 }
             } else {
