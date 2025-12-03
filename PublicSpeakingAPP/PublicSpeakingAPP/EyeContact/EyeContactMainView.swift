@@ -32,10 +32,10 @@ struct EyeContactMainView: View {
                 .opacity(viewModel.hasReceivedFirstGazePoint ? 1.0 : 0.0)
 
             Text(viewModel.cameraCheckState == .preparing || viewModel.cameraCheckState == .holding ? "\(viewModel.eyeContactCountdown)" : "")
-                .font(.system(size: 48, weight: .bold))
+                .font(.system(size: 36, weight: .bold))
                 .foregroundColor(Color.white.opacity(0.85))
                 .shadow(color: .black.opacity(0.5), radius: 5, x: 0, y: 2)
-                .padding(.top, 50)
+                .padding(.top, 80)
                 .animation(nil, value: viewModel.eyeContactCountdown)
                 .transition(.opacity.animation(.easeIn(duration: 0.1)))
         }

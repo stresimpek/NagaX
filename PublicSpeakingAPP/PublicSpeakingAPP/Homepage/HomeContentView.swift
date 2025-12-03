@@ -50,7 +50,7 @@ struct HomeContentView: View {
             Spacer()
             
             GeometryReader { geometry in
-                ScrollView {
+                VStack {
                     ZStack {
                         VStack(spacing: isIpad ? 0 : 20) {
                             Spacer()
@@ -73,16 +73,15 @@ struct HomeContentView: View {
                             }
                             Spacer()
                         }
-                        .frame(minHeight: geometry.size.height)
                         
                         SpeechBubble(text: "Hari ini belum latihan nih... Latihan gasih?")
                             .padding(.leading, isIpad ? 490 : 440)
                             .padding(.bottom, isIpad ? 40: 160)
                             .accessibilityLabel("Hari ini kamu belum latihan. Ayo mulai latihan")
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .safeAreaInset(edge: .bottom) {
+                    
+                    Spacer()
+                    
                     if isIpad {
                         HStack {
                             Spacer()
@@ -99,6 +98,8 @@ struct HomeContentView: View {
                         .padding(.trailing, 44)
                     }
                 }
+                .frame(minHeight: geometry.size.height)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .ignoresSafeArea(edges: .horizontal)
