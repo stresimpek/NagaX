@@ -84,10 +84,8 @@ struct EmptyTranscriptModalView: View {
                     )
                     .frame(
                         width: isPad ? 429 : 370,
-                        height: isPad ? 296 : 190,
                         alignment: .center
                     )
-                    .cornerRadius(24)
                     Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
