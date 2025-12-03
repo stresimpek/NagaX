@@ -144,7 +144,7 @@ class ModalViewModel: ObservableObject {
             stopAllTimers()
             mainImageName = ""
             animationName = "Kondusif" // Nama Artboard Animasi
-            buttonTitle = "LANJUT"
+            buttonTitle = "Lanjut"
             isButtonEnabled = true
             showMicVisualizer = false
             
@@ -152,16 +152,16 @@ class ModalViewModel: ObservableObject {
             mainImageName = ""
             animationName = "ArmLength" // Nama Artboard Animasi
             if needsCameraCheck {
-                buttonTitle = "LANJUT"
+                buttonTitle = "Lanjut"
             } else {
-                buttonTitle = "MULAI LATIHAN"
+                buttonTitle = "Mulai Latihan"
             }
             isButtonEnabled = true
             showMicVisualizer = false
         case .volumeCheck:
             mainImageName = ""
             animationName = "VOLUME"
-            buttonTitle = "LANJUT"
+            buttonTitle = "Lanjut"
             isButtonEnabled = true
             showMicVisualizer = false
         }

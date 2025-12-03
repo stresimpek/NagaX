@@ -284,7 +284,7 @@ extension ModalView {
             if viewModel.currentStep == .cameraSetup {
                 if viewModel.cameraCheckState == .success {
                     ButtonComponent(
-                        title: "MULAI LATIHAN",
+                        title: "Mulai Latihan",
                         systemImage: nil,
                         size: .large,
                         kind: .primaryYellow,
@@ -292,7 +292,7 @@ extension ModalView {
                     )
                 } else if viewModel.cameraCheckState == .failed {
                     ButtonComponent(
-                        title: "DETEKSI ULANG",
+                        title: "Deteksi Ulang",
                         systemImage: nil,
                         size: .large,
                         kind: .primaryYellow,

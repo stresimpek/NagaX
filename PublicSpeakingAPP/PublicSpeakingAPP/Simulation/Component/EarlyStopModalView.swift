@@ -79,6 +79,7 @@ struct EarlyStopModalView: View {
                         Image("SetupPaper")
                             .resizable(resizingMode: .stretch)
                             .scaledToFill()
+                            .accessibilityHidden(true)
                     )
                     .frame(
                         width: isPad ? 429 : 370,

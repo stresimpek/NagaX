@@ -11,7 +11,7 @@ import AVFoundation
 struct SettingsView: View {
     @State private var maxTileHeight: CGFloat = 0
     @State private var durationMinutes: Int = 1
-    @State private var distractionLevel: Double = 0.0
+    @State private var distractionLevel: Double = 1.0
     @State private var enableQnA: Bool = false
     @State private var randomTopic: Bool = false
     
