@@ -8,12 +8,13 @@
 import UIKit
 import ARKit
 import SceneKit
+import AVFoundation
 
 protocol SimulationARTrackerDelegate: AnyObject {
     func didUpdate(event: HeadGazeEvent)
 }
 
-class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
+class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDelegate, AVCaptureAudioDataOutputSampleBufferDelegate {
     
     private let logInterval: TimeInterval = 1.0
     private var lastLogTime: TimeInterval = 0.0
@@ -25,6 +26,10 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
     private var arView: ARSCNView!
     
     private let recorder = ARVideoRecorder()
+    
+    private let audioSession = AVCaptureSession()
+    private let audioOutput = AVCaptureAudioDataOutput()
+    private let audioQueue = DispatchQueue(label: "audioCaptureQueue")
     
     private let gazeSmoothness: Int = 10
     private let gazeLerpFactor: CGFloat = 0.4
@@ -47,6 +52,8 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         self.view.backgroundColor = .clear
         setupARView()
         
+        setupAudioCapture()
+        
         NotificationCenter.default.addObserver(self, selector: #selector(handleStartRecording), name: NSNotification.Name("StartARRecording"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleStopRecording), name: NSNotification.Name("StopARRecording"), object: nil)
         
@@ -54,14 +61,6 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         NotificationCenter.default.addObserver(self, selector: #selector(handleResumeRecording), name: NSNotification.Name("ResumeARRecording"), object: nil)
     }
 
-    @objc private func handlePauseRecording() {
-        recorder.pause()
-    }
-    
-    @objc private func handleResumeRecording() {
-        recorder.resume()
-    }
-    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         self.screenCenter = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
@@ -70,47 +69,93 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        guard ARFaceTrackingConfiguration.isSupported else { return }
         
+        guard ARFaceTrackingConfiguration.isSupported else { return }
         let configuration = ARFaceTrackingConfiguration()
         configuration.isLightEstimationEnabled = true
         
         arView.session.delegate = self
-        
         arView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
-        print("✅ ARSession Running & Delegate Set")
+        print("✅ ARSession Running")
+        
+        if !audioSession.isRunning {
+            DispatchQueue.global(qos: .background).async {
+                self.audioSession.startRunning()
+            }
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         arView.session.pause()
+        
+        if audioSession.isRunning {
+            audioSession.stopRunning()
+        }
     }
     
     private func setupARView() {
-            arView = ARSCNView(frame: self.view.bounds)
-            self.view.addSubview(arView)
-            arView.alpha = 0.01
-            self.view.sendSubviewToBack(arView)
-            
-            arView.delegate = self
-            arView.backgroundColor = .clear
-            
-            arView.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                arView.topAnchor.constraint(equalTo: self.view.topAnchor),
-                arView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
-                arView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-                arView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
-            ])
+        arView = ARSCNView(frame: self.view.bounds)
+        self.view.addSubview(arView)
+        arView.alpha = 0.01
+        self.view.sendSubviewToBack(arView)
+        
+        arView.delegate = self
+        arView.backgroundColor = .clear
+        
+        arView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            arView.topAnchor.constraint(equalTo: self.view.topAnchor),
+            arView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+            arView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
+            arView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
+        ])
+    }
+    
+    private func setupAudioCapture() {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            self.configureAudioSession()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .audio) { granted in
+                if granted {
+                    DispatchQueue.main.async { self.configureAudioSession() }
+                }
+            }
+        default:
+            print("❌ Akses Microphone Ditolak. Audio tidak akan terekam.")
         }
+    }
+    
+    private func configureAudioSession() {
+        audioSession.beginConfiguration()
+        if let audioDevice = AVCaptureDevice.default(for: .audio),
+           let audioInput = try? AVCaptureDeviceInput(device: audioDevice) {
+            
+            if audioSession.canAddInput(audioInput) {
+                audioSession.addInput(audioInput)
+            }
+        }
+        
+        if audioSession.canAddOutput(audioOutput) {
+            audioSession.addOutput(audioOutput)
+            audioOutput.setSampleBufferDelegate(self, queue: audioQueue)
+        }
+        
+        audioSession.commitConfiguration()
+    }
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         recorder.record(pixelBuffer: frame.capturedImage, timestamp: frame.timestamp)
     }
     
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        recorder.recordAudio(sampleBuffer: sampleBuffer)
+    }
+    
     @objc private func handleStartRecording() {
         let tempDir = FileManager.default.temporaryDirectory
-        let fileName = "SelfieRec_\(UUID().uuidString).mp4"
+        let fileName = "SimRec_\(UUID().uuidString).mp4"
         let url = tempDir.appendingPathComponent(fileName)
         
         print("🎥 ARVC: Start Recording -> \(fileName)")
@@ -121,13 +166,21 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         print("🎥 ARVC: Stop Recording Request...")
         recorder.stop { url in
             if let url = url {
-                print("✅ ARVC: Video Berhasil Disimpan -> \(url.lastPathComponent)")
+                print("✅ ARVC: Video Saved -> \(url.lastPathComponent)")
                 NotificationCenter.default.post(name: NSNotification.Name("ARRecordingSaved"), object: nil, userInfo: ["url": url])
             } else {
-                print("❌ ARVC: Video Gagal Disimpan (URL nil)")
+                print("❌ ARVC: Failed to Save Video")
                 NotificationCenter.default.post(name: NSNotification.Name("ARRecordingSaved"), object: nil, userInfo: nil)
             }
         }
+    }
+    
+    @objc private func handlePauseRecording() {
+        recorder.pause()
+    }
+    
+    @objc private func handleResumeRecording() {
+        recorder.resume()
     }
     
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
@@ -143,6 +196,7 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         
         self.latestFaceAnchor = closestFaceAnchor
         let currentHeadEulerAngles = node.eulerAngles
+        
         let leftEyeTransform = closestFaceAnchor.leftEyeTransform
         let rightEyeTransform = closestFaceAnchor.rightEyeTransform
         let leftDir = simd_make_float3(leftEyeTransform.columns.2)
@@ -151,6 +205,7 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         let leftPos = simd_make_float3(leftEyeTransform.columns.3)
         let rightPos = simd_make_float3(rightEyeTransform.columns.3)
         let avgEyePos = (leftPos + rightPos) * 0.5
+        
         let gazeOriginWorld4 = simd_mul(closestFaceAnchor.transform, simd_float4(avgEyePos, 1.0))
         let gazeDirWorld4 = simd_mul(closestFaceAnchor.transform, simd_float4(avgDir, 0.0))
         var gazeDirWorld = simd_make_float3(gazeDirWorld4.x, gazeDirWorld4.y, gazeDirWorld4.z)
@@ -175,10 +230,12 @@ class SimulationARTrackerVC: UIViewController, ARSCNViewDelegate, ARSessionDeleg
         var headEvent: HeadGazeEvent = .normal
         if let headOrigin = self.headOriginEulerAngles {
             let pitch = currentHeadEulerAngles.x - headOrigin.x
+            
             if pitch < headPitchDownThreshold {
-                headEvent = .headPitchDown
-            } else if pitch > headPitchUpThreshold {
                 headEvent = .headPitchUp
+            }
+            else if pitch > headPitchUpThreshold {
+                headEvent = .headPitchDown
             } else {
                 headEvent = .normal
             }

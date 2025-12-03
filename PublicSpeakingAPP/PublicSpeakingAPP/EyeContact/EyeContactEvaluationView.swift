@@ -2,6 +2,7 @@
 //  EyeContactEvaluationView.swift
 //  PublicSpeakingAPP
 //
+//  Created by Jordan on 13/11/25.
 //
 
 import SwiftUI
@@ -11,101 +12,89 @@ struct EyeContactEvaluationView: View {
     let videoURL: URL?
     let gazeEvents: [GazeLogItem]
     
-    @State private var player: AVPlayer?
+    @State private var player = AVPlayer()
     @State private var currentIssueIndex: Int = 0
+    @State private var loopObserver: NSObjectProtocol?
+    @State private var isFullScreen: Bool = false
     
     var issues: [GazeLogItem] {
-        return gazeEvents.sorted { $0.timestamp < $1.timestamp }
+        return gazeEvents.sorted { $0.startTime < $1.startTime }
+    }
+    
+    private var videoWidth: CGFloat {
+        UIScreen.main.bounds.width * 0.45
+    }
+    
+    private var videoHeight: CGFloat {
+        videoWidth * (9.0 / 16.0)
     }
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 0) {
             
             HStack {
-                if !issues.isEmpty {
-                    let currentTimestamp = issues[currentIssueIndex].timestamp
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock")
-                        Text(formatTime(currentTimestamp))
-                    }
-                    .font(.footnote.bold())
-                    .foregroundColor(Color("BaseColorBrown"))
-                } else {
-                    Text("00:00")
-                        .font(.footnote.bold())
-                        .foregroundColor(.gray)
+                if issues.indices.contains(currentIssueIndex) {
+                    let currentItem = issues[currentIssueIndex]
+                    Text(formatTimestamp(currentItem.startTime, currentItem.endTime))
+                        .font(.footnoteBold)
+                        .foregroundColor(.baseColorBrown)
                 }
                 
                 Spacer()
                 
-                HStack(spacing: 12) {
-                    Button(action: { jumpToIssue(index: currentIssueIndex - 1) }) {
+                HStack(spacing: 8) {
+                    Button(action: { loadClip(at: currentIssueIndex - 1) }) {
                         Image(systemName: "chevron.left")
-                            .font(.body)
-                            .padding(8)
-                            .background(Circle().fill(Color.white))
-                            .overlay(Circle().stroke(Color("BaseColorBrown").opacity(0.3), lineWidth: 1))
                     }
-                    .disabled(currentIssueIndex <= 0 || issues.isEmpty)
-                    .opacity(currentIssueIndex <= 0 || issues.isEmpty ? 0.5 : 1.0)
+                    .disabled(currentIssueIndex <= 0)
+                    .opacity(currentIssueIndex <= 0 ? 0.5 : 1.0)
                     
-                    // Indikator Posisi (e.g., 1 / 5)
-                    if !issues.isEmpty {
-                        Text("**\(currentIssueIndex + 1)** / \(issues.count)")
-                            .font(.footnote.bold())
-                            .foregroundColor(Color("BaseColorBrown"))
-                            .monospacedDigit()
-                    } else {
-                        Text("- / -")
-                            .font(.footnote.bold())
-                            .foregroundColor(.gray)
-                    }
+                    Text("**\(currentIssueIndex + 1)** / \(issues.count)")
+                        .font(.footnoteBold)
+                        .monospacedDigit()
                     
-                    // Tombol Next
-                    Button(action: { jumpToIssue(index: currentIssueIndex + 1) }) {
+                    Button(action: { loadClip(at: currentIssueIndex + 1) }) {
                         Image(systemName: "chevron.right")
-                            .font(.body)
-                            .padding(8)
-                            .background(Circle().fill(Color.white))
-                            .overlay(Circle().stroke(Color("BaseColorBrown").opacity(0.3), lineWidth: 1))
                     }
-                    .disabled(currentIssueIndex >= issues.count - 1 || issues.isEmpty)
-                    .opacity(currentIssueIndex >= issues.count - 1 || issues.isEmpty ? 0.5 : 1.0)
+                    .disabled(currentIssueIndex >= issues.count - 1)
+                    .opacity(currentIssueIndex >= issues.count - 1 ? 0.5 : 1.0)
                 }
-                .foregroundColor(Color("BaseColorBrown"))
+                .foregroundColor(.baseColorBrown)
             }
             .padding(.horizontal, 4)
+            .padding(.bottom, 16)
             
             ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.black.opacity(0.1))
-                    .frame(height: 400) // Tinggi Video
-                
-                if let player = player {
-                    VideoPlayer(player: player)
-                        .frame(height: 400)
-                        .cornerRadius(12)
+                if videoURL != nil {
+                    CleanClipPlayer(player: player)
+                        .frame(width: videoWidth, height: videoHeight)
+                        .background(Color.black)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color("BaseColorBrown").opacity(0.5), lineWidth: 1)
+                            Color.black.opacity(0.001)
+                                .allowsHitTesting(true)
                         )
                 } else {
-                    VStack {
-                        Image(systemName: "video.slash")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                        Text("Video tidak tersedia")
-                            .font(.caption)
-                            .foregroundColor(.gray)
+                    ZStack {
+                        Color.black.opacity(0.1)
+                        VStack {
+                            Image(systemName: "video.slash")
+                                .font(.largeTitle)
+                                .foregroundColor(.gray)
+                            Text("Video tidak tersedia")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
                     }
+                    .frame(width: videoWidth, height: videoHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 
-                if !issues.isEmpty {
+                if issues.indices.contains(currentIssueIndex) {
                     VStack {
                         Spacer()
-                        HStack {
+                        HStack(alignment: .bottom) {
                             let type = issues[currentIssueIndex].event
-                            
                             Text(labelForEvent(type))
                                 .font(.caption).bold()
                                 .padding(.vertical, 6)
@@ -113,89 +102,173 @@ struct EyeContactEvaluationView: View {
                                 .background(Color.red.opacity(0.8))
                                 .foregroundColor(.white)
                                 .cornerRadius(8)
-                                .padding(.bottom, 16)
-                                .padding(.leading, 16)
+                            
                             Spacer()
+                            
+                            ButtonComponent(
+                                title: "Lihat Full",
+                                systemImage: "arrow.up.left.and.arrow.down.right",
+                                size: .small,
+                                kind: .primaryYellow,
+                                action: { isFullScreen = true }
+                            )
                         }
+                        .padding(.bottom, 12)
+                        .padding(.horizontal, 12)
                     }
+                    .frame(width: videoWidth, height: videoHeight)
                 }
             }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 16)
             
-
-            if issues.isEmpty {
-                Text("Hebat! Kontak matamu sangat terjaga.")
-                    .font(.subheadline)
-                    .foregroundColor(.green)
-                    .padding()
-                    .background(Color.green.opacity(0.1))
-                    .cornerRadius(8)
-            } else {
-                Text("Tekan tombol panah di atas untuk melompat ke momen saat pandanganmu teralihkan.")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-            }
-            
-            Spacer()
         }
         .onAppear {
-            setupPlayer()
+            configureAudioSession()
+            setupInitialClip()
         }
         .onDisappear {
-            player?.pause()
+            if let observer = loopObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+            player.pause()
+        }
+        .fullScreenCover(isPresented: $isFullScreen) {
+            ZStack(alignment: .topLeading) {
+                
+                Color.black.edgesIgnoringSafeArea(.all)
+                
+                if videoURL != nil {
+                    VideoPlayer(player: player)
+                        .edgesIgnoringSafeArea(.all)
+                }
+                
+                Button(action: {
+                    isFullScreen = false
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.title3)
+                        .bold()
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(Color.black.opacity(0.6))
+                        .clipShape(Circle())
+                }
+                .padding(.leading, 20)
+                .padding(.top, 10)
+            }
+            .ignoresSafeArea()
         }
     }
     
+    private func configureAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("Gagal setting audio session: \(error)")
+        }
+    }
     
-    private func setupPlayer() {
-        guard let url = videoURL else { return }
-        let avPlayer = AVPlayer(url: url)
-        self.player = avPlayer
-        
-        if !issues.isEmpty {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                jumpToIssue(index: 0)
+    private func setupInitialClip() {
+        loopObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: nil,
+            queue: .main
+        ) { [weak player] notification in
+            if let currentItem = player?.currentItem,
+               let notifObject = notification.object as? AVPlayerItem,
+               currentItem == notifObject {
+                player?.seek(to: .zero)
+                player?.play()
             }
         }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            loadClip(at: 0)
+        }
     }
     
-    private func jumpToIssue(index: Int) {
-        guard issues.indices.contains(index), let player = player else { return }
-   
+    private func loadClip(at index: Int) {
+        guard issues.indices.contains(index), let url = videoURL else { return }
+        
         withAnimation {
             currentIssueIndex = index
         }
         
         let issue = issues[index]
-        let timestamp = issue.timestamp
+        let asset = AVAsset(url: url)
+        let totalDuration = asset.duration.seconds
         
-        let seekTime = max(0, timestamp - 1.5)
-        let cmTime = CMTime(seconds: seekTime, preferredTimescale: 600)
+        let startSeconds = max(0, issue.startTime - 3.0)
+        let endSeconds = min(totalDuration, issue.endTime + 3.0)
+        let durationSeconds = endSeconds - startSeconds
         
-        player.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
-        if player.timeControlStatus != .playing {
+        guard durationSeconds > 0 else { return }
+        
+        let timeRange = CMTimeRange(
+            start: CMTime(seconds: startSeconds, preferredTimescale: 600),
+            duration: CMTime(seconds: durationSeconds, preferredTimescale: 600)
+        )
+        
+        let composition = AVMutableComposition()
+        
+        do {
+            if let videoTrack = asset.tracks(withMediaType: .video).first,
+               let compVideoTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) {
+                try compVideoTrack.insertTimeRange(timeRange, of: videoTrack, at: .zero)
+                compVideoTrack.preferredTransform = videoTrack.preferredTransform
+            }
+            
+            if let audioTrack = asset.tracks(withMediaType: .audio).first,
+               let compAudioTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
+                try compAudioTrack.insertTimeRange(timeRange, of: audioTrack, at: .zero)
+            }
+            
+            let playerItem = AVPlayerItem(asset: composition)
+            player.replaceCurrentItem(with: playerItem)
             player.play()
+            
+        } catch {
+            print("Error creating clip: \(error)")
         }
     }
     
-    private func formatTime(_ seconds: TimeInterval) -> String {
-        let min = Int(seconds) / 60
-        let sec = Int(seconds) % 60
-        return String(format: "%02d:%02d", min, sec)
+    private func formatTimestamp(_ startTime: TimeInterval, _ endTime: TimeInterval) -> String {
+        let startMinutes = Int(startTime) / 60
+        let startSeconds = Int(startTime) % 60
+        let endMinutes = Int(endTime) / 60
+        let endSeconds = Int(endTime) % 60
+        
+        return String(format: "%02d:%02d - %02d:%02d", startMinutes, startSeconds, endMinutes, endSeconds)
     }
     
     private func labelForEvent(_ event: String) -> String {
         switch event {
-        case "HeadUp":
-            return "Kepala Terlalu Naik"
-        case "HeadDown":
-            return "Kepala Menunduk"
-        case "GazeUp":
-            return "Mata Melihat ke Atas"
-        case "GazeDown":
-            return "Mata Melihat ke Bawah"
-        default:
-            return "Gangguan Kontak Mata"
+        case "HeadUp": return "Kepala Terlalu Naik"
+        case "HeadDown": return "Kepala Menunduk"
+        case "GazeUp": return "Mata Melihat ke Atas"
+        case "GazeDown": return "Mata Melihat ke Bawah"
+        default: return "Gangguan Kontak Mata"
+        }
+    }
+}
+
+struct CleanClipPlayer: UIViewControllerRepresentable {
+    let player: AVPlayer
+    
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let controller = AVPlayerViewController()
+        controller.player = player
+        controller.showsPlaybackControls = false
+        controller.videoGravity = .resizeAspect
+        controller.view.backgroundColor = .clear
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
+        if uiViewController.player != player {
+            uiViewController.player = player
         }
     }
 }
