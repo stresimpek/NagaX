@@ -506,7 +506,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
                     }
                 } else {
                     // Normal case: use existing transcription
-                    finalizeText()
+                    await finalizeText()
                     await self.analyzeTranscriptSentence()
                 }
             } else {
@@ -535,7 +535,7 @@ final class SpeechTranscriberViewModel: ObservableObject {
             }
             
             // 4. Update Status to Trigger Navigation
-            try? await Task.sleep(nanoseconds: 100_000_000)
+//            try? await Task.sleep(nanoseconds: 100_000_000)
             await MainActor.run {
                 if !self.isTranscribing {
                     self.recordingStatus = .stopped
@@ -697,28 +697,25 @@ final class SpeechTranscriberViewModel: ObservableObject {
             isPaused = false
             proceedToEvaluation(loop: loop, needsFillerAnalysis: needsFillerAnalysis)
         }
-
-    func finalizeText() {
-        Task {
-            await MainActor.run {
-                if hypothesisText != "" {
-                    confirmedText += hypothesisText
-                    hypothesisText = ""
-                }
-
-                    
-                if !hypothesisWords.isEmpty {
-                    confirmedWords.append(contentsOf: hypothesisWords)
-                    hypothesisWords = []
-                }
-                
-                if !unconfirmedSegments.isEmpty {
-                    confirmedSegments.append(contentsOf: unconfirmedSegments)
-                    unconfirmedSegments = []
-                }
-                
-                self.updateFinalizedStyledTranscript()
+    
+    func finalizeText() async {
+        await MainActor.run {
+            if hypothesisText != "" {
+                confirmedText += hypothesisText
+                hypothesisText = ""
             }
+                
+            if !hypothesisWords.isEmpty {
+                confirmedWords.append(contentsOf: hypothesisWords)
+                hypothesisWords = []
+            }
+            
+            if !unconfirmedSegments.isEmpty {
+                confirmedSegments.append(contentsOf: unconfirmedSegments)
+                unconfirmedSegments = []
+            }
+            
+            self.updateFinalizedStyledTranscript()
         }
     }
     

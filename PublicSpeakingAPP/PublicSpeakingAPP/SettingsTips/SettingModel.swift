@@ -18,7 +18,7 @@ struct AspectOption: Identifiable, Hashable {
     static let intonasi = AspectOption(id: "intonasi", title: "Intonasi", systemImage: "AspectIntonasi", isEnabled: true)
     static let tempo = AspectOption(id: "tempo", title: "Tempo", systemImage: "AspectTempo", isEnabled: true)
     static let fillerWords = AspectOption(id: "fillerWords", title: "Kata Jeda", systemImage: "AspectFiller", isEnabled: true)
-    static let kontakMata = AspectOption(id: "kontakMata", title: "Kontak Mata", systemImage: "AspectEye", isEnabled: true)
+    static let kontakMata = AspectOption(id: "kontakMata", title: "Kontak Mata", systemImage: "AspectEye1", isEnabled: true)
     
     static let allOptions: [AspectOption] = [.intonasi, .fillerWords, .tempo, .kontakMata]
 }

@@ -16,7 +16,7 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
             
             GeometryReader { geometry in
-                ScrollView {
+               VStack {
                     VStack(spacing: 24) {
                         Spacer()
                         VStack(spacing: 8) {
@@ -57,34 +57,34 @@ struct OnboardingView: View {
                                 action: onStartTapped
                             )
                         }
-                        
                         Spacer()
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
-                    .frame(minHeight: geometry.size.height)
-                    .frame(maxWidth: .infinity)
+                   
+                   Spacer()
+                   
+                   if isIpad {
+                       HStack {
+                           Spacer()
+                           
+                           ButtonComponent(
+                               title: "Mulai",
+                               systemImage: nil,
+                               size: .large,
+                               kind: .primaryYellow,
+                               fullWidth: false,
+                               isLoading: false,
+                               isEnabled: true,
+                               action: onStartTapped
+                           )
+                       }
+                       .padding(.bottom, 52)
+                       .padding(.trailing, 44)
+                   }
                 }
-                .safeAreaInset(edge: .bottom) {
-                    if isIpad {
-                        HStack {
-                            Spacer()
-                            
-                            ButtonComponent(
-                                title: "Mulai",
-                                systemImage: nil,
-                                size: .large,
-                                kind: .primaryYellow,
-                                fullWidth: false,
-                                isLoading: false,
-                                isEnabled: true,
-                                action: onStartTapped
-                            )
-                        }
-                        .padding(.bottom, 52)
-                        .padding(.trailing, 44)
-                    }
-                }
+               .frame(minHeight: geometry.size.height)
+               .frame(maxWidth: .infinity)
             }
         }
     }
