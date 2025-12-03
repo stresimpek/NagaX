@@ -62,6 +62,10 @@ struct SimulationView: View {
         && (status == .stopping || status == .stopped)
     }
     
+    private var isMac: Bool {
+        ProcessInfo.processInfo.isiOSAppOnMac
+    }
+    
     
     init(
         viewModel: SimulationViewModel,
@@ -170,7 +174,7 @@ struct SimulationView: View {
                             .background(.coral)
                             .cornerRadius(24)
                             .shadow(color: .lightCoral, radius: 0, x: 0, y: 4)
-                            .padding(.bottom, isIPad ? 160 : 0)
+                            .padding(.bottom, isMac ? 240 : (isIPad ? 160 : 0))
                             .padding(.leading, isIPad ? 45 : 0)
                             .accessibilityElement(children: .combine)
                             .accessibilityLabel("Telah merekam selama \(viewModel.formattedTime)")
@@ -189,7 +193,7 @@ struct SimulationView: View {
                             .background(.darkBlue)
                             .cornerRadius(24)
                             .shadow(color: .darkBlue2, radius: 0, x: 0, y: 4)
-                            .padding(.bottom, isIPad ? 160 : 0)
+                            .padding(.bottom, isMac ? 240 : (isIPad ? 160 : 0))
                             .padding(.leading, isIPad ? 45 : 0)
                             .accessibilityElement(children: .combine)
                             .accessibilityLabel("Telah merekam selama \(viewModel.formattedTime)")
@@ -199,7 +203,7 @@ struct SimulationView: View {
                         Spacer()
                         
                         if isIPad {
-                            VStack(alignment: .trailing, spacing: 68) {
+                            VStack(alignment: .trailing, spacing: (isMac ? 95 : 68)) {
 
                                 if viewModel.isRecording {
 
@@ -234,7 +238,7 @@ struct SimulationView: View {
                                     action: viewModel.toggleRecording
                                 )
                                 .disabled(viewModel.whisperModelState != .loaded || isProcessing)
-                                .padding(.bottom, 20)
+                                .padding(.bottom, isMac ? 80: 20)
                                 
                             }.padding(.trailing, 40)
 
@@ -491,5 +495,7 @@ extension SimulationView {
         currentBanner = nil
         processQueueIfNeeded()
     }
+    
+
     
 }

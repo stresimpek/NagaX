@@ -18,11 +18,9 @@ struct EmptyTranscriptModalView: View {
             ZStack {
                 Color.black.opacity(0.45)
                     .ignoresSafeArea()
-                
                 VStack {
                     Spacer(minLength: 0)
-                    
-                    VStack(spacing: isPad ? 40 : 24) {
+                    VStack(spacing: 24) {
                         VStack(spacing: 4) {
                             Text("Sepertinya kamu belum mulai bicara")
                                 .font(.title3)
@@ -35,11 +33,8 @@ struct EmptyTranscriptModalView: View {
                                 .multilineTextAlignment(.center)
                         }
                         .padding(.horizontal, isPad ? 56 : 27)
-                        
                         if isPad {
                             VStack(spacing: 12) {
-                                
-                                
                                 ButtonComponent(
                                     title: "Ulang Sesi",
                                     systemImage: nil,
@@ -48,10 +43,6 @@ struct EmptyTranscriptModalView: View {
                                     fullWidth: true,
                                     action: onRestart
                                 )
-                                
-                                
-                                
-                                
                                 ButtonComponent(
                                     title: "Lanjut Latihan",
                                     systemImage: nil,
@@ -60,8 +51,6 @@ struct EmptyTranscriptModalView: View {
                                     fullWidth: true,
                                     action: onContinue
                                 )
-                                
-                                
                             }
                             .padding(.horizontal, 56)
                             
@@ -95,11 +84,8 @@ struct EmptyTranscriptModalView: View {
                     )
                     .frame(
                         width: isPad ? 429 : 370,
-                        height: isPad ? 296 : 190,
                         alignment: .center
                     )
-                    .cornerRadius(24)
-                    
                     Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
